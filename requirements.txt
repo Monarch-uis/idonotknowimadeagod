@@ -1,5 +1,5 @@
 edge-tts>=6.1.9
-moviepy<2.0.0
+moviepy<3.0.0
 faster-whisper>=0.10.0
 ffmpeg-python>=0.2.0
 ebooklib>=0.18
