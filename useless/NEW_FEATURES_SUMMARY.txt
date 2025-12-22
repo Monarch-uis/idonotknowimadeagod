@@ -1,0 +1,146 @@
+╔═══════════════════════════════════════════════════════════════╗
+║           🚨 CRITICAL UPDATE - December 10, 2025 🚨           ║
+╚═══════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────┐
+│ ✅ YOUR REQUESTED FEATURE                                     │
+├───────────────────────────────────────────────────────────────┤
+│                                                               │
+│ ✅ BATCH RANGE SELECTOR - ADDED!                             │
+│                                                               │
+│ Now you can choose:                                           │
+│   • Start from any chapter (e.g., Chapter 50)                │
+│   • End at any chapter (e.g., Chapter 100)                   │
+│   • Process specific sections without starting over          │
+│                                                               │
+│ Example:                                                      │
+│   Start: 50                                                   │
+│   End: 100                                                    │
+│   Batch size: 25                                              │
+│   → Creates 2 videos (Ch 50-74, Ch 75-100)                   │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│ 🚨 CRITICAL ISSUE DISCOVERED                                  │
+├───────────────────────────────────────────────────────────────┤
+│                                                               │
+│ EDGE-TTS HAS RATE LIMITING! ⚠️                                │
+│                                                               │
+│ What I Found:                                                 │
+│   • Microsoft added STRICT rate limits                        │
+│   • Too many requests = 403 error (IP BANNED)                │
+│   • Your concurrent mode = HIGHER RISK                        │
+│   • Hundreds of users affected (GitHub issues)               │
+│                                                               │
+│ What This Means For You:                                      │
+│   ❌ Edge-TTS concurrent mode may fail mid-batch             │
+│   ❌ Your IP can get blocked for hours                       │
+│   ❌ Large batches (50+) will likely trigger blocking        │
+│   ❌ Processing multiple videos in succession = risky        │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│ ✅ PROTECTION ADDED                                           │
+├───────────────────────────────────────────────────────────────┤
+│                                                               │
+│ 1. Pre-Warning System                                         │
+│    → Warns you BEFORE processing starts                       │
+│    → Explains the risks clearly                               │
+│    → Offers to switch to Piper (safer)                        │
+│                                                               │
+│ 2. Request Delay (0.8s)                                       │
+│    → Adds delay between Edge-TTS requests                     │
+│    → Reduces rate limit triggers                              │
+│    → Configurable in config.json                              │
+│                                                               │
+│ 3. Smart Recommendations                                      │
+│    → Suggests Piper for large batches                         │
+│    → Warns about concurrent mode risks                        │
+│    → Limits batch size to <50 chapters                        │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│ 💡 WHAT YOU SHOULD DO                                         │
+├───────────────────────────────────────────────────────────────┤
+│                                                               │
+│ RECOMMENDED: Use Piper TTS ⭐                                 │
+│   ✅ No rate limits                                           │
+│   ✅ No internet needed                                       │
+│   ✅ Same quality as Edge-TTS                                 │
+│   ✅ Already installed on your system                         │
+│   ✅ Faster for large batches                                 │
+│                                                               │
+│ If Using Edge-TTS:                                            │
+│   ⚠️  Use Sequential mode (not concurrent)                   │
+│   ⚠️  Process <30 chapters per batch                         │
+│   ⚠️  Wait 10+ minutes between batches                       │
+│   ⚠️  Small books only (<100 chapters total)                 │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│ 📊 COMPARISON: Edge-TTS vs Piper                              │
+├───────────────────────────────────────────────────────────────┤
+│                                                               │
+│              Edge-TTS        Piper                            │
+│ Speed        Fast             Fast ⚡                         │
+│ Quality      Excellent        Excellent ✅                     │
+│ Internet     Required ❌      Not needed ✅                    │
+│ Rate Limits  YES 🚨          NONE ✅                          │
+│ Risk         HIGH ⚠️          ZERO ✅                          │
+│ Cost         Free             Free ✅                          │
+│                                                               │
+│ WINNER: Piper 🏆                                              │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│ 🔥 URGENT ACTION REQUIRED                                     │
+├───────────────────────────────────────────────────────────────┤
+│                                                               │
+│ 1. Read: EDGE_TTS_WARNING.md (detailed explanation)          │
+│                                                               │
+│ 2. Test the new batch range feature:                          │
+│    → Try processing chapters 1-10 first                       │
+│    → Use Piper TTS for testing                                │
+│                                                               │
+│ 3. For your next full project:                                │
+│    → Use Piper TTS (no rate limits!)                          │
+│    → Or if Edge-TTS: Sequential + <30 chapters                │
+│                                                               │
+│ 4. If you see 403 errors:                                     │
+│    → STOP immediately                                         │
+│    → Switch to Piper                                          │
+│    → Wait 30-60 minutes if continuing with Edge               │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│ 📁 FILES UPDATED                                              │
+├───────────────────────────────────────────────────────────────┤
+│                                                               │
+│ ✅ epub_project_manager.py    - Batch range + rate limiting  │
+│ ✅ config.json                 - New delay setting            │
+│ 📄 EDGE_TTS_WARNING.md         - Full documentation           │
+│ 📄 THIS FILE                   - Quick summary                │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+╔═══════════════════════════════════════════════════════════════╗
+║  BOTH FEATURES READY TO USE!                                  ║
+║  1. ✅ Batch Range Selector                                   ║
+║  2. 🛡️ Edge-TTS Protection                                    ║
+║                                                               ║
+║  IMPORTANT: Use Piper TTS for best results! ⭐                ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Next steps:
+1. Run: python epub_project_manager.py
+2. Try the new batch range feature
+3. Choose Piper when asked for TTS engine
+4. Enjoy safer, faster processing!
+
+Questions? Check EDGE_TTS_WARNING.md for details!

@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  epub-converter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: epub-converter:latest
+    container_name: epub-audiobook-converter
+    
+    # Volume mappings for persistent data
+    volumes:
+      # Active novel projects
+      - ./Novels:/app/Novels
+      
+      # Input EPUBs directory
+      - ./_NEW_EPUBS_HERE:/app/_NEW_EPUBS_HERE
+      
+      # Output directory for generated files
+      - ./output:/app/output
+      
+      # Configuration file
+      - ./config.json:/app/config.json:ro
+      
+      # Logs directory
+      - ./logs:/app/logs
+      
+      # Processing queue persistence
+      - ./processing_queue.json:/app/processing_queue.json
+    
+    # Environment variables
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Kolkata
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+        reservations:
+          cpus: '2.0'
+          memory: 2G
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Interactive mode for user input
+    stdin_open: true
+    tty: true
+    
+    # Network mode
+    network_mode: bridge

@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project Specific
+*.log
+*.epub
+*.mp3
+*.mp4
+*.m4b
+*.wav
+*.ogg
+Novels/
+output/
+_NEW_EPUBS_HERE/
+logs/
+*.prof
+htmlcov/
+.coverage
+.pytest_cache/
+*.pyc
+
+# Temporary files
+*.tmp
+temp/
+tmp/
+backups/
+*.bak
+
+# OS specific
+Thumbs.db
+.DS_Store
+
+# Docker
+.dockerignore
+
+# Sensitive data
+*.key
+*.pem
+secrets/
+config.local.json
+
+# Media files
+media/*.mp3
+media/*.mp4
+piper_models/*.onnx
+
+# Recovery and queue files
+recovery_patterns.json
+processing_queue.json

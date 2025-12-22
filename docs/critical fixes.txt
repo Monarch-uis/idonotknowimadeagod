@@ -1,0 +1,518 @@
+# =============================================================================
+# CRITICAL FIXES - Drop-in Replacements
+# =============================================================================
+
+# =============================================================================
+# FIX #1: requirements.txt - COMPLETE VERSION
+# =============================================================================
+"""
+# Save this as your new requirements.txt
+
+# Core dependencies
+edge-tts>=6.1.0
+moviepy>=1.0.3
+pillow>=10.0.0
+pyttsx3>=2.90
+
+# System monitoring
+psutil>=5.9.0
+
+# EPUB handling
+ebooklib>=0.18
+beautifulsoup4>=4.12.0
+lxml>=4.9.0              # ✅ ADDED - Required by ebooklib
+
+# File watching
+watchdog>=3.0.0
+
+# Video generation (NEW - REQUIRED!)
+faster-whisper>=0.10.0   # ✅ ADDED - For caption generation
+ffmpeg-python>=0.2.0     # ✅ ADDED - For video rendering
+imageio-ffmpeg>=0.4.8    # ✅ ADDED - Helps find ffmpeg
+
+# Audio validation (OPTIONAL but recommended)
+pydub>=0.25.1            # ✅ ADDED - For audio validation
+
+# Development/Testing (optional)
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+"""
+
+# =============================================================================
+# FIX #2: Improved sanitize_filename
+# Replace in core/utils.py
+# =============================================================================
+
+import re
+import unicodedata
+from pathlib import Path
+
+def sanitize_filename(name, max_length=200):
+    """
+    Properly sanitize filename for all platforms including Unicode
+    
+    Handles:
+    - Unicode characters (Chinese, Japanese, etc.)
+    - Path separators
+    - Windows reserved names
+    - Control characters
+    - Problematic characters
+    
+    Examples:
+        sanitize_filename("転生したらスライムだった件") -> "転生したらスライムだった件"
+        sanitize_filename("../../etc/passwd") -> "etc_passwd"
+        sanitize_filename("CON.txt") -> "_CON.txt"
+    """
+    if not name:
+        return "untitled"
+    
+    # Normalize Unicode to standard form
+    name = unicodedata.normalize('NFKD', name)
+    
+    # Remove or replace path separators
+    name = name.replace('/', '_').replace('\\', '_')
+    
+    # Remove control characters (but keep printable Unicode)
+    name = ''.join(c for c in name 
+                   if not unicodedata.category(c).startswith('C'))
+    
+    # Replace Windows/filesystem problematic characters
+    # Keep Unicode letters/numbers but replace these special chars
+    name = re.sub(r'[<>:"|?*]', '_', name)
+    
+    # Handle Windows reserved names (CON, PRN, AUX, etc.)
+    reserved = {
+        'CON', 'PRN', 'AUX', 'NUL',
+        'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+        'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
+    }
+    name_upper = name.upper()
+    base_name = name_upper.split('.')[0]
+    if base_name in reserved:
+        name = f"_{name}"
+    
+    # Remove leading/trailing spaces and dots (Windows doesn't allow)
+    name = name.strip('. ')
+    
+    # Truncate if too long (but preserve extension)
+    if len(name) > max_length:
+        path_obj = Path(name)
+        stem = path_obj.stem
+        suffix = path_obj.suffix
+        
+        # Calculate how much to keep
+        available = max_length - len(suffix) - 1  # -1 for the dot
+        if available > 0:
+            name = stem[:available] + suffix
+        else:
+            name = stem[:max_length]
+    
+    # Final safety check
+    if not name or name in ('.', '..'):
+        return "untitled"
+    
+    return name
+
+# =============================================================================
+# FIX #3: GPU Detection Fix
+# Replace in core/video_pipeline.py
+# =============================================================================
+
+def _detect_gpu_device(device_pref="auto"):
+    """
+    Properly detect GPU availability
+    
+    Args:
+        device_pref: "auto", "cuda", "cpu", or "mps" (Mac M1/M2)
+    
+    Returns:
+        str: "cuda", "mps", or "cpu"
+    """
+    if device_pref != "auto":
+        return device_pref
+    
+    # Try CUDA (NVIDIA GPU)
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return "cuda"
+    except ImportError:
+        pass
+    
+    # Try MPS (Apple Silicon)
+    try:
+        import torch
+        if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            return "mps"
+    except (ImportError, AttributeError):
+        pass
+    
+    # Default to CPU
+    return "cpu"
+
+# Usage in generate_timeline_from_audio():
+# Replace this line:
+#   device = "cuda" if os.environ.get("CUDA_VISIBLE_DEVICES") else "cpu"
+# With:
+#   device = _detect_gpu_device(device_pref)
+
+# =============================================================================
+# FIX #4: Temp File Leak Prevention
+# Add to core/video_pipeline.py
+# =============================================================================
+
+import tempfile
+from contextlib import contextmanager
+from pathlib import Path
+
+@contextmanager
+def temp_ass_file(captions, config):
+    """
+    Context manager for temporary ASS subtitle file
+    Guarantees cleanup even if crash occurs
+    
+    Usage:
+        with temp_ass_file(captions, config) as ass_path:
+            # Use ass_path...
+            # Automatically cleaned up
+    """
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix=".ass", text=True)
+    path_obj = Path(tmp_path)
+    
+    try:
+        os.close(tmp_fd)
+        
+        # Generate subtitle content
+        style = _default_caption_style(config)
+        header = _build_ass_header(style)
+        body = _write_ass_dialogue(captions, style)
+        
+        # Write to file
+        with open(path_obj, "w", encoding="utf-8") as handle:
+            handle.write(header)
+            handle.write(body)
+        
+        yield path_obj
+        
+    finally:
+        # Always cleanup, even on error
+        try:
+            if path_obj.exists():
+                path_obj.unlink()
+        except Exception as e:
+            # Log but don't raise - cleanup is best-effort
+            print(f"Warning: Could not delete temp file {path_obj}: {e}")
+
+# Replace _materialize_ass_file() calls with:
+# with temp_ass_file(captions, config) as ass_path:
+#     # Use ass_path in ffmpeg...
+
+# =============================================================================
+# FIX #5: EPUB Validation
+# Add to core/epub_io.py
+# =============================================================================
+
+def validate_epub(epub_path):
+    """
+    Validate EPUB file before processing to avoid wasting time
+    
+    Checks:
+    - File is readable
+    - Has required metadata
+    - Has parseable chapters
+    - First chapter can be parsed
+    
+    Returns:
+        (bool, Optional[str]): (is_valid, error_message)
+    """
+    try:
+        # Check file exists and is readable
+        if not os.path.exists(epub_path):
+            return False, "File not found"
+        
+        if os.path.getsize(epub_path) == 0:
+            return False, "File is empty"
+        
+        # Try to open as EPUB
+        try:
+            book = epub.read_epub(epub_path)
+        except Exception as e:
+            return False, f"Cannot read EPUB: {str(e)[:100]}"
+        
+        # Check for required metadata
+        title = book.get_metadata('DC', 'title')
+        if not title:
+            return False, "Missing title metadata"
+        
+        # Get chapters
+        chapters = [item for item in book.get_items() 
+                   if item.get_type() == ebooklib.ITEM_DOCUMENT]
+        
+        if not chapters:
+            return False, "No chapters found in EPUB"
+        
+        # Try to parse first chapter
+        try:
+            first_chapter = chapters[0]
+            html_content = first_chapter.get_content()
+            
+            # Verify it's valid HTML
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html_content, 'html.parser')
+            
+            # Check if we can extract text
+            text = soup.get_text()
+            if not text.strip():
+                return False, "First chapter has no text"
+                
+        except Exception as e:
+            return False, f"Cannot parse first chapter: {str(e)[:100]}"
+        
+        # All checks passed
+        return True, None
+        
+    except Exception as e:
+        return False, f"Validation error: {str(e)[:100]}"
+
+# Use before processing:
+# valid, error = validate_epub(epub_path)
+# if not valid:
+#     print(f"❌ Invalid EPUB: {error}")
+#     return False
+
+# =============================================================================
+# FIX #6: Improved Audio Validation
+# Add to core/tts.py or core/utils.py
+# =============================================================================
+
+def validate_audio_file(filepath, min_duration=0.5, min_size_mb=0.01):
+    """
+    Validate that generated audio file is actually usable
+    
+    Checks:
+    - File exists and has content
+    - Can be opened as audio
+    - Has reasonable duration
+    - Is not silent
+    - File size matches duration
+    
+    Args:
+        filepath: Path to audio file
+        min_duration: Minimum duration in seconds
+        min_size_mb: Minimum file size in MB
+    
+    Returns:
+        (bool, Optional[str]): (is_valid, error_message)
+    """
+    try:
+        # Check file exists
+        if not os.path.exists(filepath):
+            return False, "File does not exist"
+        
+        # Check file size
+        size_bytes = os.path.getsize(filepath)
+        size_mb = size_bytes / (1024 * 1024)
+        
+        if size_mb < min_size_mb:
+            return False, f"File too small: {size_mb:.2f}MB"
+        
+        # Try to load as audio using pydub (if available)
+        try:
+            from pydub import AudioSegment
+            
+            audio = AudioSegment.from_file(filepath)
+            
+            # Check duration
+            duration = audio.duration_seconds
+            if duration < min_duration:
+                return False, f"Audio too short: {duration:.1f}s"
+            
+            # Check if audio is silent (dBFS very low)
+            # Normal speech is around -20 to -10 dBFS
+            if audio.dBFS < -50:
+                return False, f"Audio appears silent (dBFS: {audio.dBFS:.1f})"
+            
+            # Verify file size is reasonable for duration
+            # MP3: roughly 16-32KB per second
+            # WAV: roughly 176KB per second
+            expected_min_size = duration * 0.010  # 10KB/sec minimum
+            if size_mb < expected_min_size:
+                return False, f"File size ({size_mb:.2f}MB) too small for duration ({duration:.1f}s)"
+            
+            return True, None
+            
+        except ImportError:
+            # pydub not available, do basic checks only
+            if size_mb > 0.1:  # At least 100KB
+                return True, None
+            else:
+                return False, "File size suspicious (install pydub for better validation)"
+                
+    except Exception as e:
+        return False, f"Validation error: {str(e)[:100]}"
+
+# Use after generating audio:
+# success, error = gen_single_clip_edge_with_retry(...)
+# if success:
+#     valid, validation_error = validate_audio_file(filename)
+#     if not valid:
+#         print(f"⚠️  Warning: {validation_error}")
+#         # Retry or handle error
+
+# =============================================================================
+# FIX #7: Better Logging Setup
+# Replace in core/utils.py
+# =============================================================================
+
+import logging
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+import os
+
+def setup_logging(log_level=None):
+    """
+    Setup logging with proper configuration
+    
+    Args:
+        log_level: "DEBUG", "INFO", "WARNING", "ERROR" or None (uses env/config)
+    
+    Returns:
+        logging.Logger: Configured logger
+    """
+    # Create logs directory
+    log_dir = Path('logs')
+    log_dir.mkdir(exist_ok=True)
+    
+    # Get log level from env or parameter
+    if log_level is None:
+        log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+    
+    # Create logger
+    logger = logging.getLogger('epub_automation')
+    
+    # Clear any existing handlers
+    logger.handlers.clear()
+    
+    # Set level
+    logger.setLevel(getattr(logging, log_level, logging.INFO))
+    
+    # File handler with rotation
+    log_file = log_dir / 'epub_automation.log'
+    file_handler = RotatingFileHandler(
+        log_file,
+        maxBytes=5*1024*1024,  # 5MB per file
+        backupCount=5,
+        encoding='utf-8'
+    )
+    
+    # Detailed formatter
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    
+    # Console handler (only in DEBUG mode or if explicitly enabled)
+    if log_level == 'DEBUG' or os.getenv('LOG_TO_CONSOLE', '').lower() == 'true':
+        console_handler = logging.StreamHandler()
+        console_formatter = logging.Formatter(
+            '%(levelname)s - %(message)s'
+        )
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
+    
+    # Prevent propagation to avoid duplicate logs
+    logger.propagate = False
+    
+    logger.info(f"Logging initialized at {log_level} level")
+    logger.info(f"Log file: {log_file}")
+    
+    return logger
+
+# Usage at top of modules:
+# logger = setup_logging()
+
+# =============================================================================
+# FIX #8: Memory Cleanup Between Batches
+# Add to epub_project_manager.py
+# =============================================================================
+
+import gc
+
+def cleanup_between_batches():
+    """
+    Clean up resources between batch processing
+    Prevents memory leaks during long processing sessions
+    """
+    # Force garbage collection
+    gc.collect()
+    
+    # Log memory usage
+    try:
+        import psutil
+        process = psutil.Process()
+        memory_mb = process.memory_info().rss / 1024 / 1024
+        logger.info(f"Memory usage after cleanup: {memory_mb:.1f} MB")
+    except:
+        pass
+
+# Call after each batch:
+# process_batch(chapters)
+# cleanup_between_batches()
+
+# =============================================================================
+# INSTALLATION INSTRUCTIONS
+# =============================================================================
+
+"""
+HOW TO APPLY THESE FIXES:
+
+1. Update requirements.txt:
+   - Copy the new requirements.txt content above
+   - Run: pip install -r requirements.txt --upgrade
+
+2. Update core/utils.py:
+   - Replace sanitize_filename() with new version
+   - Replace logging setup with setup_logging()
+
+3. Update core/video_pipeline.py:
+   - Add _detect_gpu_device() function
+   - Add temp_ass_file() context manager
+   - Replace old GPU detection with new function
+   - Replace _materialize_ass_file calls with context manager
+
+4. Update core/epub_io.py:
+   - Add validate_epub() function
+   - Call it before processing any EPUB
+
+5. Update core/tts.py:
+   - Add validate_audio_file() function
+   - Call after each audio generation
+
+6. Update epub_project_manager.py:
+   - Add cleanup_between_batches() function
+   - Call between batches
+
+7. Test everything:
+   python -m pytest tests/
+   python epub_project_manager.py
+
+TESTING CHECKLIST:
+☐ Install new dependencies (no errors)
+☐ Test with Unicode filename EPUB
+☐ Test with corrupted EPUB (should reject)
+☐ Test on GPU system (should detect correctly)
+☐ Test long processing (check memory)
+☐ Check logs/ directory created
+☐ Verify temp files cleaned up
+
+ROLLBACK PLAN:
+- Keep backups of original files
+- Test on small EPUB first
+- Have requirements_old.txt backup
+"""
+
+# =============================================================================
+# END OF CRITICAL FIXES
+# =============================================================================

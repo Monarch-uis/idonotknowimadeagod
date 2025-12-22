@@ -1,0 +1,238 @@
+{
+    "audio_settings": {
+        "voice": "en-US-GuyNeural",
+        "background_volume": 0.1,
+        "background_music_path": "media/background.mp3",
+        "tts_speed_default": "+0%",
+        "max_concurrent_tts": 4,
+        "retry_attempts": 5,
+        "retry_delay": 3,
+        "edge_tts_request_delay": 0.8,
+        "min_audio_size_mb": 0.5,
+        "piper_model_path": "en_US-lessac-medium.onnx",
+        "piper_speaker_id": 0,
+        "piper_noise_scale": 0.667,
+        "piper_length_scale": 1.0,
+        "enable_audio_crossfade": true,
+        "export_bitrate": "192k"
+    },
+    "system_limits": {
+        "max_batch_size": 50,
+        "ram_warning_threshold_mb": 1500,
+        "enable_memory_monitoring": true,
+        "min_disk_space_gb": 2.0,
+        "max_chapter_length_chars": 50000
+    },
+    "branding": {
+        "intro": "Yo legends! Welcome back to the channel. Grab your headphones and lock in, because today’s story is on another level. Want the next chapter? Drop a comment below and if the legend continues, I’m bringing it straight to you!",
+        "outro": "Alright legends, that’s it for today! If you’re ready for the next chapter, smash that like button and flood the comments right now. Remember, we’ve got 3 days to prove this story needs to continue. Subscribe so you don't miss the drop, and I'll meet you in the next audiobook!",
+        "tagline": "For fans\u2026 by a legend.",
+        "intro_disclaimer_delay": 2.5
+    },
+    "video_settings": {
+        "enable_text_overlay": true,
+        "enable_chapter_markers": true,
+        "enable_subtitles": true,
+        "embed_subtitles": true,
+        "use_advanced_renderer": true,
+        "subtitle_max_chars": 60,
+        "subtitle_reading_speed_wps": 2.5,
+        "caption_model_size": "small",
+        "caption_compute_type": "float16",
+        "caption_language": "auto",
+        "caption_fragment_max_duration": 3.0,
+        "caption_fragment_max_words": 12,
+        "whisper_model_path": "models/whisper",
+        "preview_fps": 12,
+        "caption_style": {
+            "preset": "Modern",
+            "font": "Montserrat-Bold",
+            "font_size": 70,
+            "bold": true,
+            "color": "#FFFFFF",
+            "stroke_color": "#000000",
+            "stroke_width": 5,
+            "shadow": 2,
+            "alignment": 2,
+            "margin_v_percent": 7.0,
+            "margin_h_percent": 2.5,
+            "responsive_scaling": true,
+            "min_font_size": 45,
+            "max_font_size": 90,
+            "outline_thickness": 5,
+            "shadow_depth": 2
+        },
+        "default_effects": [],
+        "text_overlay_font_size": 36,
+        "text_overlay_bottom_margin": 40,
+        "current_quality_preset": "Fast",
+        "quality_presets": {
+            "Fast": {
+                "height": 480,
+                "crf": 30,
+                "preset": "ultrafast"
+            },
+            "Balanced": {
+                "height": 720,
+                "crf": 23,
+                "preset": "medium"
+            },
+            "High": {
+                "height": 1080,
+                "crf": 20,
+                "preset": "slow"
+            }
+        },
+        "enable_dynamic_background": true,
+        "background_animation_style": "static",
+        "rendering_preset": "ultrafast"
+    },
+    "cleanup_settings": {
+        "auto_cleanup_on_startup": true,
+        "max_temp_age_days": 5,
+        "min_size_for_cleanup_mb": 5,
+        "warn_threshold_mb": 800
+    },
+    "recovery_settings": {
+        "enable_auto_recovery": true,
+        "auto_approve_safe_fixes": false,
+        "silent_mode": false,
+        "max_recovery_attempts": 3,
+        "recovery_log": "recovery.log",
+        "notify_on_recovery": true
+    },
+    "banned_words": [
+        "\\bfuck\\w*",
+        "\\bshit\\w*",
+        "\\bbitch\\w*",
+        "\\bcunt\\w*",
+        "\\bwhore\\w*",
+        "\\brape\\w*",
+        "\\bnigg\\w*",
+        "\\bfagg\\w*",
+        "\\bretard\\w*",
+        "\\bslut\\w*",
+        "\\bpussy\\w*",
+        "\\bdick\\w*",
+        "\\bcock\\w*",
+        "\\bsex\\b",
+        "\\bmotherfucker\\w*"
+    ],
+    "pronunciation_fixes": {
+        "Sasuke": "Soss-kay",
+        "Uchiha": "Oo-chee-ha",
+        "Naruto": "Na-roo-toe",
+        "Hokage": "Ho-kah-gay",
+        "Kakashi": "Kah-kah-she",
+        "Sharingan": "Shar-in-gone",
+        "Chakra": "Cha-kra",
+        "Jutsu": "Joot-soo",
+        "Konoha": "Ko-no-ha",
+        "Akatsuki": "A-kot-ski",
+        "Luffy": "Loo-fee",
+        "Zoro": "Zoh-row",
+        "Sanji": "Sahn-jee",
+        "Nakama": "Nah-kah-mah",
+        "Saiyan": "Sigh-an",
+        "Goku": "Go-koo",
+        "Vegeta": "Va-gee-ta",
+        "Kamehameha": "Ka-may-ha-may-ha",
+        "Hermione": "Her-my-oh-nee",
+        "Voldemort": "Vol-de-more",
+        "Gryffindor": "Griff-in-door",
+        "Slytherin": "Slith-er-in",
+        "Isekai": "Ee-seh-kai",
+        "Cultivation": "Cul-ti-vay-shun",
+        "Mana": "Mah-nah"
+    },
+    "fandom_tags": {
+        "one piece": [
+            "#OnePiece",
+            "#Luffy",
+            "#Zoro",
+            "#Sanji",
+            "#StrawHatPirates"
+        ],
+        "naruto": [
+            "#Naruto",
+            "#NarutoShippuden",
+            "#Konoha",
+            "#Ninja",
+            "#Anime"
+        ],
+        "fairy tail": [
+            "#FairyTail",
+            "#Natsu",
+            "#Lucy",
+            "#DragonSlayer",
+            "#Anime"
+        ],
+        "dragon ball": [
+            "#DragonBall",
+            "#DBZ",
+            "#DBS",
+            "#Goku",
+            "#Vegeta"
+        ],
+        "pokemon": [
+            "#Pokemon",
+            "#Trainer",
+            "#Pikachu",
+            "#Nintendo"
+        ],
+        "marvel": [
+            "#Marvel",
+            "#MCU",
+            "#Avengers",
+            "#Superhero"
+        ],
+        "dc": [
+            "#DCComics",
+            "#JusticeLeague",
+            "#Batman",
+            "#Superman"
+        ],
+        "harry potter": [
+            "#HarryPotter",
+            "#Hogwarts",
+            "#WizardingWorld"
+        ],
+        "bleach": [
+            "#Bleach",
+            "#Ichigo",
+            "#SoulSociety",
+            "#Shinigami"
+        ],
+        "system": [
+            "#System",
+            "#LevelUp",
+            "#Gamer",
+            "#LitRPG"
+        ],
+        "cultivation": [
+            "#Cultivation",
+            "#Xianxia",
+            "#Wuxia"
+        ],
+        "reincarnat": [
+            "#Reincarnation",
+            "#Isekai"
+        ],
+        "transmigrat": [
+            "#Transmigration",
+            "#Isekai"
+        ],
+        "villain": [
+            "#Villain",
+            "#AntiHero"
+        ],
+        "harem": [
+            "#Harem",
+            "#Romance"
+        ],
+        "overpowered": [
+            "#OpMc",
+            "#GodLike"
+        ]
+    }
+}

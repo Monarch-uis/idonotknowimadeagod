@@ -1,0 +1,386 @@
+# 📋 COMPLETE ACTION PLAN
+**Excluding Edge TTS Rate Limiting Issues**
+
+---
+
+## 🎯 **QUICK START - CRITICAL FIXES ONLY (2 Hours)**
+
+If you only have 2 hours, do THIS:
+
+### **STEP 1: Fix requirements.txt (5 minutes)**
+```bash
+# Add to requirements.txt:
+echo "lxml>=4.9.0" >> requirements.txt
+echo "faster-whisper>=0.10.0" >> requirements.txt
+echo "ffmpeg-python>=0.2.0" >> requirements.txt
+echo "imageio-ffmpeg>=0.4.8" >> requirements.txt
+echo "pydub>=0.25.1" >> requirements.txt
+
+# Install
+pip install -r requirements.txt --upgrade
+```
+
+### **STEP 2: Test Installation (5 minutes)**
+```bash
+python -c "import lxml; print('✅ lxml')"
+python -c "import ffmpeg; print('✅ ffmpeg-python')"
+python -c "from faster_whisper import WhisperModel; print('✅ faster-whisper')"
+```
+
+### **STEP 3: Add EPUB Validation (30 minutes)**
+Copy the `validate_epub()` function from artifact #2 into `core/epub_io.py`, then add this to your main script before processing:
+
+```python
+# Before: book = epub.read_epub(epub_path)
+# After:
+valid, error = validate_epub(epub_path)
+if not valid:
+    print(f"❌ Invalid EPUB: {error}")
+    print("   This file is corrupted or incomplete")
+    return False
+
+book = epub.read_epub(epub_path)
+```
+
+### **STEP 4: Fix sanitize_filename (20 minutes)**
+Replace the `sanitize_filename()` function in `core/utils.py` with the improved version from artifact #2.
+
+### **STEP 5: Fix GPU Detection (20 minutes)**
+Replace GPU detection in `core/video_pipeline.py`:
+```python
+# Old:
+device = "cuda" if os.environ.get("CUDA_VISIBLE_DEVICES") else "cpu"
+
+# New:
+def _detect_gpu_device(device_pref="auto"):
+    if device_pref != "auto":
+        return device_pref
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return "cuda"
+    except ImportError:
+        pass
+    return "cpu"
+
+device = _detect_gpu_device(device_pref)
+```
+
+### **STEP 6: Test Everything (40 minutes)**
+```bash
+# Test 1: Unicode filename
+python epub_project_manager.py
+# Select an EPUB with Japanese/Chinese characters
+
+# Test 2: Corrupted EPUB
+# Try loading a text file renamed to .epub
+# Should reject it gracefully
+
+# Test 3: Small batch (10 chapters)
+# Verify audio generates and video renders
+```
+
+**If these 6 steps work, you've fixed the CRITICAL issues!**
+
+---
+
+## 📅 **FULL IMPLEMENTATION PLAN (1-2 Weeks)**
+
+### **Week 1: Critical & Major Issues**
+
+#### **Day 1: Dependencies & Validation**
+- [ ] ✅ Update requirements.txt (30 min)
+- [ ] ✅ Install all dependencies (30 min)
+- [ ] ✅ Add EPUB validation (1 hour)
+- [ ] ✅ Test with 10 different EPUBs (2 hours)
+- [ ] ✅ Document any new issues found (30 min)
+
+#### **Day 2: File Handling**
+- [ ] ✅ Replace sanitize_filename (1 hour)
+- [ ] ✅ Test with Unicode filenames (1 hour)
+- [ ] ✅ Add path validation (1 hour)
+- [ ] ✅ Convert to pathlib where possible (2 hours)
+- [ ] ✅ Test on Windows & Linux (1 hour)
+
+#### **Day 3: Subtitle System**
+- [ ] ⚠️  Review subtitle timing (2 hours)
+- [ ] ⚠️  Research proper sync method (1 hour)
+- [ ] ⚠️  Implement audio-based timing (3 hours)
+- [ ] ⚠️  Test sync with 5 videos (1 hour)
+
+#### **Day 4: GPU & Resources**
+- [ ] ✅ Fix GPU detection (1 hour)
+- [ ] ✅ Add temp file context managers (2 hours)
+- [ ] ✅ Add memory cleanup (1 hour)
+- [ ] ✅ Test with large EPUB (2 hours)
+- [ ] ✅ Monitor resource usage (1 hour)
+
+#### **Day 5: Text Processing**
+- [ ] ✅ Fix censorship overlaps (2 hours)
+- [ ] ✅ Improve history conflict detection (1 hour)
+- [ ] ✅ Test with various patterns (2 hours)
+- [ ] ✅ Add pronunciation edge cases (1 hour)
+
+### **Week 2: Moderate & Polish**
+
+#### **Day 6: Error Handling**
+- [ ] ✅ Add audio validation (2 hours)
+- [ ] ✅ Improve error messages (2 hours)
+- [ ] ✅ Add better logging (2 hours)
+- [ ] ✅ Test error scenarios (1 hour)
+
+#### **Day 7: Quality of Life**
+- [ ] ✅ Improve progress indicators (2 hours)
+- [ ] ✅ Add checkpoint resume (2 hours)
+- [ ] ✅ Better configuration validation (2 hours)
+- [ ] ✅ Add helpful warnings (1 hour)
+
+#### **Day 8-9: Testing & Documentation**
+- [ ] ✅ Write comprehensive tests (6 hours)
+- [ ] ✅ Test all edge cases (4 hours)
+- [ ] ✅ Update documentation (4 hours)
+- [ ] ✅ Create troubleshooting guide (2 hours)
+
+#### **Day 10: Final Polish**
+- [ ] ✅ Code review & cleanup (3 hours)
+- [ ] ✅ Performance optimization (2 hours)
+- [ ] ✅ Final testing (3 hours)
+- [ ] ✅ Release notes (1 hour)
+
+---
+
+## 🧪 **TESTING MATRIX**
+
+After each fix, run these tests:
+
+### **Smoke Tests (Quick - 10 minutes)**
+```bash
+# 1. Import test
+python -c "from core import *; from features import *; print('✅ Imports OK')"
+
+# 2. Config load
+python -c "from core.config import CONFIG; print('✅ Config OK')"
+
+# 3. EPUB parse
+python -c "from core.epub_io import validate_epub; print(validate_epub('test.epub'))"
+```
+
+### **Integration Tests (Medium - 1 hour)**
+```bash
+# 1. Small EPUB (3 chapters)
+python epub_project_manager.py
+# Process chapters 1-3
+# Verify: audio + video generated
+
+# 2. Unicode EPUB
+# Use EPUB with Japanese/Chinese title
+# Verify: filename sanitized correctly
+
+# 3. Large EPUB (50+ chapters)
+# Process in batches of 10
+# Verify: memory doesn't explode
+```
+
+### **Stress Tests (Long - 4+ hours)**
+```bash
+# 1. Very large EPUB (500+ chapters)
+python epub_project_manager.py
+# Process 100 chapters at once
+# Monitor: RAM, disk, temp files
+
+# 2. Parallel instances
+# Run 2 instances simultaneously
+# Verify: no file corruption
+
+# 3. Error recovery
+# Kill process mid-batch
+# Restart and verify resume works
+```
+
+### **Edge Cases (Various)**
+- [ ] Empty EPUB (0 chapters)
+- [ ] Corrupted EPUB (invalid XML)
+- [ ] EPUB with images only (no text)
+- [ ] EPUB with special characters in chapter names
+- [ ] Very long chapter (100,000+ characters)
+- [ ] Very short chapter (1 sentence)
+- [ ] Chapter with only numbers
+- [ ] Chapter with Unicode emojis
+- [ ] Path with spaces/special chars
+- [ ] Disk full scenario
+- [ ] No internet (Edge TTS should fail gracefully)
+
+---
+
+## 📊 **PROGRESS TRACKING**
+
+### **Critical Issues (Must Fix)**
+- [x] 1. Missing dependencies → requirements.txt
+- [ ] 2. Subtitle timing desync → subtitle_generator.py
+- [ ] 3. Index error in chunking → subtitle_generator.py
+- [x] 4. GPU detection bug → video_pipeline.py
+- [x] 5. Temp file leak → video_pipeline.py
+
+**Status: 2/5 Complete**
+
+### **Major Issues (Should Fix)**
+- [ ] 6. Path handling → Use pathlib
+- [x] 7. Sanitize filename → utils.py
+- [ ] 8. Censorship overlaps → utils.py
+- [x] 9. No EPUB validation → epub_io.py
+- [ ] 10. History conflicts → epub_io.py
+
+**Status: 2/5 Complete**
+
+### **Moderate Issues (Nice to Have)**
+- [ ] 11. Progress persistence
+- [ ] 12. Audio validation
+- [ ] 13. Better logging
+- [ ] 14. Memory leaks
+- [ ] 15. Error notifications
+
+**Status: 0/5 Complete**
+
+---
+
+## 🔧 **TOOLS YOU NEED**
+
+### **Required**
+```bash
+# Python packages
+pip install pytest pytest-asyncio pytest-cov
+
+# System tools
+# - FFmpeg (already have)
+# - Git (for version control)
+```
+
+### **Recommended**
+```bash
+# Code quality
+pip install black isort mypy ruff
+
+# Debugging
+pip install ipdb pdbpp
+
+# Profiling
+pip install memory_profiler line_profiler
+```
+
+### **Optional**
+```bash
+# CI/CD
+pip install pre-commit
+
+# Documentation
+pip install mkdocs mkdocs-material
+```
+
+---
+
+## 📚 **DOCUMENTATION TO CREATE**
+
+### **User Documentation**
+1. **Installation Guide** - Complete setup instructions
+2. **Quick Start** - Get running in 5 minutes
+3. **Configuration** - All config options explained
+4. **Troubleshooting** - Common errors & solutions
+5. **FAQ** - Frequently asked questions
+
+### **Developer Documentation**
+1. **Architecture** - System design overview
+2. **Code Style** - Conventions & standards
+3. **Testing Guide** - How to run tests
+4. **Contributing** - How to submit fixes
+5. **API Reference** - Function documentation
+
+### **Process Documentation**
+1. **EPUB Processing Flow** - Step-by-step diagram
+2. **TTS Pipeline** - How audio is generated
+3. **Video Rendering** - How videos are created
+4. **Error Recovery** - How system handles failures
+5. **Batch Processing** - How batches work
+
+---
+
+## 🎓 **LEARNING RESOURCES**
+
+### **If You're Stuck On:**
+
+**Subtitle Timing:**
+- [SubRip (SRT) Format Spec](https://en.wikipedia.org/wiki/SubRip)
+- [Video Sync Best Practices](https://www.3playmedia.com/blog/subtitle-video-sync/)
+
+**Unicode Handling:**
+- [Python Unicode HOWTO](https://docs.python.org/3/howto/unicode.html)
+- [Filename Best Practices](https://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-filename)
+
+**FFmpeg:**
+- [FFmpeg Documentation](https://ffmpeg.org/documentation.html)
+- [Python FFmpeg Tutorial](https://kkroening.github.io/ffmpeg-python/)
+
+**Async Python:**
+- [Async IO in Python](https://realpython.com/async-io-python/)
+- [AsyncIO Documentation](https://docs.python.org/3/library/asyncio.html)
+
+---
+
+## 🆘 **GETTING HELP**
+
+If you encounter issues:
+
+1. **Check the logs:**
+   ```bash
+   tail -f logs/epub_automation.log
+   ```
+
+2. **Run diagnostics:**
+   ```bash
+   python -m core.system_validator
+   python tests/test_imports.py
+   ```
+
+3. **Search error message online**
+
+4. **Check GitHub issues for similar problems**
+
+5. **Ask for help:**
+   - Include full error message
+   - Include relevant config
+   - Include steps to reproduce
+   - Include system info (OS, Python version)
+
+---
+
+## ✅ **DEFINITION OF DONE**
+
+Your project is ready when:
+
+- [ ] ✅ All critical issues fixed
+- [ ] ✅ All tests pass
+- [ ] ✅ Can process 100+ chapter EPUB without crash
+- [ ] ✅ Subtitles sync perfectly with audio
+- [ ] ✅ Works with Unicode filenames
+- [ ] ✅ Memory usage stays reasonable
+- [ ] ✅ No temp file leaks
+- [ ] ✅ Errors are handled gracefully
+- [ ] ✅ Documentation is complete
+- [ ] ✅ Works on Windows, Linux, and macOS
+
+---
+
+## 🚀 **QUICK WINS**
+
+Want to see immediate improvement? Do these:
+
+1. **Update requirements.txt** (5 min) → Project installs correctly
+2. **Add EPUB validation** (30 min) → Catch bad files early
+3. **Fix sanitize_filename** (20 min) → Unicode support
+4. **Add better error messages** (1 hour) → Easier debugging
+5. **Improve logging** (1 hour) → Better troubleshooting
+
+**Total time: ~3 hours for major UX improvements!**
+
+---
+
+**Good luck with the fixes! You've got a solid foundation - these fixes will make it production-ready! 🎉**
