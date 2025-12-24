@@ -441,6 +441,9 @@ def generate_timeline_from_audio(
         # Keep UI alive while loading
         while loader.is_alive():
             loader.join(0.1)
+            # Force refresh to prevent UI freeze during heavy load
+            progress.refresh()
+            
             
         if load_error:
             e = load_error[0]
@@ -836,33 +839,21 @@ def render_video_with_timeline(
                 # [0:v] is the input cover image
                 
                 if style == "pulse":
-                    # Breathing pulse effect
-                    # Background: blurred, oversized, subtle pulse
+                    # Static blurred background (simplified for compatibility)
                     bg_logic = (
-                        f"scale={target_width*1.2}:-1,boxblur=20:5, "
-                        f"scale='iw*(1+0.03*sin(t/2))':-1, "
+                        f"scale={target_width*1.1}:{target_height*1.1}:force_original_aspect_ratio=increase,boxblur=20:5, "
                         f"crop={target_width}:{target_height}[bg]"
                     )
-                    # Foreground: sharp, floating pulse
-                    fg_logic = (
-                        f"[0:v]scale=-1:{int(target_height*0.85)}, "
-                        f"scale='iw*(1+0.02*sin(t/2.5))':-1[fg]"
-                    )
+                    # Foreground: sharp center image
+                    fg_logic = f"[0:v]scale=-1:{int(target_height*0.85)}[fg]"
                 elif style == "ken_burns":
-                    # Ken Burns: Slow zoom using zoompan filter (proper method)
-                    # Research: crop with dynamic dimensions causes "Failed to configure input pad" errors
-                    # zoompan is specifically designed for Ken Burns effects
-                    # zoom: 1.0 (no zoom) to 1.15 (15% zoom in) over duration
-                    # Formula: z='min(zoom+0.0002,1.15)' for gradual zoom
+                    # Ken Burns: Slow zoom using zoompan filter
                     fps = 12  # Match video FPS
                     bg_logic = (
-                        f"scale={target_width*1.5}:-1,boxblur=20:5, "
+                        f"scale={target_width*1.5}:{target_height*1.5}:force_original_aspect_ratio=increase,boxblur=20:5, "
                         f"crop={target_width}:{target_height}:'(iw-ow)/2':'(ih-oh)/2'[bg]"
                     )
                     # Foreground: Use zoompan for smooth Ken Burns zoom
-                    # d=1 means evaluate expression for each frame
-                    # s=WxH sets output size
-                    # z='min(zoom+0.0002,1.15)' creates gradual zoom from 1.0 to 1.15
                     fg_scale = int(target_height * 0.85)
                     fg_logic = (
                         f"[0:v]zoompan=z='min(zoom+0.0002,1.15)':d=1:s={target_width}x{target_height}:fps={fps}, "
@@ -870,13 +861,14 @@ def render_video_with_timeline(
                     )
                 else:
                     # Default static layout
-                    bg_logic = f"scale={target_width}:{target_height},boxblur=20:5[bg]"
+                    bg_logic = f"scale={target_width}:{target_height}:force_original_aspect_ratio=increase,crop={target_width}:{target_height},boxblur=20:5[bg]"
                     fg_logic = f"[0:v]scale=-1:{int(target_height*0.85)}[fg]"
 
+                # Force yuv420p at the end of the filter chain for player compatibility
                 filter_complex = (
                     f"[0:v]{bg_logic}; "
                     f"{fg_logic}; "
-                    f"[bg][fg]overlay=(W-w)/2:(H-h)/2,subtitles='{ass_path_escaped}'[v]"
+                    f"[bg][fg]overlay=(W-w)/2:(H-h)/2,subtitles='{ass_path_escaped}',format=yuv420p[v]"
                 )
                 run_ffmpeg_render("", filter_complex=filter_complex)
             else:

@@ -222,7 +222,7 @@ DEFAULT_CONFIG: ConfigType = {
         "auto_approve_safe_fixes": False,
         "silent_mode": False,
         "max_recovery_attempts": 3,
-        "recovery_log": "recovery.log",
+        "recovery_log": "logs/recovery.log",
         "notify_on_recovery": True
     },
     "banned_words": [

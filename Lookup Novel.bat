@@ -13,6 +13,6 @@ echo.
 echo Starting lookup tool...
 echo.
 
-python lookup_novel.py
+python scripts\lookup_novel.py
 
 pause

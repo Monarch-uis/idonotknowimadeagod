@@ -48,7 +48,20 @@ except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
     else:
         PIPER_AVAILABLE = False
         PIPER_EXE_PATH = None
+        PIPER_EXE_PATH = None
         print("⚠️  'piper' not found. Install: https://github.com/rhasspy/piper")
+
+# Check Chatterbox availability
+try:
+    from core.tts_chatterbox import ChatterboxTTSClient
+    CHATTERBOX_AVAILABLE = True
+    print("✅ Chatterbox TTS available (Premium)")
+except ImportError:
+    CHATTERBOX_AVAILABLE = False
+    print("⚠️  Chatterbox TTS not available.")
+except Exception as e:
+    CHATTERBOX_AVAILABLE = False
+    print(f"⚠️  Chatterbox TTS import error: {e}")
 
 if not EDGE_TTS_AVAILABLE and not PYTTSX3_AVAILABLE and not PIPER_AVAILABLE:
     print(CP("❌ No TTS libraries available. Install at least one.", 'red'))
@@ -63,6 +76,8 @@ def select_tts_engine_and_mode():
         available.append("2. pyttsx3 (offline, system voices)")
     if PIPER_AVAILABLE:
         available.append("3. Piper (offline, neural, FAST)")
+    if CHATTERBOX_AVAILABLE:
+        available.append("4. Chatterbox Turbo (premium, expressive, SLOW)")
     
     print("\n🎤 TTS Engine Selection:")
     for eng in available:
@@ -90,6 +105,13 @@ def select_tts_engine_and_mode():
                 print("   • Natural neural voices")
                 print("   • Low resource usage")
                 return "piper", False
+
+            elif choice == "4" and CHATTERBOX_AVAILABLE:
+                print("\n💡 Chatterbox Features:")
+                print("   • Expressive (laughs, sighs)")
+                print("   • Voice cloning capable")
+                print("   • Quality > Speed")
+                return "chatterbox", False
                 
         except (KeyboardInterrupt, EOFError):
             sys.exit(1)
@@ -507,4 +529,36 @@ def gen_single_clip_piper_with_retry(text, filename, model_path, max_retries=7, 
                 return False, f"Piper error: {e.stderr.decode('utf-8', errors='ignore') if e.stderr else str(e)}", None
     
     return False, "Max retries reached", None
+
+def gen_single_clip_chatterbox(text, filename):
+    """Generate audio using Chatterbox Turbo"""
+    try:
+        from core.tts_chatterbox import ChatterboxTTSClient
+        client = ChatterboxTTSClient()
+        client.generate_audio(text, filename)
+        
+        if os.path.exists(filename) and os.path.getsize(filename) > 1000:
+            # Estimate duration for subtitles
+            duration = os.path.getsize(filename) / 32000.0 # Approx 16bit 16khz mono
+            
+            # Simple word distribution
+            words = text.split()
+            estimated_subs = []
+            if words and duration > 0:
+                word_duration = duration / len(words)
+                current_time = 0.0
+                for word in words:
+                    estimated_subs.append({
+                        'start': current_time,
+                        'end': current_time + word_duration,
+                        'text': word
+                    })
+                    current_time += word_duration
+            
+            return True, None, {'events': estimated_subs, 'is_high_precision': False}
+        else:
+             return False, "Empty audio generated", None
+
+    except Exception as e:
+        return False, str(e), None
 

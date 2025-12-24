@@ -14,7 +14,10 @@
         "piper_noise_scale": 0.667,
         "piper_length_scale": 1.0,
         "enable_audio_crossfade": true,
-        "export_bitrate": "192k"
+        "export_bitrate": "192k",
+        "chatterbox_enabled": false,
+        "chatterbox_model": "ResembleAI/chatterbox-turbo",
+        "chatterbox_tier": "premium"
     },
     "system_limits": {
         "max_batch_size": 50,

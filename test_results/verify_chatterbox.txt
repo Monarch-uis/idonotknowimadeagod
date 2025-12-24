@@ -1,0 +1,184 @@
+﻿python : C:\Users\DIBAKAR\AppData\Local\Programs\Python\Python
+313\Lib\site-packages\perth\perth_net\__init__.py:1: 
+UserWarning: pkg_resources is deprecated as an API. See 
+https://setuptools.pypa.io/en/latest/pkg_resources.html. The 
+pkg_resources package is slated for removal as early as 
+2025-11-30. Refrain from using this package or pin to 
+Setuptools<81.
+At line:1 char:1
++ python tests/test_chatterbox.py 2>&1 | Out-File -Encoding 
+utf8 verify ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\DIBAKA. 
+   .. Setuptools<81.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  from pkg_resources import resource_filename
+C:\Users\DIBAKAR\AppData\Local\Programs\Python\Python313\Lib\s
+ite-packages\diffusers\models\lora.py:393: FutureWarning: 
+`LoRACompatibleLinear` is deprecated and will be removed in 
+version 1.0.0. Use of `LoRACompatibleLinear` is deprecated. 
+Please switch to PEFT backend by installing PEFT: `pip 
+install peft`.
+  deprecate("LoRACompatibleLinear", "1.0.0", 
+deprecation_message)
+C:\Users\DIBAKAR\AppData\Local\Programs\Python\Python313\Lib\c
+ontextlib.py:109: FutureWarning: 
+`torch.backends.cuda.sdp_kernel()` is deprecated. In the 
+future, this context manager will be removed. Please see 
+`torch.nn.attention.sdpa_kernel()` for the new context 
+manager, with updated signature.
+  self.gen = func(*args, **kwds)
+`sdpa` attention does not support `output_attentions=True` or 
+`head_mask`. Please set your attention to `eager` if you want 
+any of these features.
+Chatterbox (ChatterboxTTS) imported successfully.
+Initializing Chatterbox (this might download models)...
+Chatterbox methods: ['DEC_COND_LEN', 'ENC_COND_LEN', '__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__firstlineno__', '__format__', '__ge__', '__getattribute__', '__getstate__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__static_attributes__', '__str__', '__subclasshook__', '__weakref__', 'from_local', 'from_pretrained', 'generate', 'prepare_conditionals']
+from_pretrained sig: (device) -> 'ChatterboxTTS'
+Attempting to load model 'resemble-ai/chatterbox-turbo'...
+Trying Chatterbox.from_pretrained(device='cpu')...
+loaded PerthNet (Implicit) at step 250,000
+Generating audio for: 'Hello! [laugh] This is a test of the Chatterbox Turbo system on a CPU.'
+generate sig: (text, repetition_penalty=1.2, min_p=0.05, top_p=1.0, audio_prompt_path=None, exaggeration=0.5, cfg_weight=0.5, temperature=0.8)
+Generating audio for: 'Hello! [laugh] This is a test of the Chatterbox Turbo system on a CPU.'
+
+Sampling:   0%|          | 0/1000 [00:00<?, ?it/s]
+Sampling:   0%|          | 1/1000 [00:00<07:16,  2.29it/s]
+Sampling:   0%|          | 2/1000 [00:00<04:54,  3.39it/s]
+Sampling:   0%|          | 3/1000 [00:00<04:07,  4.03it/s]
+Sampling:   0%|          | 4/1000 [00:01<03:46,  4.39it/s]
+Sampling:   0%|          | 5/1000 [00:01<03:25,  4.85it/s]
+Sampling:   1%|          | 6/1000 [00:01<03:11,  5.18it/s]
+Sampling:   1%|          | 7/1000 [00:01<03:04,  5.38it/s]
+Sampling:   1%|          | 8/1000 [00:01<02:56,  5.63it/s]
+Sampling:   1%|          | 9/1000 [00:01<02:48,  5.88it/s]
+Sampling:   1%|1         | 10/1000 [00:02<02:46,  5.93it/s]
+Sampling:   1%|1         | 11/1000 [00:02<02:47,  5.92it/s]
+Sampling:   1%|1         | 12/1000 [00:02<02:46,  5.94it/s]
+Sampling:   1%|1         | 13/1000 [00:02<02:44,  6.01it/s]
+Sampling:   1%|1         | 14/1000 [00:02<02:41,  6.09it/s]
+Sampling:   2%|1         | 15/1000 [00:02<02:41,  6.11it/s]
+Sampling:   2%|1         | 16/1000 [00:02<02:43,  6.04it/s]
+Sampling:   2%|1         | 17/1000 [00:03<02:41,  6.09it/s]
+Sampling:   2%|1         | 18/1000 [00:03<02:41,  6.09it/s]
+Sampling:   2%|1         | 19/1000 [00:03<02:38,  6.18it/s]
+Sampling:   2%|2         | 20/1000 [00:03<02:37,  6.24it/s]
+Sampling:   2%|2         | 21/1000 [00:03<02:36,  6.24it/s]
+Sampling:   2%|2         | 22/1000 [00:03<02:37,  6.20it/s]
+Sampling:   2%|2         | 23/1000 [00:04<02:38,  6.18it/s]
+Sampling:   2%|2         | 24/1000 [00:04<02:40,  6.09it/s]
+Sampling:   2%|2         | 25/1000 [00:04<02:39,  6.12it/s]
+Sampling:   3%|2         | 26/1000 [00:04<02:37,  6.19it/s]
+Sampling:   3%|2         | 27/1000 [00:04<02:38,  6.13it/s]
+Sampling:   3%|2         | 28/1000 [00:04<02:39,  6.08it/s]
+Sampling:   3%|2         | 29/1000 [00:05<02:39,  6.10it/s]
+Sampling:   3%|3         | 30/1000 [00:05<02:38,  6.13it/s]
+Sampling:   3%|3         | 31/1000 [00:05<02:37,  6.16it/s]
+Sampling:   3%|3         | 32/1000 [00:05<02:36,  6.18it/s]
+Sampling:   3%|3         | 33/1000 [00:05<02:35,  6.22it/s]
+Sampling:   3%|3         | 34/1000 [00:05<02:36,  6.16it/s]
+Sampling:   4%|3         | 35/1000 [00:06<02:36,  6.15it/s]
+Sampling:   4%|3         | 36/1000 [00:06<02:38,  6.08it/s]
+Sampling:   4%|3         | 37/1000 [00:06<02:36,  6.15it/s]
+Sampling:   4%|3         | 38/1000 [00:06<02:35,  6.19it/s]
+Sampling:   4%|3         | 39/1000 [00:06<02:40,  5.98it/s]
+Sampling:   4%|4         | 40/1000 [00:06<02:40,  5.98it/s]
+Sampling:   4%|4         | 41/1000 [00:07<02:40,  5.98it/s]
+Sampling:   4%|4         | 42/1000 [00:07<02:44,  5.84it/s]
+Sampling:   4%|4         | 43/1000 [00:07<02:43,  5.84it/s]
+Sampling:   4%|4         | 44/1000 [00:07<02:44,  5.82it/s]
+Sampling:   4%|4         | 45/1000 [00:07<02:43,  5.83it/s]
+Sampling:   5%|4         | 46/1000 [00:07<02:40,  5.93it/s]
+Sampling:   5%|4         | 47/1000 [00:08<02:41,  5.90it/s]
+Sampling:   5%|4         | 48/1000 [00:08<02:39,  5.96it/s]
+Sampling:   5%|4         | 49/1000 [00:08<02:38,  5.99it/s]
+Sampling:   5%|5         | 50/1000 [00:08<02:37,  6.05it/s]
+Sampling:   5%|5         | 51/1000 [00:08<02:35,  6.10it/s]
+Sampling:   5%|5         | 52/1000 [00:08<02:33,  6.17it/s]
+Sampling:   5%|5         | 53/1000 [00:09<02:30,  6.28it/s]
+Sampling:   5%|5         | 54/1000 [00:09<02:31,  6.26it/s]
+Sampling:   6%|5         | 55/1000 [00:09<02:31,  6.23it/s]
+Sampling:   6%|5         | 56/1000 [00:09<02:31,  6.23it/s]
+Sampling:   6%|5         | 57/1000 [00:09<02:30,  6.27it/s]
+Sampling:   6%|5         | 58/1000 [00:09<02:29,  6.30it/s]
+Sampling:   6%|5         | 59/1000 [00:10<02:29,  6.31it/s]
+Sampling:   6%|6         | 60/1000 [00:10<02:28,  6.32it/s]
+Sampling:   6%|6         | 61/1000 [00:10<02:28,  6.32it/s]
+Sampling:   6%|6         | 62/1000 [00:10<02:28,  6.31it/s]
+Sampling:   6%|6         | 63/1000 [00:10<02:30,  6.24it/s]
+Sampling:   6%|6         | 64/1000 [00:10<02:30,  6.23it/s]
+Sampling:   6%|6         | 65/1000 [00:10<02:30,  6.19it/s]
+Sampling:   7%|6         | 66/1000 [00:11<02:30,  6.21it/s]
+Sampling:   7%|6         | 67/1000 [00:11<02:29,  6.24it/s]
+Sampling:   7%|6         | 68/1000 [00:11<02:29,  6.22it/s]
+Sampling:   7%|6         | 69/1000 [00:11<02:29,  6.24it/s]
+Sampling:   7%|7         | 70/1000 [00:11<02:28,  6.27it/s]
+Sampling:   7%|7         | 71/1000 [00:11<02:28,  6.27it/s]
+Sampling:   7%|7         | 72/1000 [00:12<02:27,  6.29it/s]
+Sampling:   7%|7         | 73/1000 [00:12<02:31,  6.14it/s]
+Sampling:   7%|7         | 74/1000 [00:12<02:33,  6.05it/s]
+Sampling:   8%|7         | 75/1000 [00:12<02:34,  6.00it/s]
+Sampling:   8%|7         | 76/1000 [00:12<02:33,  6.01it/s]
+Sampling:   8%|7         | 77/1000 [00:12<02:34,  5.99it/s]
+Sampling:   8%|7         | 78/1000 [00:13<02:35,  5.93it/s]
+Sampling:   8%|7         | 79/1000 [00:13<02:42,  5.66it/s]
+Sampling:   8%|8         | 80/1000 [00:13<02:41,  5.71it/s]
+Sampling:   8%|8         | 81/1000 [00:13<02:38,  5.79it/s]
+Sampling:   8%|8         | 82/1000 [00:13<02:37,  5.82it/s]
+Sampling:   8%|8         | 83/1000 [00:14<02:38,  5.79it/s]
+Sampling:   8%|8         | 84/1000 [00:14<02:39,  5.75it/s]
+Sampling:   8%|8         | 85/1000 [00:14<02:37,  5.79it/s]
+Sampling:   9%|8         | 86/1000 [00:14<02:37,  5.81it/s]
+Sampling:   9%|8         | 87/1000 [00:14<02:37,  5.80it/s]
+Sampling:   9%|8         | 88/1000 [00:14<02:35,  5.85it/s]
+Sampling:   9%|8         | 89/1000 [00:15<02:37,  5.79it/s]
+Sampling:   9%|9         | 90/1000 [00:15<02:33,  5.92it/s]
+Sampling:   9%|9         | 91/1000 [00:15<02:31,  6.01it/s]
+Sampling:   9%|9         | 92/1000 [00:15<02:30,  6.04it/s]
+Sampling:   9%|9         | 93/1000 [00:15<02:30,  6.04it/s]
+Sampling:   9%|9         | 94/1000 [00:15<02:29,  6.07it/s]
+Sampling:  10%|9         | 95/1000 [00:16<02:28,  6.11it/s]
+Sampling:  10%|9         | 96/1000 [00:16<02:26,  6.18it/s]
+Sampling:  10%|9         | 97/1000 [00:16<02:25,  6.22it/s]
+Sampling:  10%|9         | 98/1000 [00:16<02:25,  6.22it/s]
+Sampling:  10%|9         | 99/1000 [00:16<02:25,  6.19it/s]
+Sampling:  10%|#         | 100/1000 [00:16<02:27,  6.10it/s]
+Sampling:  10%|#         | 101/1000 [00:16<02:27,  6.09it/s]
+Sampling:  10%|#         | 102/1000 [00:17<02:26,  6.14it/s]
+Sampling:  10%|#         | 103/1000 [00:17<02:28,  6.06it/s]
+Sampling:  10%|#         | 104/1000 [00:17<02:31,  5.93it/s]
+Sampling:  10%|#         | 105/1000 [00:17<02:32,  5.86it/s]
+Sampling:  11%|#         | 106/1000 [00:17<02:32,  5.85it/s]
+Sampling:  11%|#         | 107/1000 [00:18<02:35,  5.75it/s]
+Sampling:  11%|#         | 108/1000 [00:18<02:34,  5.77it/s]
+Sampling:  11%|#         | 109/1000 [00:18<02:33,  5.81it/s]
+Sampling:  11%|#1        | 110/1000 [00:18<02:32,  5.85it/s]
+Sampling:  11%|#1        | 111/1000 [00:18<02:30,  5.90it/s]
+Sampling:  11%|#1        | 112/1000 [00:18<02:35,  5.71it/s]
+Sampling:  11%|#1        | 113/1000 [00:19<03:41,  4.01it/s]
+Sampling:  11%|#1        | 114/1000 [00:19<04:33,  3.25it/s]
+Sampling:  12%|#1        | 115/1000 [00:19<04:05,  3.61it/s]
+Sampling:  12%|#1        | 116/1000 [00:20<03:46,  3.91it/s]
+Sampling:  12%|#1        | 117/1000 [00:20<03:40,  4.01it/s]
+Sampling:  12%|#1        | 118/1000 [00:20<03:31,  4.17it/s]
+Sampling:  12%|#1        | 119/1000 [00:20<03:30,  4.19it/s]
+Sampling:  12%|#2        | 120/1000 [00:21<03:18,  4.43it/s]
+Sampling:  12%|#2        | 121/1000 [00:21<03:19,  4.41it/s]
+Sampling:  12%|#2        | 122/1000 [00:21<03:20,  4.37it/s]
+Sampling:  12%|#2        | 123/1000 [00:21<03:09,  4.62it/s]
+Sampling:  12%|#2        | 124/1000 [00:21<03:07,  4.67it/s]
+Sampling:  12%|#2        | 125/1000 [00:22<02:59,  4.87it/s]
+Sampling:  13%|#2        | 126/1000 [00:22<02:55,  4.98it/s]
+Sampling:  13%|#2        | 127/1000 [00:22<02:57,  4.92it/s]
+Sampling:  13%|#2        | 128/1000 [00:22<02:52,  5.05it/s]
+Sampling:  13%|#2        | 129/1000 [00:22<02:53,  5.02it/s]
+Sampling:  13%|#3        | 130/1000 [00:23<02:54,  4.99it/s]
+Sampling:  13%|#3        | 131/1000 [00:23<02:50,  5.10it/s]
+Sampling:  13%|#3        | 132/1000 [00:23<02:50,  5.10it/s]
+Sampling:  13%|#3        | 133/1000 [00:23<02:48,  5.15it/s]
+Sampling:  13%|#3        | 133/1000 [00:23<02:34,  5.62it/s]
+Result type: <class 'torch.Tensor'>
+Result does not have .save(). Check logic.
+Success! Saved to chatterbox_test.wav
+Time taken: 71.32 seconds

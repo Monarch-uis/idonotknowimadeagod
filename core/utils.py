@@ -19,7 +19,7 @@ except ImportError:
 
 # Setup logging with rotation (2MB × 3 backups)
 log_handler = RotatingFileHandler(
-    'epub_automation.log',
+    'logs/epub_automation.log',
     maxBytes=2*1024*1024,  # 2MB
     backupCount=3
 )

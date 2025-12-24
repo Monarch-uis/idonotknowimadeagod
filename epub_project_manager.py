@@ -55,7 +55,9 @@ from core.tts import (
     gen_single_clip_edge_with_retry,
     gen_single_clip_pyttsx3_with_retry,
     gen_single_clip_piper_with_retry,
-    resolve_piper_model_path
+    resolve_piper_model_path,
+    gen_single_clip_chatterbox,
+    CHATTERBOX_AVAILABLE
 )
 from features.checkpoint_manager import CheckpointManager, save_progress_checkpoint, check_for_resume
 from core import ui_manager
@@ -711,6 +713,10 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                             audio_text, chap_path, tts_voice,
                             max_retries=max_retries, delay=delay
                         )
+                    elif tts_engine == "chatterbox":
+                        tts_success, tts_error, tts_result = gen_single_clip_chatterbox(
+                            audio_text, chap_path
+                        )
                     else:
                         tts_success, tts_error, tts_result = gen_single_clip_pyttsx3_with_retry(
                             audio_text, chap_path, tts_voice, speed_rate,
@@ -799,16 +805,15 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
         if success_rate < 0.90:
             print(f"\n   🚨 FAILURE: Only {success_rate*100:.1f}% (need ≥90%)", flush=True)
             play_critical_failure_alarm()
-            print("\n   Failed chapters:")
             for failed in failed_chapters:
                 print(f"      • Ch {failed['number']}: {failed['title']}", flush=True)
-            return False, []
+            return False, [], []
         
         # === FINAL ASSEMBLY ===
         if len(clips_to_merge) == 0:
             print(CP("\n   ❌ No audio clips generated", 'red'), flush=True)
             play_critical_failure_alarm()
-            return False, []
+            return False, [], []
         
         print(f"\n   ✅ Threshold met (≥90%)", flush=True)
         if CONFIG["audio_settings"].get("enable_audio_crossfade", True):
@@ -961,113 +966,125 @@ def prepare_custom_image(image_path, temp_folder, unique_id, target_size=None):
 def generate_pro_cover_from_file(cover_path, output_folder, unique_id, book_title=None, chapter_range=None, target_size=None):
     """Generate professional thumbnail from cover with optional text overlay"""
     try:
-        with Image.open(cover_path) as original:
-            original = original.convert("RGB")
+        # Load and immediately copy the original to make it independent
+        original_img = Image.open(cover_path)
+        original = original_img.convert("RGB").copy()  # CRITICAL: .copy() makes it independent
+        original_img.close()  # Explicitly close the file handle
+        
+        W, H = target_size if target_size else (854, 480)
+        
+        # Create background (blurred version)
+        bg_aspect = original.width / original.height
+        bg_new_height = int(W / bg_aspect)
+        background = original.resize((W, max(bg_new_height, H)), Image.Resampling.LANCZOS).copy()
+        
+        left = (background.width - W) // 2
+        top = (background.height - H) // 2
+        background = background.crop((int(left), int(top), int(left + W), int(top + H)))
+        background = background.filter(ImageFilter.GaussianBlur(20))
+        
+        # Convert to RGBA for overlay operations
+        background = background.convert("RGBA")
+        
+        # Dark overlay
+        overlay = Image.new('RGBA', (W, H), (0, 0, 0, 80))
+        background = Image.alpha_composite(background, overlay)
+        
+        # Create sharp foreground
+        target_h = int(H * 0.90)
+        ratio = target_h / original.height
+        target_w = int(original.width * ratio)
+        sharp = original.resize((target_w, target_h), Image.Resampling.LANCZOS)
+        
+        x = (W - target_w) // 2
+        y = (H - target_h) // 2
+        
+        # Add shadow
+        shadow = Image.new('RGBA', (target_w, target_h), (0, 0, 0, 150))
+        background.paste(shadow, (x + 10, y + 10), shadow)
+        
+        # Paste sharp foreground
+        sharp_rgba = sharp.convert("RGBA")
+        background.paste(sharp_rgba, (x, y), sharp_rgba)
+        
+        # Add text overlay if enabled
+        enable_overlay = CONFIG.get("video_settings", {}).get("enable_text_overlay", True)
+        if enable_overlay and book_title:
+            draw = ImageDraw.Draw(background)
             
-            W, H = target_size if target_size else (854, 480)
-            bg_aspect = original.width / original.height
-            bg_new_height = int(W / bg_aspect)
-            background = original.resize((W, max(bg_new_height, H)))
-            
-            left = (background.width - W) / 2
-            top = (background.height - H) / 2
-            background = background.crop((left, top, left + W, top + H))
-            background = background.filter(ImageFilter.GaussianBlur(20))
-            
-            overlay = Image.new('RGBA', (W, H), (0, 0, 0, 80))
-            background.paste(overlay, (0, 0), overlay)
-            
-            target_h = int(H * 0.90)
-            ratio = target_h / original.height
-            target_w = int(original.width * ratio)
-            sharp = original.resize((target_w, target_h), Image.Resampling.LANCZOS)
-            
-            x = (W - target_w) // 2
-            y = (H - target_h) // 2
-            shadow = Image.new('RGBA', (target_w, target_h), (0, 0, 0, 150))
-            background.paste(shadow, (x + 10, y + 10), shadow)
-            background.paste(sharp, (x, y))
-            
-            # Add text overlay if enabled and text provided
-            enable_overlay = CONFIG.get("video_settings", {}).get("enable_text_overlay", True)
-            if enable_overlay and book_title:
-                draw = ImageDraw.Draw(background)
-                
-                # Try to load a nice font, fallback to default if not available
-                try:
-                    # Try to use a bold system font
-                    font_size = CONFIG.get("video_settings", {}).get("text_overlay_font_size", 36)
-                    try:
-                        # Windows font path
-                        font_path = "C:/Windows/Fonts/arialbd.ttf"
-                        if not os.path.exists(font_path):
-                            font_path = "C:/Windows/Fonts/arial.ttf"
-                        if os.path.exists(font_path):
-                            title_font = ImageFont.truetype(font_path, font_size)
-                            range_font = ImageFont.truetype(font_path, int(font_size * 0.7))
-                        else:
-                            raise FileNotFoundError
-                    except:
-                        # Fallback to default font
-                        title_font = ImageFont.load_default()
-                        range_font = ImageFont.load_default()
-                except:
+            # Load font
+            font_size = CONFIG.get("video_settings", {}).get("text_overlay_font_size", 36)
+            try:
+                font_path = "C:/Windows/Fonts/arialbd.ttf"
+                if not os.path.exists(font_path):
+                    font_path = "C:/Windows/Fonts/arial.ttf"
+                if os.path.exists(font_path):
+                    title_font = ImageFont.truetype(font_path, font_size)
+                    range_font = ImageFont.truetype(font_path, int(font_size * 0.7))
+                else:
                     title_font = ImageFont.load_default()
                     range_font = ImageFont.load_default()
-                
-                # Draw semi-transparent background for text
-                bottom_margin = CONFIG.get("video_settings", {}).get("text_overlay_bottom_margin", 40)
-                
-                # Truncate title if too long
-                display_title = book_title[:40] + "..." if len(book_title) > 40 else book_title
-                
-                # Calculate text positions
-                text_padding = 15
-                title_bbox = draw.textbbox((0, 0), display_title, font=title_font)
-                title_width = title_bbox[2] - title_bbox[0]
-                title_height = title_bbox[3] - title_bbox[1]
-                
-                range_width = 0
-                range_height = 0
-                if chapter_range:
-                    range_bbox = draw.textbbox((0, 0), chapter_range, font=range_font)
-                    range_width = range_bbox[2] - range_bbox[0]
-                    range_height = range_bbox[3] - range_bbox[1]
-                
-                total_text_height = title_height + (range_height + 10 if chapter_range else 0)
-                text_bg_height = total_text_height + (text_padding * 2)
-                
-                # Draw text background rectangle
-                text_bg = Image.new('RGBA', (W, text_bg_height), (0, 0, 0, 180))
-                background.paste(text_bg, (0, H - text_bg_height - bottom_margin), text_bg)
-                
-                # Draw title text
-                title_x = (W - title_width) // 2
-                title_y = H - text_bg_height - bottom_margin + text_padding
-                
-                # Draw text with shadow for readability
-                shadow_offset = 2
-                draw.text((title_x + shadow_offset, title_y + shadow_offset), display_title, 
-                         fill=(0, 0, 0, 200), font=title_font)
-                draw.text((title_x, title_y), display_title, 
-                         fill=(255, 255, 255), font=title_font)
-                
-                # Draw chapter range if provided
-                if chapter_range:
-                    range_x = (W - range_width) // 2
-                    range_y = title_y + title_height + 10
-                    draw.text((range_x + shadow_offset, range_y + shadow_offset), chapter_range,
-                             fill=(0, 0, 0, 200), font=range_font)
-                    draw.text((range_x, range_y), chapter_range,
-                             fill=(255, 255, 100), font=range_font)
+            except:
+                title_font = ImageFont.load_default()
+                range_font = ImageFont.load_default()
+            
+            bottom_margin = CONFIG.get("video_settings", {}).get("text_overlay_bottom_margin", 40)
+            display_title = book_title[:40] + "..." if len(book_title) > 40 else book_title
+            
+            text_padding = 15
+            title_bbox = draw.textbbox((0, 0), display_title, font=title_font)
+            title_width = title_bbox[2] - title_bbox[0]
+            title_height = title_bbox[3] - title_bbox[1]
+            
+            range_width = 0
+            range_height = 0
+            if chapter_range:
+                range_bbox = draw.textbbox((0, 0), chapter_range, font=range_font)
+                range_width = range_bbox[2] - range_bbox[0]
+                range_height = range_bbox[3] - range_bbox[1]
+            
+            total_text_height = title_height + (range_height + 10 if chapter_range else 0)
+            text_bg_height = total_text_height + (text_padding * 2)
+            
+            # Text background
+            text_bg = Image.new('RGBA', (W, text_bg_height), (0, 0, 0, 180))
+            background.paste(text_bg, (0, H - text_bg_height - bottom_margin), text_bg)
+            
+            title_x = (W - title_width) // 2
+            title_y = H - text_bg_height - bottom_margin + text_padding
+            
+            # Draw text with shadow
+            shadow_offset = 2
+            draw.text((title_x + shadow_offset, title_y + shadow_offset), display_title, 
+                     fill=(0, 0, 0, 200), font=title_font)
+            draw.text((title_x, title_y), display_title, 
+                     fill=(255, 255, 255), font=title_font)
+            
+            if chapter_range:
+                range_x = (W - range_width) // 2
+                range_y = title_y + title_height + 10
+                draw.text((range_x + shadow_offset, range_y + shadow_offset), chapter_range,
+                         fill=(0, 0, 0, 200), font=range_font)
+                draw.text((range_x, range_y), chapter_range,
+                         fill=(255, 255, 100), font=range_font)
         
+        # Save the final image
         temp_filename = f"temp_thumb_{unique_id}.jpg"
         out_path = os.path.join(output_folder, temp_filename)
-        background.convert("RGB").save(out_path)
+        final_rgb = background.convert("RGB")
+        final_rgb.save(out_path, 'JPEG', quality=95)
+        
+        # Cleanup
+        original.close()
+        background.close()
+        final_rgb.close()
+        
         return out_path
             
     except Exception as e:
         logger.error(f"Thumbnail generation failed: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def create_video_with_recovery(audio_path, image_path, output_path, book_title=None, chapter_range=None, timestamps=None, word_timeline=None, max_retries=3, quality_preset=None):
@@ -1453,6 +1470,8 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
 
             # Prepare ffmpeg parameters
             ffmpeg_params_list = ffmpeg_params.copy()
+            # Force yuv420p for compatibility (fixes black screen on some players)
+            ffmpeg_params_list.extend(['-pix_fmt', 'yuv420p'])
             
             # Add subtitle filter if subtitle file was generated
             if subtitle_file and os.path.exists(subtitle_file):
@@ -1607,9 +1626,21 @@ Examples:
 
   # Override just engine and voice:
   python epub_project_manager.py --engine edge --voice en-US-JennyNeural
+  
+  # Test mode (temporary data storage):
+  python epub_project_manager.py --test-mode --history-dir "path/to/test/history" --novels-dir "path/to/test/novels"
         """
     )
     
+    # Test mode arguments
+    parser.add_argument("--test-mode", action="store_true",
+                       help="Run in test mode (temporary data storage)")
+    parser.add_argument("--history-dir", type=str, default=None,
+                       help="Custom history directory (for test mode)")
+    parser.add_argument("--novels-dir", type=str, default=None,
+                       help="Custom novels directory (for test mode)")
+    
+    # TTS and processing arguments
     parser.add_argument("--engine", choices=["edge", "pyttsx3", "piper"],
                        help="TTS engine to use (edge/pyttsx3/piper)")
     parser.add_argument("--voice", type=str,
@@ -1925,8 +1956,10 @@ def main():
         check_temp_space_warning(warn_threshold)
     
     
+    
     # === MAIN MENU ===
     qm = QueueManager()
+    auto_resume = False
     
     print("\n" + "="*50)
     print("MAIN MENU")
@@ -1956,8 +1989,41 @@ def main():
         print("\n👇 Returning to book selection...")
     elif main_choice == '3':
         # Resume handled by check_for_resume() logic below
-        pass
+        if not resume_data:
+            print(f"   {CP('⚠️  No active checkpoint found in memory.', 'yellow')}")
+            resume_data = check_for_resume()
         
+        if resume_data:
+            print(CP("\n   🚀 Initiating Resume Sequence...", "cyan"))
+            r_title = resume_data.get('book_title')
+            r_safe_title = sanitize_filename(r_title)
+            r_project_dir = os.path.join(ACTIVE_NOVELS_DIR, r_safe_title)
+            r_source_dir = os.path.join(r_project_dir, "source_epub")
+            
+            # Find the source EPUB
+            found_epub = None
+            if os.path.exists(r_source_dir):
+                candidates = glob.glob(os.path.join(r_source_dir, "*.epub"))
+                if candidates:
+                    found_epub = candidates[0]
+            
+            # Fallback: Check input zone for exact name match (less reliable)
+            if not found_epub:
+                input_candidates = glob.glob(os.path.join(INPUT_ZONE, "*.epub"))
+                for ie in input_candidates:
+                    if r_safe_title in sanitize_filename(os.path.basename(ie)):
+                        found_epub = ie
+                        break
+            
+            if found_epub:
+                selected_path = found_epub
+                auto_resume = True
+                print(f"   📂 Found project: {r_title}")
+                print(f"   📄 Source: {os.path.basename(selected_path)}")
+            else:
+                print(CP(f"   ❌ Could not find source EPUB for '{r_title}'", "red"))
+                print("      Please select it manually below.")
+
     # === FILE SELECTION ===
     
     # Check for resume (Legacy check, but we kept it consistent)
@@ -2040,6 +2106,9 @@ def main():
             if cli_args.auto:
                 choice = '2'
                 print(f"\n   ℹ️  Auto-selecting [2] Full Reset via CLI")
+            elif auto_resume:
+                choice = '1'
+                print(f"\n   ℹ️  Auto-selecting [1] Open Existing Project (Resume)")
             else:
                 choice = input(f"\n   {CP('👉 Select (1-4):', 'cyan')} ").strip()
             
@@ -2089,7 +2158,7 @@ def main():
     print(CP(f"\n📘 Title: {meta['title']}", 'cyan'))
     
     new_title = ""
-    if not cli_args.auto:
+    if not cli_args.auto and not auto_resume:
         new_title = input("   Press Enter to keep, or type new name: ").strip()
         
     if new_title:
@@ -2122,7 +2191,11 @@ def main():
         
         use_profile = 'y'
         if not cli_args.auto:
-             use_profile = input("\n   Use saved settings? (y/n, default y): ").strip().lower()
+             if auto_resume:
+                 use_profile = 'y'
+                 print("\n   ℹ️  Auto-loading saved settings (Resume)")
+             else:
+                 use_profile = input("\n   Use saved settings? (y/n, default y): ").strip().lower()
              
         if use_profile != 'n':
             cli_args.engine = cli_args.engine or book_profile.get('engine')
@@ -2208,7 +2281,11 @@ def main():
             mode = "1" # Default to Batch All in auto mode
             print(f"   ℹ️  Auto-selecting Mode [1] via CLI")
         else:
-            mode = input("   👉 Select: ").strip()
+            if auto_resume:
+                mode = "1"
+                print(f"   ℹ️  Auto-selecting Mode [1] (Resume)")
+            else:
+                mode = input("   👉 Select: ").strip()
 
     
     if mode == "3":
@@ -2431,12 +2508,14 @@ def main():
         
         while not raw_batches:
             try:
-                s_in = input(f"   ▶️  Start (1-{len(all_chapters)}): ").strip()
-                if not s_in:
+                s_in = input(f"   ▶️  Start (1-{len(all_chapters)}) or 'q' to cancel: ").strip()
+                if not s_in or s_in.lower() == 'q':
+                    print("   ⚠️  Selection cancelled.")
                     break
                 s_idx = int(s_in) - 1
-                e_in = input(f"   ⏹️  Stop ({s_idx+1}-{len(all_chapters)}): ").strip()
-                if not e_in:
+                e_in = input(f"   ⏹️  Stop ({s_idx+1}-{len(all_chapters)}) or 'q' to cancel: ").strip()
+                if not e_in or e_in.lower() == 'q':
+                    print("   ⚠️  Selection cancelled.")
                     break
                 e_idx = int(e_in)
                 if 0 <= s_idx < e_idx <= len(all_chapters):
@@ -2553,40 +2632,89 @@ def main():
                     continue
         
         print(f"\n[{idx+1}/{len(raw_batches)}] Setup: {range_label}")
-        print("   🖼️  Drag image (or Enter for previous):")
         
-        custom_img = ""
-        if not cli_args.auto:
-             custom_img = input("   👉 ").strip().replace('"', '').replace("'", "")
-        
+        # Smart thumbnail detection
+        expected_cover_name = f"{sanitize_filename(range_label)}.jpg"
+        expected_cover_path = os.path.join(paths["covers"], expected_cover_name)
         img_path_for_batch = None
-        if custom_img == "" and last_img_path:
-            print("   ↳ Using previous")
-            img_path_for_batch = last_img_path
-        elif custom_img and os.path.exists(custom_img):
-            print("   ↳ Processing new image...")
-            img_path_for_batch = prepare_custom_image(custom_img, paths["temp"], idx)
-            last_img_path = img_path_for_batch
-        else:
-            print("   ↳ Using EPUB cover")
-            print("   ↳ Using EPUB cover")
-            extracted = extract_cover_to_project(book_obj, paths, meta['title'])
-            if extracted:
-                # Resolve Quality for Manual Mode Pre-setup (Phase 1)
-                # This uses the current setting for manual setup
-                curr_q = CONFIG["video_settings"].get("current_quality_preset", "Balanced")
-                presets = CONFIG["video_settings"].get("quality_presets", {})
-                q_conf = presets.get(curr_q, presets.get("Balanced", {"height": 720}))
-                target_h = q_conf.get("height", 720)
-                target_w = int(target_h * 16 / 9)
-                if target_w % 2 != 0: target_w += 1
+        skip_input = False
+        
+        if os.path.exists(expected_cover_path):
+            # Validate aspect ratio (16:9 is approx 1.77)
+            try:
+                with Image.open(expected_cover_path) as im_check:
+                    w, h = im_check.size
+                    ratio = w / h if h != 0 else 0
                 
-                img_path_for_batch = generate_pro_cover_from_file(extracted, paths["temp"], idx, 
-                                                                   book_title=meta['title'], 
-                                                                   chapter_range=range_label,
-                                                                   target_size=(target_w, target_h))
+                # Check if it's landscape 16:9 (allow small margin of error 1.7 to 1.8)
+                if 1.7 < ratio < 1.85:
+                    print(CP(f"   ✅ Found existing thumbnail: {expected_cover_name}", 'green'))
+                    print("   ↳ Using cached version")
+                    img_path_for_batch = expected_cover_path
+                    last_img_path = img_path_for_batch
+                    skip_input = True
+                else:
+                    print(CP(f"   found source image: {expected_cover_name} ({w}x{h})", 'cyan'))
+                    print("   ↳ Converting to 16:9 Pro Cover with blurred background...")
+                    
+                    # Resolve target size (reusing logic from below)
+                    curr_q = CONFIG["video_settings"].get("current_quality_preset", "Balanced")
+                    presets = CONFIG["video_settings"].get("quality_presets", {})
+                    q_conf = presets.get(curr_q, presets.get("Balanced", {"height": 720}))
+                    target_h = q_conf.get("height", 720)
+                    target_w = int(target_h * 16 / 9)
+                    if target_w % 2 != 0: target_w += 1
+                    
+                    # Generate Pro Cover
+                    img_path_for_batch = generate_pro_cover_from_file(
+                        expected_cover_path, 
+                        paths["temp"], 
+                        idx, 
+                        book_title=meta['title'],
+                        chapter_range=range_label,
+                        target_size=(target_w, target_h)
+                    )
+                    last_img_path = img_path_for_batch
+                    skip_input = True
+                    
+            except Exception as e:
+                print(f"   ⚠️  Check failed for {expected_cover_name}: {e}")
+                # Fallback to normal input prompt if check fails
+                skip_input = False
+            
+        if not skip_input:
+            print("   🖼️  Drag image (or Enter for previous):")
+            
+            custom_img = ""
+            extracted = None
+            if not cli_args.auto:
+                 custom_img = input("   👉 ").strip().replace('"', '').replace("'", "")
+            
+            if custom_img == "" and last_img_path:
+                print("   ↳ Using previous")
+                img_path_for_batch = last_img_path
+            elif custom_img and os.path.exists(custom_img):
+                print("   ↳ Processing new image...")
+                img_path_for_batch = prepare_custom_image(custom_img, paths["temp"], idx)
+                last_img_path = img_path_for_batch
             else:
-                img_path_for_batch = None # Fallback logic below handles placeholder
+                print("   ↳ Using EPUB cover")
+                extracted = extract_cover_to_project(book_obj, paths, meta['title'])
+                if extracted:
+                    # Resolve Quality for Manual Mode Pre-setup (Phase 1)
+                    curr_q = CONFIG["video_settings"].get("current_quality_preset", "Balanced")
+                    presets = CONFIG["video_settings"].get("quality_presets", {})
+                    q_conf = presets.get(curr_q, presets.get("Balanced", {"height": 720}))
+                    target_h = q_conf.get("height", 720)
+                    target_w = int(target_h * 16 / 9)
+                    if target_w % 2 != 0: target_w += 1
+                    
+                    img_path_for_batch = generate_pro_cover_from_file(extracted, paths["temp"], idx, 
+                                                                       book_title=meta['title'], 
+                                                                       chapter_range=range_label,
+                                                                       target_size=(target_w, target_h))
+                else:
+                    img_path_for_batch = None  # Fallback logic below handles placeholder
                 
             if not img_path_for_batch:
                 # Resolve quality for fallback
@@ -2607,10 +2735,17 @@ def main():
             archive_name = f"{sanitize_filename(range_label)}.jpg"
             archive_path = os.path.join(paths["covers"], archive_name)
             try:
-                shutil.copy2(img_path_for_batch, archive_path)
+                # Use PIL to ensure proper image save instead of raw file copy
+                with Image.open(img_path_for_batch) as img:
+                    img.convert('RGB').save(archive_path, 'JPEG', quality=95)
                 print(f"   ✅ Archived: {archive_name}")
-            except:
-                pass
+            except Exception as e:
+                print(f"   ⚠️  Archive failed: {e}")
+                # Fallback to copy if PIL fails
+                try:
+                    shutil.copy2(img_path_for_batch, archive_path)
+                except:
+                    pass
         
         execution_queue.append({
             "batch": selected_batch,
@@ -2847,20 +2982,64 @@ def main():
     input("Press Enter to exit...")
 
 if __name__ == "__main__":
-    # Parse CLI arguments for novel name mapping commands
-    if len(sys.argv) > 1:
-        if sys.argv[1] == '--lookup' and len(sys.argv) > 2:
-            from features.novel_name_mapper import lookup_by_youtube_name_cli
-            lookup_by_youtube_name_cli(' '.join(sys.argv[2:]))
-            sys.exit(0)
-        elif sys.argv[1] == '--list-mappings':
-            from features.novel_name_mapper import list_all_mappings_cli
-            list_all_mappings_cli()
-            sys.exit(0)
-        elif sys.argv[1] == '--search-mappings' and len(sys.argv) > 2:
-            from features.novel_name_mapper import search_mappings_cli
-            search_mappings_cli(' '.join(sys.argv[2:]))
-            sys.exit(0)
+    # Parse CLI arguments FIRST (before any imports use the paths)
+    cli_args = parse_cli_args()
+    
+    # Handle test mode - MUST happen before main() to override paths
+    if cli_args.test_mode:
+        print(CP("\\n🧪 TEST MODE ENABLED", 'yellow'))
+        print(CP("   All data will be stored in temporary directories", 'cyan'))
+        
+        # Override global paths if provided
+        if cli_args.history_dir:
+            import core.config as config_module
+            import core.epub_io as epub_io_module
+            
+            # Normalize the path
+            history_dir = os.path.normpath(cli_args.history_dir)
+            
+            # Update config module
+            config_module.HISTORY_DIR = history_dir
+            config_module.HISTORY_FILE = os.path.join(history_dir, "global_database.json")
+            
+            # Update epub_io module (it imports from config, but we need to update its references)
+            epub_io_module.HISTORY_DIR = history_dir
+            epub_io_module.HISTORY_FILE = os.path.join(history_dir, "global_database.json")
+            
+            # Update module-level variables in THIS file (epub_project_manager.py)
+            globals()['HISTORY_DIR'] = history_dir
+            globals()['HISTORY_FILE'] = os.path.join(history_dir, "global_database.json")
+            
+            print(f"   📂 Test History: {history_dir}")
+        
+        if cli_args.novels_dir:
+            import core.config as config_module
+            import core.epub_io as epub_io_module
+            
+            # Normalize the path
+            novels_dir = os.path.normpath(cli_args.novels_dir)
+            
+            # Update config module
+            config_module.MASTER_NOVEL_DIR = novels_dir
+            config_module.ACTIVE_NOVELS_DIR = os.path.join(novels_dir, "Active Novels")
+            config_module.ARCHIVED_NOVELS_DIR = os.path.join(novels_dir, "Archived Novels")
+            
+            # Update epub_io module
+            epub_io_module.ACTIVE_NOVELS_DIR = os.path.join(novels_dir, "Active Novels")
+            epub_io_module.ARCHIVED_NOVELS_DIR = os.path.join(novels_dir, "Archived Novels")
+            
+            # Update module-level variables in THIS file (epub_project_manager.py)
+            globals()['MASTER_NOVEL_DIR'] = novels_dir
+            globals()['ACTIVE_NOVELS_DIR'] = os.path.join(novels_dir, "Active Novels")
+            globals()['ARCHIVED_NOVELS_DIR'] = os.path.join(novels_dir, "Archived Novels")
+            
+            print(f"   📚 Test Novels: {novels_dir}")
+        
+        print(CP("   ⚠️  No permanent history will be saved!\\n", 'yellow'))
+
+
+
+
     
     try:
         main()

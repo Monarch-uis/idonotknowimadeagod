@@ -17,7 +17,7 @@ from core.utils import CP, logger
 
 # Recovery log
 recovery_logger = logging.getLogger('auto_recovery')
-recovery_handler = logging.FileHandler('recovery.log')
+recovery_handler = logging.FileHandler('logs/recovery.log')
 recovery_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 recovery_logger.addHandler(recovery_handler)
 recovery_logger.setLevel(logging.INFO)

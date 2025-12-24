@@ -95,7 +95,14 @@ CONFIG_SCHEMA = {
                     "maximum": 3.0,
                     "default": 1.0,
                     "description": "Piper length scale (speed adjustment)"
-                }
+                },
+                "export_bitrate": {
+                     "type": "string", 
+                     "pattern": "^\\d+k$"
+                },
+                "chatterbox_enabled": {"type": "boolean"},
+                "chatterbox_model": {"type": "string"},
+                "chatterbox_tier": {"type": "string"}
             }
         },
         "system_limits": {
