@@ -28,9 +28,48 @@ class TestCaptionIntegration(unittest.TestCase):
             timeline = generate_timeline_from_words("dummy.mp3", "proj1", words, config)
             self.assertEqual(timeline['metadata']['source'], 'tts_timing')
             # Should have at least the caption fragment
-            captions = [t for t in timeline['timeline'] if t.get('type') == 'caption_fragment']
             self.assertEqual(len(captions), 1)
             self.assertEqual(captions[0]['payload']['text'], 'Hello')
 
+    @patch('core.video_pipeline._probe_duration')
+    @patch('core.video_pipeline._split_audio_into_chunks')
+    @patch('core.video_pipeline._load_whisper_model')
+    @patch('core.video_pipeline._transcribe_segment_with_model')
+    @patch('core.video_pipeline.Progress') # Mock UI
+    def test_chunking_logic_flow(self, mock_progress, mock_transcribe, mock_load_model, mock_split, mock_probe):
+        """Verify audio chunking when video > 30 minutes"""
+        from core import video_pipeline
+        
+        # Setup
+        mock_probe.return_value = 3600.0 # 1 hour audio
+        mock_split.return_value = ("/tmp/mock_dir", ["chunk1.mp3", "chunk2.mp3"])
+        
+        # Mock transcription results
+        mock_transcribe.side_effect = [
+            [{"text": "A", "start": 1.0, "end": 2.0}],
+            [{"text": "B", "start": 1.0, "end": 2.0}] # Relative to chunk start
+        ]
+        
+        # Sequence of probe calls: Total, then Chunk 1, then Chunk 2
+        mock_probe.side_effect = [3600.0, 1800.0, 1800.0] 
+        
+        config = {
+            "video_settings": {
+                "caption_language": "en"
+            }
+        }
+        
+        # Execute
+        video_pipeline.generate_timeline_from_audio(
+            "fake_audio.mp3", "test_project", config, model_size="tiny"
+        )
+        
+        # Verify Split was called
+        mock_split.assert_called_once()
+        
+        # Verify Transcribe was called twice (once per chunk)
+        self.assertEqual(mock_transcribe.call_count, 2)
+
 if __name__ == '__main__':
     unittest.main()
+

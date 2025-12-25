@@ -17,7 +17,11 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 import tempfile
 import subprocess
 import gc
+import shutil
+import math
 from contextlib import contextmanager
+from typing import Generator
+
 
 # Import utility function for time formatting
 from core.utils import seconds_to_time_str
@@ -357,6 +361,131 @@ def _group_words_into_fragments(
     return fragments
 
 
+def _split_audio_into_chunks(audio_path: str, chunk_duration: int = 1800) -> Tuple[str, List[str]]:
+    """
+    Split audio into chunks using FFmpeg segment muxer.
+    Returns (temp_dir, list_of_chunk_paths).
+    Caller is responsible for cleaning up temp_dir.
+    """
+    temp_dir = tempfile.mkdtemp(prefix="audio_chunks_")
+    
+    # Determine extension
+    ext = Path(audio_path).suffix
+    if not ext:
+        ext = ".mp3"
+        
+    output_pattern = os.path.join(temp_dir, f"chunk_%03d{ext}")
+    
+    ffmpeg_exe = "ffmpeg"
+    try:
+        from imageio_ffmpeg import get_ffmpeg_exe
+        ffmpeg_exe = get_ffmpeg_exe()
+    except ImportError:
+        pass
+
+    # Use -f segment with -c copy for speed as requested
+    # -reset_timestamps 1 is crucial so each chunk starts at 0 for Whisper
+    cmd = [
+        ffmpeg_exe, "-y",
+        "-i", audio_path,
+        "-f", "segment",
+        "-segment_time", str(chunk_duration),
+        "-c", "copy",
+        "-reset_timestamps", "1",
+        output_pattern
+    ]
+    
+    print(f"   ✂️  Splitting audio into {chunk_duration}s chunks...", flush=True)
+    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    
+    # Collect chunks
+    chunks = sorted([str(p) for p in Path(temp_dir).glob(f"chunk_*{ext}")])
+    return temp_dir, chunks
+
+
+def _load_whisper_model(
+    model_size: str,
+    device: str,
+    compute_type: str,
+    cpu_threads: int,
+    download_root: Optional[str],
+    progress_console=None
+):
+    """Refactored model loader to allow reuse across chunks."""
+    WhisperModel = _import_fast_whisper()
+    import threading
+    
+    model = None
+    load_error = []
+
+    def _loader_thread(m_size, dev, c_type, threads, root):
+        nonlocal model
+        try:
+            # First, check if valid model path exists in root to avoid network calls
+            local_files_only = False
+            if root and os.path.exists(root):
+                if any(p.name.startswith("model") for p in Path(root).rglob("*")):
+                     local_files_only = True
+            
+            try:
+                if local_files_only:
+                     print(f"   📂 Loading from local cache: {root}")
+                     model = WhisperModel(m_size, device=dev, compute_type=c_type, cpu_threads=threads, download_root=root, local_files_only=True)
+                else:
+                     model = WhisperModel(m_size, device=dev, compute_type=c_type, cpu_threads=threads, download_root=root)
+            except Exception as local_err:
+                if local_files_only:
+                     print(f"   ⚠️  Local load failed, retrying with network: {local_err}")
+                     model = WhisperModel(m_size, device=dev, compute_type=c_type, cpu_threads=threads, download_root=root, local_files_only=False)
+                else:
+                    raise local_err
+
+        except Exception as e:
+            load_error.append(e)
+
+    # If we have a console/progress context, use it. Otherwise just print.
+    if progress_console:
+        loader = threading.Thread(target=_loader_thread, args=(model_size, device, compute_type, cpu_threads, download_root))
+        loader.daemon = True
+        loader.start()
+        while loader.is_alive():
+            loader.join(0.1)
+    else:
+        # Simple blocking load if no UI context
+        _loader_thread(model_size, device, compute_type, cpu_threads, download_root)
+
+    if load_error:
+        raise load_error[0]
+        
+    return model
+
+
+def _transcribe_segment_with_model(
+    model,
+    audio_path: str,
+    language: Optional[str]
+) -> List[Dict[str, Any]]:
+    """Transcribe a single audio segment using an already loaded model."""
+    segments, info = model.transcribe(
+        audio_path,
+        language=language,
+        vad_filter=True,
+        word_timestamps=True,
+    )
+    
+    words = []
+    for segment in segments:
+        for word in getattr(segment, "words", []):
+            if word.word is None:
+                continue
+            words.append({
+                "text": word.word.strip(),
+                "start": float(getattr(word, "start", 0.0) or 0.0),
+                "end": float(getattr(word, "end", 0.0) or 0.0),
+            })
+    return words
+
+
 def generate_timeline_from_audio(
     audio_path: str,
     project_id: str,
@@ -394,128 +523,120 @@ def generate_timeline_from_audio(
 
     import threading
 
-    # Load Whisper model with a spinner for visual feedback
-    model = None
-    load_error = []
-
-    def _load_model_thread(m_size, dev, c_type, threads, root):
-        nonlocal model
-        try:
-            # First, check if valid model path exists in root to avoid network calls
-            local_files_only = False
-            if root and os.path.exists(root):
-                # Simple heuristic: if likely populated, try local first
-                # (Actual model validation is complex, but this prevents hang on update checks)
-                if any(p.name.startswith("model") for p in Path(root).rglob("*")):
-                     local_files_only = True
-            
-            try:
-                if local_files_only:
-                     print(f"   📂 Loading from local cache: {root}")
-                     model = WhisperModel(m_size, device=dev, compute_type=c_type, cpu_threads=threads, download_root=root, local_files_only=True)
-                else:
-                     model = WhisperModel(m_size, device=dev, compute_type=c_type, cpu_threads=threads, download_root=root)
-            except Exception as local_err:
-                if local_files_only:
-                     print(f"   ⚠️  Local load failed, retrying with network: {local_err}")
-                     model = WhisperModel(m_size, device=dev, compute_type=c_type, cpu_threads=threads, download_root=root, local_files_only=False)
-                else:
-                    raise local_err
-
-        except Exception as e:
-            load_error.append(e)
-
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        TimeElapsedColumn(),
-        expand=True
-    ) as progress:
-        loading_task = progress.add_task(description=f"[cyan]Loading Whisper Model ({model_size}, {compute_type})...", total=None)
-        
-        # Start loading in background thread
-        loader = threading.Thread(target=_load_model_thread, args=(model_size, device, compute_type, cpu_threads, download_root))
-        loader.daemon = True
-        loader.start()
-        
-        # Keep UI alive while loading
-        while loader.is_alive():
-            loader.join(0.1)
-            # Force refresh to prevent UI freeze during heavy load
-            progress.refresh()
-            
-            
-        if load_error:
-            e = load_error[0]
-            if "float16" in str(e).lower():
-                fallback = "int8" if device == "cpu" else "float32"
-                progress.console.print(f"   ⚠️  float16 not supported on this device. Falling back to {fallback}...")
-                
-                # Reset error and try again
-                load_error.clear()
-                loader = threading.Thread(target=_load_model_thread, args=(model_size, device, fallback, cpu_threads, download_root))
-                loader.daemon = True
-                loader.start()
-                while loader.is_alive():
-                    loader.join(0.1)
-                
-                if load_error:
-                    raise load_error[0]
-            else:
-                progress.stop() # Ensure UI stops before raising
-                raise e
-
-    segments, info = model.transcribe(
-        audio_path,
-        language=language,
-        vad_filter=True,
-        word_timestamps=True,
-    )
-
-    words: List[Dict[str, Any]] = []
+    # Check duration to decide on splitting
+    total_duration = _probe_duration(audio_path) or 0.0
+    CHUNK_THRESHOLD = 30 * 60  # 30 minutes
     
-    # Use Progress bar for transcription
-    total_duration = info.duration
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TaskProgressColumn(),
-        TimeElapsedColumn(),
-        expand=True
-    ) as progress:
-        transcribe_task = progress.add_task("[yellow]Transcribing Audio (Whisper)...", total=total_duration)
-        
-        for segment in segments:
-            # Update progress based on segment end time
-            progress.update(transcribe_task, completed=segment.end)
+    # Holder for final merged words
+    all_words: List[Dict[str, Any]] = []
+    
+    # LOAD MODEL ONCE
+    # We use a progress bar for the loading phase
+    model = None
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            TimeElapsedColumn(),
+            expand=True
+        ) as progress:
+            progress.add_task(description=f"[cyan]Loading Whisper Model ({model_size}, {compute_type})...", total=None)
             
-            for word in getattr(segment, "words", []):
-                if word.word is None:
-                    continue
-                words.append(
-                    {
-                        "text": word.word.strip(),
-                        "start": float(getattr(word, "start", 0.0) or 0.0),
-                        "end": float(getattr(word, "end", 0.0) or 0.0),
-                    }
-                )
-        
-        # Ensure bar is full at the end
-        progress.update(transcribe_task, completed=total_duration)
+            # Use our new loader helper
+            # We catch errors here to handle the float16 fallback logic
+            try:
+                model = _load_whisper_model(model_size, device, compute_type, cpu_threads, download_root, progress)
+            except Exception as e:
+                # Handle float16 error fallback for CPU
+                if "float16" in str(e).lower() and device == "cpu":
+                    fallback = "int8"
+                    progress.console.print(f"   ⚠️  float16 not supported on this device. Falling back to {fallback}...")
+                    model = _load_whisper_model(model_size, device, fallback, cpu_threads, download_root, progress)
+                    # Update metadata
+                    compute_type = fallback
+                else:
+                    raise e
+    except Exception as e:
+        print(f"   ❌ Failed to load model: {e}")
+        raise
+
+    # PROCESSING STRATEGY
+    temp_chunk_dir = None
+    
+    try:
+        if total_duration > CHUNK_THRESHOLD:
+            # --- SPLIT STRATEGY ---
+            print(f"   🚀 Long video detected ({seconds_to_time_str(total_duration)}). engaging chunked mode.")
+            temp_chunk_dir, chunks = _split_audio_into_chunks(audio_path, chunk_duration=1800) # 30 mins
+            
+            current_offset = 0.0
+            
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                TimeElapsedColumn(),
+                expand=True
+            ) as progress:
+                main_task = progress.add_task(f"[yellow]Processing {len(chunks)} Chunks...", total=len(chunks))
+                
+                for i, chunk_path in enumerate(chunks):
+                    chunk_duration_val = _probe_duration(chunk_path) or 0.0
+                    progress.console.print(f"      🔹 Chunk {i+1}/{len(chunks)}: {seconds_to_time_str(chunk_duration_val)}")
+                    
+                    # Transcribe chunk
+                    chunk_words = _transcribe_segment_with_model(model, chunk_path, language)
+                    
+                    # Shift timestamps and merge
+                    for word in chunk_words:
+                        word["start"] += current_offset
+                        word["end"] += current_offset
+                        all_words.append(word)
+                    
+                    # Update offset using ACTUAL chunk duration (safest to use what ffmpeg produced)
+                    current_offset += chunk_duration_val
+                    progress.advance(main_task)
+
+        else:
+            # --- STANDARD STRATEGY ---
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                TimeElapsedColumn(),
+                expand=True
+            ) as progress:
+                task = progress.add_task("[yellow]Transcribing Audio...", total=None) 
+                # Note: We can't easily get realtime progress from the simple helper without callbacks, 
+                # but it keeps code clean. For short videos, spinner is fine.
+                all_words = _transcribe_segment_with_model(model, audio_path, language)
+                progress.update(task, completed=100)
+
+    finally:
+        # Cleanup chunks
+        if temp_chunk_dir and os.path.exists(temp_chunk_dir):
+            try:
+                shutil.rmtree(temp_chunk_dir)
+            except Exception as e:
+                print(f"   ⚠️  Failed to clean up temp chunks: {e}")
+
+    words = all_words
 
     fragments = _group_words_into_fragments(words, max_fragment_duration, max_fragment_words)
     
     # Debug output for caption generation
     print(f"   📝 Generated {len(fragments)} caption fragments from {len(words)} words")
 
-    duration = None
-    if info and getattr(info, "duration", None):
-        duration = float(info.duration)
-    if duration is None:
-        duration = _probe_duration(audio_path)
-    if duration is None:
-        duration = fragments[-1]["end"] if fragments else 0.0
+    driver_duration = None
+    if total_duration > 0:
+        driver_duration = total_duration
+    
+    if driver_duration is None:
+        driver_duration = _probe_duration(audio_path)
+    if driver_duration is None:
+        driver_duration = fragments[-1]["end"] if fragments else 0.0
 
     timeline: List[Dict[str, Any]] = fragments
 
@@ -525,10 +646,11 @@ def generate_timeline_from_audio(
         start = float(effect_cfg.get("start", 0.0))
         duration_cfg = effect_cfg.get("duration")
         if duration_cfg is not None:
-            end = start + float(duration_cfg)
+             end = start + float(duration_cfg)
         else:
-            end = float(effect_cfg.get("end", duration))
-        end = min(duration, max(start, end)) if duration else max(start, end)
+             end = float(effect_cfg.get("end", driver_duration))
+        end = min(driver_duration, max(start, end)) if driver_duration else max(start, end)
+
         if end <= start:
             continue
         timeline.append(
@@ -550,7 +672,7 @@ def generate_timeline_from_audio(
         "project_id": project_id,
         "media": {
             "path": str(Path(audio_path).resolve()),
-            "duration": duration,
+            "duration": driver_duration,
         },
         "timeline": timeline,
         "metadata": {
@@ -559,6 +681,7 @@ def generate_timeline_from_audio(
             "language": language or "auto",
         },
     }
+
 
 def generate_timeline_from_words(
     audio_path: str,
