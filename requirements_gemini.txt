@@ -1,0 +1,35 @@
+edge-tts>=6.1.9
+moviepy<2.0.0
+faster-whisper>=0.10.0
+ffmpeg-python>=0.2.0
+ebooklib>=0.18
+beautifulsoup4>=4.12.0
+# Security: Updated Pillow to address CVE-2023-50447 and CVE-2023-44271
+# Pinned <12.0 for gradio compatibility (gradio requires <12.0)
+Pillow>=11.3.0,<12.0
+imageio-ffmpeg>=0.4.9
+pyttsx3>=2.90
+psutil>=5.9.0
+# Pinned <6.0 for lightnovel-crawler compatibility
+lxml>=4.9.0,<6.0
+watchdog>=3.0.0
+pydub>=0.25.1
+# Pinned numpy <2.3 for numba compatibility (numba 0.61.x requires <2.3)
+numpy>=1.24,<2.3
+
+# Gemini AI Integration (NEW)
+google-generativeai>=0.3.0
+
+# Testing dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+pytest-asyncio>=0.21.0
+
+# Config validation
+jsonschema>=4.19.0
+
+# Performance profiling (psutil already included above)
+
+# Security: Pin versions to avoid supply chain attacks
+# Consider using pip-audit regularly to scan for vulnerabilities

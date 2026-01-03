@@ -1,0 +1,131 @@
+{
+    "document_title": "TTS Voice Engine Options - What Each One Does",
+    "description": "A complete guide to what you experience with each voice engine option",
+    "choosing_a_voice_engine": {
+        "when_this_happens": "During configuration, after selecting your EPUB file",
+        "what_you_see": "A numbered list of available voice engines"
+    },
+    "edge_tts_online_voices": {
+        "when_available": "Always shown if your computer has internet access",
+        "selecting_edge_tts": {
+            "what_you_do": "Type '1' and press Enter",
+            "next_prompt": "'Enter Edge-TTS voice name (press Enter for default: en-US-GuyNeural):'",
+            "if_you_press_enter": "The default male American voice is used",
+            "if_you_type_a_voice": "That specific voice is used (e.g., 'en-US-JennyNeural' for female)"
+        },
+        "during_processing": {
+            "what_you_see": "Progress updates as each chapter is sent to Microsoft's servers",
+            "speed": "Usually takes 1-2 minutes per chapter depending on internet speed",
+            "if_internet_drops": {
+                "what_you_see": "'❌ Edge-TTS: Connection timeout'",
+                "what_happens_next": [
+                    "'🔄 Retrying in 3 seconds...'",
+                    "After 3 retries: '❌ Edge-TTS failed. Switch to Piper offline voice? (y/n)'"
+                ],
+                "if_you_say_yes": "The program switches to Piper and continues",
+                "if_you_say_no": "The chapter is skipped"
+            },
+            "if_rate_limited": {
+                "what_this_means": "You made too many requests too fast, Microsoft temporarily blocked you",
+                "what_you_see": "'⚠️ Rate limited by Edge-TTS. Waiting 30 seconds...'",
+                "what_happens": "The program automatically waits and retries"
+            }
+        },
+        "voice_quality": {
+            "pros": "Most natural sounding, wide variety of voices and accents",
+            "cons": "Requires internet, can fail or be slow, limited by Microsoft's policies"
+        }
+    },
+    "piper_offline_voices": {
+        "when_available": "Shown if Piper is installed and voice models are found in piper_models folder",
+        "selecting_piper": {
+            "what_you_do": "Type the number for Piper and press Enter",
+            "next_prompt": "A list of available voice models",
+            "example": [
+                "Available Piper voice models:",
+                "  1. en_US-lessac-medium (Male, American, High Quality)",
+                "  2. en_US-amy-medium (Female, American)",
+                "  3. en_GB-alan-medium (Male, British)",
+                "  4. en_US-libritts-high (Multiple speakers)"
+            ],
+            "what_you_do_next": "Type the number of the voice you want"
+        },
+        "if_no_models_found": {
+            "what_you_see": "'⚠️ No Piper models found. Please add .onnx files to piper_models folder.'",
+            "what_to_do": "Download voice models from the Piper website and place them in the piper_models folder"
+        },
+        "during_processing": {
+            "what_you_see": "Progress as audio is generated locally on your computer",
+            "speed": "Usually faster than Edge-TTS because no internet needed",
+            "no_failures_from": "Internet issues, rate limiting, or server problems"
+        },
+        "voice_quality": {
+            "pros": "Works offline, very reliable, high quality neural voices, no usage limits",
+            "cons": "Need to download model files first, fewer voice options than Edge-TTS"
+        },
+        "why_this_is_recommended": "The project focuses on Piper because it's the most reliable and produces professional results without internet dependency"
+    },
+    "pyttsx3_system_voices": {
+        "when_available": "Always available on Windows and usually on Linux",
+        "selecting_pyttsx3": {
+            "what_you_do": "Type the number for pyttsx3",
+            "next_prompt": "A list of voices installed on your computer",
+            "example_on_windows": [
+                "System voices available:",
+                "  1. Microsoft David (Male, American)",
+                "  2. Microsoft Zira (Female, American)",
+                "  3. Microsoft Mark (Male, American)"
+            ]
+        },
+        "during_processing": {
+            "what_you_see": "Progress as your computer's built-in speech synthesizer generates audio",
+            "speed": "Very fast because it uses basic speech synthesis"
+        },
+        "voice_quality": {
+            "pros": "Works offline, no setup needed, very fast",
+            "cons": "Sounds robotic and unnatural, not recommended for YouTube content"
+        },
+        "when_to_use": "Only as a last resort if other options don't work"
+    },
+    "chatterbox_premium_voices": {
+        "when_available": "Only shown if Chatterbox is installed and GPU is detected",
+        "selecting_chatterbox": {
+            "what_you_do": "Type the number for Chatterbox",
+            "what_happens": "The system checks if your GPU has enough memory"
+        },
+        "gpu_requirements": {
+            "what_you_need": "A GPU with at least 4GB VRAM (NVIDIA recommended)",
+            "if_no_gpu": "'⚠️ Chatterbox requires a GPU. Falling back to Piper.'",
+            "if_gpu_found": "'✅ GPU detected: NVIDIA RTX 3060 (12GB)'"
+        },
+        "during_processing": {
+            "what_you_see": "Progress as your GPU generates audio",
+            "speed": "Slower than other options because it's doing more complex AI processing",
+            "warning_shown": "'Note: Chatterbox uses more resources. Processing may take longer.'"
+        },
+        "voice_quality": {
+            "pros": "Highest quality, emotional expression, sounds most human",
+            "cons": "Requires GPU, slowest option, uses more power"
+        },
+        "special_use_case": "Used in AI multi-speaker mode for character dialogue to make characters sound distinct"
+    },
+    "speed_adjustment": {
+        "when_asked": "After selecting voice engine and voice",
+        "what_you_see": "'TTS Speed adjustment? (default: +0%, faster: +10%, slower: -10%):'",
+        "what_the_values_mean": {
+            "+0%": "Normal speaking speed",
+            "+10%": "10% faster than normal (good for action scenes)",
+            "+20%": "20% faster (may sound rushed)",
+            "-10%": "10% slower (more dramatic)",
+            "-20%": "20% slower (very slow, for emphasis)"
+        },
+        "if_you_press_enter": "Normal speed is used"
+    },
+    "voice_testing": {
+        "when_this_happens": "Before processing begins, if you're using Edge-TTS",
+        "what_you_see": "'🔌 Testing voice connection...'",
+        "what_is_generated": "A short test phrase is spoken",
+        "if_test_plays": "'✅ Voice test successful!'",
+        "if_test_fails": "'❌ Voice test failed' with options to switch engines"
+    }
+}

@@ -120,7 +120,7 @@ def check_duplicate_epub(epub_path):
     """Check if EPUB was already processed using hash"""
     epub_hash = calculate_epub_hash(epub_path)
     if not epub_hash:
-        return None, None
+        return None
     
     history = load_history()
     for book_key, entries in history.items():
@@ -169,26 +169,89 @@ def check_duplicate_epub(epub_path):
             }
     return None
 
-def delete_book_from_history(epub_path, chapters=None):
+def get_history_summary(search_title):
+    """Search history by title and return aggregated summary"""
+    history = load_history()
+    search_key = sanitize_filename(search_title)
+    
+    # Try exact key match first
+    if search_key in history:
+        entries = history[search_key]
+        min_start = float('inf')
+        max_end = -1
+        latest_date = "1970-01-01"
+        title = search_title
+        
+        for entry in entries:
+            if entry.get("title"): title = entry.get("title")
+            e_date = entry.get("date", "1970-01-01")
+            if e_date > latest_date: latest_date = e_date
+            try:
+                s, e = int(entry.get("start", 0)), int(entry.get("end", 0))
+                if s < min_start: min_start = s
+                if e > max_end: max_end = e
+            except: pass
+            
+        return {
+            "key": search_key, "title": title, "date": latest_date,
+            "start": min_start if min_start != float('inf') else "?",
+            "end": max_end if max_end != -1 else "?"
+        }
+        
+    # Try fuzzy title match
+    for book_key, entries in history.items():
+        if not entries: continue
+        # Check title of first entry as representative
+        if search_title.lower() in entries[0].get('title', '').lower():
+            min_start = float('inf')
+            max_end = -1
+            latest_date = "1970-01-01"
+            title = entries[0].get('title', book_key)
+            
+            for entry in entries:
+                e_date = entry.get("date", "1970-01-01")
+                if e_date > latest_date: latest_date = e_date
+                try:
+                    s, e = int(entry.get("start", 0)), int(entry.get("end", 0))
+                    if s < min_start: min_start = s
+                    if e > max_end: max_end = e
+                except: pass
+                
+            return {
+                "key": book_key, "title": title, "date": latest_date,
+                "start": min_start if min_start != float('inf') else "?",
+                "end": max_end if max_end != -1 else "?"
+            }
+            
+    return None
+
+def delete_book_from_history(epub_path, title=None, chapters=None):
     """
     Remove entry from history.
     If chapters is None: removes all entries for this book.
     If chapters is (start, end): removes only overlapping ranges.
+    Matches by epub_hash (primary) or title (fallback).
     Returns: (bool, int) - (Success, number of entries removed)
     """
-    epub_hash = calculate_epub_hash(epub_path)
-    if not epub_hash:
-        return False, 0
-        
+    epub_hash = calculate_epub_hash(epub_path) if epub_path else None
+    
     history = load_history()
     removed_count = 0
     updated_history = {}
     
+    # Target title for fallback matching
+    target_title = title
+    
     for book_key, entries in history.items():
         new_entries = []
+        # book_key is usually the title in our history structure
+        title_matches = (target_title and book_key == target_title)
+        
         for entry in entries:
-            # Check if this entry matches the book hash
-            if entry.get("epub_hash") == epub_hash:
+            # Check if this entry matches by hash or title
+            hash_matches = (epub_hash and entry.get("epub_hash") == epub_hash)
+            
+            if hash_matches or title_matches:
                 if chapters is None:
                     # Full book reset - remove this entry
                     removed_count += 1
@@ -215,7 +278,7 @@ def delete_book_from_history(epub_path, chapters=None):
                 os.makedirs(HISTORY_DIR)
             with open(HISTORY_FILE, "w", encoding="utf-8") as f:
                 json.dump(updated_history, f, indent=4)
-            logger.info(f"Removed {removed_count} history entries for hash {epub_hash}")
+            logger.info(f"Removed {removed_count} history entries (Hash: {epub_hash}, Title: {title})")
             return True, removed_count
         except (OSError, IOError) as e:
             logger.error(f"History deletion failed: {e}")
@@ -370,11 +433,16 @@ def parse_full_epub(epub_path):
         content = item.get_content().decode('utf-8')
         chap_title, chap_text = clean_html_for_tts(content)
         
-        if not meta["summary"] and i < 5:
+        if i < 10:
             lower = chap_title.lower()
             if any(x in lower for x in ["info", "intro", "desc", "synopsis", "about"]):
-                print(f"   📝 Found summary: '{chap_title}'")
-                meta["summary"] = chap_text
+                # If we don't have a good summary yet, use this text
+                current_summary = meta.get("summary", "")
+                if not current_summary or current_summary == "No summary available." or len(current_summary) < 50:
+                    print(f"   📝 Using front-matter as summary: '{chap_title}'")
+                    meta["summary"] = chap_text
+                else:
+                    print(f"   ℹ️ Skipping front-matter/info page: '{chap_title}'")
                 continue
         
         if len(chap_text) < 50:

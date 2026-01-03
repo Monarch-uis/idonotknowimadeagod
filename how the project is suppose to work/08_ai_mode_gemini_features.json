@@ -1,0 +1,130 @@
+{
+    "document_title": "AI Mode (Gemini Integration) - What You Experience",
+    "description": "What happens when you enable AI-powered features",
+    "what_ai_mode_does": {
+        "story_analysis": "AI reads your entire book and understands the plot, characters, and themes",
+        "auto_descriptions": "AI writes YouTube descriptions for you",
+        "title_suggestions": "AI suggests catchy YouTube titles",
+        "multi_speaker_audio": "AI assigns different voices to different characters"
+    },
+    "enabling_ai_mode": {
+        "from_command_line": "python epub_project_manager.py --with-ai",
+        "from_menu": "Not yet available in menu (coming soon)",
+        "api_key_needed": {
+            "what_you_see_first_time": "'🔑 Gemini API key not found.'",
+            "prompt": "'Enter your Gemini API key (get one free at makersuite.google.com):'",
+            "after_entering": "'✅ API key saved. You won't need to enter it again.'"
+        }
+    },
+    "phase_1_story_analysis": {
+        "when_it_happens": "After you select an EPUB, before processing begins",
+        "what_you_see": [
+            "'🤖 AI Story Analysis'",
+            "'   Sending book to Gemini AI for analysis...'",
+            "'   This only happens once per book and may take 30-60 seconds.'"
+        ],
+        "during_analysis": "'   ⏳ Analyzing 50 chapters (200,000 words)...'",
+        "when_complete": [
+            "'✅ Story analysis complete!'",
+            "",
+            "'📖 Detected genres: Action, Fantasy, Romance'",
+            "'👥 Main characters identified: 12'",
+            "'🎭 Tone: Action-packed with comedic moments'"
+        ],
+        "cached_for_future": "If you process more chapters later, analysis is reused (no extra API calls)"
+    },
+    "ai_generated_titles": {
+        "what_you_see": [
+            "'🎬 AI-Generated Title Suggestions:'",
+            "─────────────────────────────────────",
+            "1. The Uzumaki Legacy: A Naruto Reborn Story",
+            "2. From Zero to Hokage: Naruto's Second Chance",
+            "3. Naruto SI - The Hidden Leaf's New Legend",
+            "4. Rewriting Destiny: A Naruto Fanfiction",
+            "5. The Sage's Return: Naruto Reincarnation Story",
+            "─────────────────────────────────────"
+        ],
+        "what_you_do": [
+            "Type 1-5 to select a suggested title",
+            "Type 'c' to enter your own custom title",
+            "Type 's' to skip and use original EPUB title"
+        ]
+    },
+    "ai_generated_description": {
+        "what_you_see": [
+            "'📝 AI-Generated YouTube Description:'",
+            "─────────────────────────────────────",
+            "What if Naruto woke up with memories of his past life?",
+            "",
+            "In this gripping fanfiction, our favorite ninja gets",
+            "a second chance to save everyone he loves...",
+            "(Description continues for 3-4 paragraphs)",
+            "─────────────────────────────────────",
+            "",
+            "'Use this description? (y) or edit manually (e)'"
+        ],
+        "if_you_accept": "This description is saved to the output folder",
+        "if_you_edit": "A text editor opens so you can modify it"
+    },
+    "phase_2_multi_speaker_audio": {
+        "what_this_is": "Different voices for different characters",
+        "when_enabled": "Requires both AI mode AND Chatterbox TTS to be available",
+        "how_it_works": {
+            "step_1": "AI reads each chapter before processing",
+            "step_2": "AI identifies dialogue vs narration",
+            "step_3": "AI assigns voices: narrator voice for prose, character voices for dialogue"
+        },
+        "what_you_see_during_chapter": [
+            "'📖 Chapter 5: The Battle Begins'",
+            "'   🤖 AI analyzing dialogue segments...'",
+            "'   Found: 15 dialogue segments, 3 unique speakers'",
+            "",
+            "'   Generating segments:'",
+            "'     [1/15] Narrator: \"The sun rose over...\" (Piper)'",
+            "'     [2/15] Naruto: \"Believe it!\" (Chatterbox)'",
+            "'     [3/15] Sasuke: \"Hmph.\" (Chatterbox)'",
+            "'     [4/15] Narrator: \"They faced each other...\" (Piper)'"
+        ],
+        "chatterbox_limit": {
+            "why_limited": "Chatterbox is slower and uses more resources",
+            "what_you_see": "'ℹ️ Chatterbox used for 8 of 15 dialogue segments (limit to preserve quality)'",
+            "overflow": "Excess dialogue uses Piper voice instead"
+        }
+    },
+    "ai_generated_intros": {
+        "normal_intro": "Uses the static text from your config (Yo legends, welcome back...)",
+        "ai_intro": {
+            "what_happens": "AI writes a custom intro based on what happens in this batch",
+            "example": [
+                "'Welcome back legends! In today's episode,'",
+                "'Naruto finally faces Orochimaru, Sasuke makes a shocking choice,'",
+                "'and we learn the truth about the Fourth Hokage. Lock in!'"
+            ],
+            "benefit": "Each video has a unique, context-aware intro"
+        }
+    },
+    "ai_cost_and_usage": {
+        "is_it_free": {
+            "answer": "Gemini has a generous free tier",
+            "free_limit": "Approximately 60 queries per minute, 1500 per day"
+        },
+        "usage_tracking": {
+            "what_you_see_at_end": [
+                "'📊 AI Usage This Session:'",
+                "'   Requests: 15'",
+                "'   Input tokens: 45,000'",
+                "'   Output tokens: 3,200'",
+                "'   Estimated cost: $0.00 (within free tier)'"
+            ]
+        },
+        "if_rate_limited": {
+            "what_you_see": "'⚠️ Gemini rate limit reached. Waiting 60 seconds...'",
+            "what_happens": "Automatic wait, then continues"
+        }
+    },
+    "when_ai_is_not_available": {
+        "no_api_key": "AI features are simply skipped, normal processing continues",
+        "network_error": "'⚠️ Could not reach Gemini API. Continuing without AI features.'",
+        "everything_else_works": "The core audio/video generation doesn't require AI"
+    }
+}

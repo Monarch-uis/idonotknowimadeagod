@@ -1,0 +1,181 @@
+{
+    "document_title": "Error Recovery and What Happens When Things Go Wrong",
+    "description": "Every error scenario you might encounter and how the program handles it",
+    "overall_philosophy": "The program tries to fix problems automatically whenever possible. You only get asked to make decisions when there are multiple options or when the problem can't be fixed automatically.",
+    "tts_audio_errors": {
+        "edge_tts_connection_timeout": {
+            "what_went_wrong": "The Microsoft TTS server didn't respond in time",
+            "what_you_see": "'❌ Edge-TTS error: Connection timeout'",
+            "automatic_recovery": "'🔄 Retrying in 3 seconds... (Attempt 2/5)'",
+            "if_all_retries_fail": "'❌ Edge-TTS failed after 5 attempts.'",
+            "you_are_asked": "'Switch to Piper offline voice? (y/n)'",
+            "if_you_say_yes": [
+                "'✅ Switching to Piper...'",
+                "'🔄 Reprocessing failed chapter with Piper...'",
+                "'✅ Chapter recovered successfully!'"
+            ],
+            "if_you_say_no": "Chapter is skipped and marked as failed"
+        },
+        "edge_tts_rate_limited": {
+            "what_went_wrong": "You sent too many requests to Microsoft's servers, they temporarily blocked you",
+            "what_you_see": "'⚠️ Edge-TTS: Rate limited. Waiting 30 seconds...'",
+            "what_happens": "Automatic wait, then retry",
+            "no_action_needed": "This resolves itself after waiting"
+        },
+        "piper_model_not_found": {
+            "what_went_wrong": "The voice model file you selected doesn't exist",
+            "what_you_see": "'❌ Piper model not found: en_US-lessac-medium.onnx'",
+            "you_are_asked": "'Select a different model or switch to pyttsx3? (1-3)'",
+            "options": [
+                "1. Choose another Piper model",
+                "2. Switch to pyttsx3 (basic offline voice)",
+                "3. Cancel processing"
+            ]
+        },
+        "piper_crash": {
+            "what_went_wrong": "The Piper program crashed while generating audio",
+            "what_you_see": "'❌ Piper process crashed unexpectedly'",
+            "automatic_recovery": "'🔄 Restarting Piper and retrying...'",
+            "if_keeps_crashing": "'⚠️ Piper keeps crashing. This chapter has very long text. Breaking into smaller chunks...'"
+        },
+        "chatterbox_out_of_memory": {
+            "what_went_wrong": "Your GPU doesn't have enough memory for Chatterbox",
+            "what_you_see": "'❌ Chatterbox: CUDA out of memory'",
+            "automatic_recovery": "'🔄 Switching to Piper for remaining chapters...'"
+        },
+        "all_tts_engines_failed": {
+            "what_went_wrong": "Every voice engine failed for this chapter",
+            "what_you_see": [
+                "'❌ CRITICAL: All TTS engines failed for Chapter 5'",
+                "'   Tried: Edge-TTS (timeout), Piper (crash), pyttsx3 (error)'"
+            ],
+            "options_given": [
+                "1. Skip this chapter and continue",
+                "2. Stop processing entirely",
+                "3. Try again from the beginning"
+            ]
+        }
+    },
+    "video_errors": {
+        "ffmpeg_not_installed": {
+            "what_went_wrong": "FFmpeg is not installed on your computer",
+            "what_you_see": "'❌ FFmpeg not found. Video creation is not possible.'",
+            "options_given": [
+                "1. Generate audio only (no video)",
+                "2. Cancel and install FFmpeg first"
+            ],
+            "if_choose_audio_only": "Program generates the audiobook MP3 file but skips video creation"
+        },
+        "ffmpeg_encoding_failed": {
+            "what_went_wrong": "FFmpeg crashed while creating the video",
+            "what_you_see": "'❌ Video encoding failed'",
+            "automatic_recovery": "'🔄 Trying with simpler settings...'",
+            "what_changes": "GPU acceleration is disabled, effects are removed, basic encoding is used",
+            "if_simple_works": "'✅ Video created with fallback settings.'",
+            "if_still_fails": {
+                "what_you_see": "'❌ Video creation failed even with simple settings.'",
+                "options": [
+                    "1. Keep audio file only",
+                    "2. View FFmpeg error log",
+                    "3. Try with lowest quality (480p)"
+                ]
+            }
+        },
+        "whisper_not_available": {
+            "what_went_wrong": "The Whisper transcription tool isn't installed",
+            "what_you_see": "'⚠️ faster-whisper not installed. Subtitles will be chapter-based only.'",
+            "what_this_means": {
+                "without_whisper": "Subtitles show chapter titles at the start of each chapter",
+                "with_whisper": "Subtitles show every word as it's spoken (word-by-word captions)"
+            },
+            "the_video_still_works": "Just with simpler subtitles"
+        },
+        "disk_full": {
+            "what_went_wrong": "Your hard drive ran out of space during rendering",
+            "what_you_see": "'❌ Disk full: Cannot write video file'",
+            "automatic_action": "'🧹 Attempting to free space by cleaning temp files...'",
+            "if_space_freed": "'✅ Freed 500 MB. Retrying video creation...'",
+            "if_still_full": "'❌ Not enough disk space. Need at least 2 GB free. Please free up space and try again.'"
+        },
+        "subtitle_file_error": {
+            "what_went_wrong": "Problem with the subtitle file",
+            "what_you_see": "'⚠️ Subtitle timing issue detected. Repairing...'",
+            "automatic_fix": "The program fixes overlapping times and invalid entries",
+            "after_fix": "'✅ Subtitle file repaired.'"
+        }
+    },
+    "file_and_permission_errors": {
+        "epub_file_unreadable": {
+            "what_went_wrong": "The EPUB file is corrupted or has an unsupported format",
+            "what_you_see": "'❌ Cannot read EPUB file. The file may be corrupted or password-protected.'",
+            "suggestions": [
+                "Try opening the EPUB in an e-reader app to verify it works",
+                "Download the file again",
+                "Convert the file using Calibre"
+            ]
+        },
+        "output_folder_locked": {
+            "what_went_wrong": "Another program is using the output folder",
+            "what_you_see": "'❌ Permission denied: Cannot write to output folder'",
+            "automatic_retry": "'🔄 Waiting 5 seconds for file to be released...'",
+            "if_still_locked": "'❌ File still locked. Close any programs using files in this folder.'"
+        },
+        "cannot_extract_cover": {
+            "what_went_wrong": "The EPUB doesn't have a cover image",
+            "what_you_see": "'⚠️ No cover image found in EPUB'",
+            "options": [
+                "1. Use a solid color background",
+                "2. Select your own image file",
+                "3. Use default placeholder image"
+            ]
+        }
+    },
+    "network_errors": {
+        "complete_offline": {
+            "when_detected": "At startup if Edge-TTS is configured",
+            "what_you_see": "'⚠️ No internet connection detected. Edge-TTS will not work.'",
+            "automatic_switch": "'✅ Switching to Piper (offline) as default engine.'"
+        },
+        "internet_drops_during_processing": {
+            "what_happens": "You lose internet while using Edge-TTS",
+            "what_you_see": "'❌ Lost connection mid-chapter'",
+            "automatic_recovery": "Retries, then offers to switch to Piper",
+            "completed_chapters_kept": "Everything processed so far is saved"
+        }
+    },
+    "crash_recovery": {
+        "if_program_crashes": {
+            "what_happens": "Power outage, computer crash, or program error",
+            "when_you_restart": "Checkpoint system kicks in",
+            "what_you_see": [
+                "'📌 CHECKPOINT FOUND'",
+                "'Book: The Uzumaki Legend'",
+                "'Progress: 7 of 25 chapters completed'",
+                "'Resume? (y/n)'"
+            ],
+            "if_you_resume": "Processing continues from chapter 8, using all previously completed work",
+            "if_you_dont_resume": "Starts completely fresh (previous work is discarded)"
+        }
+    },
+    "pattern_learning": {
+        "what_this_means": "The program remembers what errors you've encountered before",
+        "example_frequent_edge_tts_failures": {
+            "after_5_edge_tts_failures": "'💡 Suggestion: Edge-TTS has failed frequently. Consider switching to Piper as your default engine.'",
+            "you_can_accept_or_ignore": "This is just a suggestion, not forced"
+        },
+        "cascading_failure_detection": {
+            "what_it_is": "When 3 or more failures happen in a row",
+            "what_you_see": "'⚠️ Multiple consecutive failures detected. Pausing to avoid wasting resources.'",
+            "options": [
+                "1. Try a completely different TTS engine",
+                "2. Reduce processing speed",
+                "3. Stop and investigate the problem"
+            ]
+        }
+    },
+    "manual_recovery_option": {
+        "always_available": "At any error prompt, you can usually type 'skip' or 'cancel'",
+        "skip": "Skips the current chapter and continues with the next",
+        "cancel": "Stops processing entirely but keeps completed work"
+    }
+}

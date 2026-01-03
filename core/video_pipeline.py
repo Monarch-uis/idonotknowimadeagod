@@ -24,7 +24,9 @@ from typing import Generator
 
 
 # Import utility function for time formatting
-from core.utils import seconds_to_time_str
+
+# Import utility function for time formatting
+from core.utils import seconds_to_time_str, logger
 
 
 CAPTION_PRESETS = {
@@ -470,7 +472,9 @@ def _transcribe_segment_with_model(
         audio_path,
         language=language,
         vad_filter=True,
+        vad_parameters=dict(min_silence_duration_ms=500),
         word_timestamps=True,
+        # beam_size=5, # Default is 5, reverting greedy (1) for better accuracy
     )
     
     words = []
@@ -515,6 +519,15 @@ def generate_timeline_from_audio(
     # Get device preference from config (cpu, cuda, auto, etc.)
     device_pref = video_settings.get("caption_device", "auto")
     device = _detect_gpu_device(device_pref)
+    
+    # RAM-Aware Model Selection
+    from features.memory_manager import get_recommended_whisper_model, check_memory_status
+    safe_model = get_recommended_whisper_model(model_size)
+    if safe_model != model_size:
+        from core.utils import CP
+        print(CP(f"   ⚠️  Low RAM detected ({check_memory_status()}).", 'yellow'))
+        print(CP(f"   📉 Auto-downgrading model: {model_size} → {safe_model} for stability", 'yellow'))
+        model_size = safe_model
     
     # Auto-adjust compute_type if it's float16 but on CPU (often slow/unsupported)
     if device == "cpu" and compute_type == "float16":
@@ -681,6 +694,47 @@ def generate_timeline_from_audio(
             "language": language or "auto",
         },
     }
+
+def generate_timeline_with_alignment(
+    audio_path: str,
+    project_id: str,
+    config: Dict[str, Any],
+    text_content: Optional[str] = None,
+    time_offset: float = 0.0
+) -> Dict[str, Any]:
+    """
+    High-level wrapper for timeline generation with support for forced alignment 
+    (if text provided) and global timing offsets.
+    """
+    logger.info(f"Generating timeline with alignment (offset: {time_offset}s)")
+    
+    # Check if we should use forced alignment (CaptionGod style)
+    # For now, we use standard transcription as the primary alignment engine
+    # But we could integrate more complex aligners here if text_content is robust
+    
+    # 1. Generate base timeline
+    timeline_data = generate_timeline_from_audio(
+        audio_path=audio_path,
+        project_id=project_id,
+        config=config
+    )
+    
+    # 2. Apply global time offset if requested
+    if time_offset != 0:
+        logger.info(f"Applying time offset: {time_offset}s to all fragments")
+        for item in timeline_data.get("timeline", []):
+            if "start" in item:
+                item["start"] += time_offset
+            if "end" in item:
+                item["end"] += time_offset
+                
+        # Also update media metadata if needed, though usually media duration is relative
+        if "media" in timeline_data and "duration" in timeline_data["media"]:
+             # Note: We don't shift the media duration itself, 
+             # just where fragments sit in the global clock
+             pass
+
+    return timeline_data
 
 
 def generate_timeline_from_words(
@@ -944,8 +998,11 @@ def render_video_with_timeline(
         target_width = 1280
         if current_preset in presets:
             target_height = int(presets[current_preset].get("height", 720))
-            target_width = int(target_width * 16 / 9) if target_height == 720 else int(target_height * 16 / 9)
-            # Standard 16:9
+            # FIX: Calculate width from height to maintain 16:9, and ensure evenness
+            raw_width = int(target_height * 16 / 9)
+            target_width = (raw_width // 2) * 2  # Force even width
+            
+            # Standard 16:9 overrides for exactness
             if target_height == 480: target_width = 854
             elif target_height == 720: target_width = 1280
             elif target_height == 1080: target_width = 1920
@@ -1048,6 +1105,8 @@ def check_dependencies() -> bool:
 
 __all__ = [
     "generate_timeline_from_audio",
+    "generate_timeline_from_words",
+    "generate_timeline_with_alignment",
     "render_video_with_timeline",
     "check_dependencies",
 ]

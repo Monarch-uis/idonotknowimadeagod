@@ -81,3 +81,6 @@ piper_models/*.onnx
 # Recovery and queue files
 recovery_patterns.json
 processing_queue.json
+
+# Node modules
+node_modules/

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Fanfiction Legend
+Comment=Automate EPUB to Audiobook/Video conversion
+Exec=/home/dibakar/Desktop/idonotknowimadeagod/scripts/startgod.sh
+Icon=/home/dibakar/Desktop/idonotknowimadeagod/media/cover.jpg
+Terminal=true
+Categories=Utility;
+StartupNotify=true

@@ -1,0 +1,187 @@
+{
+    "document_title": "Queue Mode and Batch Processing - User Experience",
+    "description": "What you see and experience when processing multiple books at once",
+    "when_to_use_queue_mode": "When you have many EPUB files to process and don't want to manually configure each one as it finishes",
+    "entering_queue_mode": {
+        "from_main_menu": "Select option 3: 'Manage the processing queue'",
+        "from_command_line": "Start the program with: python epub_project_manager.py --queue"
+    },
+    "queue_mode_menu": {
+        "what_you_see": [
+            "═══════════════════════════════════════════════════",
+            "📋 QUEUE MANAGER",
+            "═══════════════════════════════════════════════════",
+            "Current queue status:",
+            "  • Pending: 3 books",
+            "  • Processing: 0",
+            "  • Completed: 5",
+            "  • Failed: 1",
+            "",
+            "Options:",
+            "  1. Add new book to queue",
+            "  2. View pending jobs",
+            "  3. Start processing queue",
+            "  4. Clear completed jobs",
+            "  5. Remove a job from queue",
+            "  6. Back to main menu"
+        ]
+    },
+    "adding_books_to_queue": {
+        "step_1": {
+            "what_you_do": "Select option 1: 'Add new book to queue'",
+            "what_you_see": "List of available EPUB files (same as normal mode)"
+        },
+        "step_2": {
+            "configuration": {
+                "what_happens": "You configure the book the same way as normal mode:",
+                "steps": [
+                    "Confirm or change book title",
+                    "Select TTS engine and voice",
+                    "Choose chapter range",
+                    "Set batch size",
+                    "Choose video quality"
+                ]
+            }
+        },
+        "step_3": {
+            "what_you_see_after": "'✅ Added to queue: The Uzumaki Legend (Chapters 1-25)'",
+            "then_asked": "'Add another book? (y/n)'",
+            "if_yes": "You go back to select another EPUB",
+            "if_no": "You return to queue menu"
+        },
+        "adding_multiple_books": {
+            "flow": [
+                "Add first book → Configure it → Added to queue",
+                "Add second book → Configure it → Added to queue",
+                "Add third book → Configure it → Added to queue",
+                "Say 'no' when asked to add more",
+                "Return to queue menu → Start processing"
+            ]
+        }
+    },
+    "viewing_pending_jobs": {
+        "what_you_see": [
+            "Pending jobs in queue:",
+            "══════════════════════════════════════════════════",
+            "1. The Uzumaki Legend",
+            "   Chapters: 1-25 | Engine: Piper | Quality: Balanced",
+            "   Added: 2025-12-15 10:30 AM",
+            "",
+            "2. One Piece SI - Become Pirate King",
+            "   Chapters: 1-50 | Engine: Piper | Quality: High",
+            "   Added: 2025-12-15 10:35 AM",
+            "",
+            "3. My Hero Academia Reborn",
+            "   Chapters: 1-15 | Engine: Edge-TTS | Quality: Fast",
+            "   Added: 2025-12-15 10:40 AM",
+            "══════════════════════════════════════════════════"
+        ]
+    },
+    "starting_queue_processing": {
+        "option_1_process_in_this_window": {
+            "what_happens": "The program processes all books one after another in the current terminal",
+            "what_you_see": "Each book is processed completely before moving to the next",
+            "you_cannot": "Close this window or your processing stops"
+        },
+        "option_2_spawn_worker": {
+            "what_you_are_asked": "'Start a background worker to process the queue? (y/n)'",
+            "if_yes": {
+                "what_happens": "A new terminal window opens to process the queue",
+                "what_you_see_in_original": "'✅ Worker started in new terminal. You can close this window.'",
+                "what_you_see_in_new_window": "The worker terminal shows processing progress"
+            },
+            "benefit": "You can close the original window and the processing continues"
+        }
+    },
+    "worker_mode_processing": {
+        "what_worker_does": "Grabs jobs from the queue one at a time and processes them",
+        "worker_display": [
+            "═══════════════════════════════════════════════════",
+            "👷 QUEUE WORKER - Processing Job 1 of 3",
+            "═══════════════════════════════════════════════════",
+            "📖 Book: The Uzumaki Legend",
+            "📑 Chapters: 1-25",
+            "",
+            "(Normal processing display appears here)"
+        ],
+        "when_job_completes": [
+            "'✅ Job completed: The Uzumaki Legend'",
+            "'📋 Moving to next job in queue...'",
+            "",
+            "═══════════════════════════════════════════════════",
+            "👷 QUEUE WORKER - Processing Job 2 of 3",
+            "═══════════════════════════════════════════════════"
+        ],
+        "when_all_jobs_complete": [
+            "'🎉 All jobs in queue completed!'",
+            "'   ✅ 3 successful'",
+            "'   ❌ 0 failed'",
+            "",
+            "'Worker will exit in 10 seconds...'"
+        ],
+        "if_job_fails": {
+            "what_happens": "The job is marked as failed and worker moves to next job",
+            "what_you_see": [
+                "'❌ Job failed: One Piece SI - Become Pirate King'",
+                "'   Error: TTS generation failed after 3 retries'",
+                "'',",
+                "'📋 Moving to next job in queue...'"
+            ],
+            "failed_job_stays_in_queue": "You can view failed jobs later and see what went wrong"
+        }
+    },
+    "checking_queue_status": {
+        "while_worker_is_running": {
+            "how": "Open another terminal, run the program, go to queue manager",
+            "what_you_see": [
+                "Current queue status:",
+                "  • Pending: 1 book",
+                "  • Processing: 1 (One Piece SI by Worker PID 12345)",
+                "  • Completed: 1",
+                "  • Failed: 0"
+            ]
+        }
+    },
+    "managing_queue": {
+        "clear_completed": {
+            "what_it_does": "Removes all completed jobs from the queue list",
+            "why": "Keeps your queue clean and easy to read"
+        },
+        "remove_job": {
+            "what_you_see": "Numbered list of pending jobs",
+            "what_you_do": "Type the number of the job to remove",
+            "confirmation": "'Remove job: The Uzumaki Legend? (y/n)'"
+        },
+        "view_failed_jobs": {
+            "what_you_see": [
+                "Failed jobs:",
+                "1. One Piece SI (Chapters 26-50)",
+                "   Failed at: 2025-12-15 14:30",
+                "   Error: FFmpeg rendering error"
+            ],
+            "options": [
+                "Retry this job",
+                "Remove from queue",
+                "View detailed error log"
+            ]
+        }
+    },
+    "queue_file_storage": {
+        "where_saved": "processing_queue.json in your project folder",
+        "what_this_means": {
+            "survives_restart": "If you close the program, your queue is preserved",
+            "can_add_anytime": "You can add more jobs while worker is running",
+            "shared_between_windows": "Multiple terminals can see the same queue"
+        }
+    },
+    "running_worker_at_startup": {
+        "command": "python epub_project_manager.py --worker",
+        "or": "bash start_worker.sh",
+        "what_this_does": "Starts directly in worker mode, immediately begins processing queue"
+    },
+    "stale_job_cleanup": {
+        "what_this_means": "If a job shows 'processing' but the worker crashed",
+        "what_you_see": "'⚠️ Found stale job: Last worker (PID 12345) is no longer running'",
+        "automatic_action": "The job is reset to 'pending' so it can be picked up again"
+    }
+}

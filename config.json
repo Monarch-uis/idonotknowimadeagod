@@ -33,7 +33,7 @@
         "intro_disclaimer_delay": 2.5
     },
     "video_settings": {
-        "enable_text_overlay": true,
+        "enable_text_overlay": false,
         "enable_chapter_markers": true,
         "enable_subtitles": true,
         "embed_subtitles": true,

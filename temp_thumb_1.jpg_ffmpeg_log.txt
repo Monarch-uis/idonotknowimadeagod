@@ -1,0 +1,538 @@
+Routing option strict to both codec and muxer layer
+[Parsed_scale_0 @ 0x5a88c9674200] w:1280 h:480 flags:'' interl:0
+[Parsed_subtitles_5 @ 0x5a88c9682040] libass API version: 0x1701000
+[Parsed_subtitles_5 @ 0x5a88c9682040] libass source: tarball: 0.17.1
+[Parsed_subtitles_5 @ 0x5a88c9682040] Raster: FreeType 2.13.2
+[Parsed_subtitles_5 @ 0x5a88c9682040] Shaper: FriBidi 1.0.13 (SIMPLE) HarfBuzz-ng 8.3.0 (COMPLEX)
+[Parsed_subtitles_5 @ 0x5a88c9682040] Initialized
+[Parsed_subtitles_5 @ 0x5a88c9682040] Using font provider fontconfig
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event: [Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 480
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Montserrat-Bold,45,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,0,2,32,32,33,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+[Parsed_subtitles_5 @ 0x5a88c9682040] 
+[Parsed_subtitles_5 @ 0x5a88c9682040] [0x5a88c96851c0] Style: Default,Montserrat-Bold,45,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,0,2,32,32,33,1
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 0, +2800: 0,0,Default,,0,0,0,,This video continues with chapter 2, Marvel,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 3200, +2240: 1,0,Default,,0,0,0,,the symbiote catalyst, chapter 2.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 5760, +2980: 2,0,Default,,0,0,0,,Suhan narrowed his eyes and the fine and white
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 8740, +2660: 3,0,Default,,0,0,0,,teeth in his mouth bit his lip until it turned
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 11400, +460: 4,0,Default,,0,0,0,,blue.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 12420, +2000: 5,0,Default,,0,0,0,,Hump, looking for something else.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 14980, +2780: 6,0,Default,,0,0,0,,Millions of symbiants are a lot to say, but
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 17760, +2940: 7,0,Default,,0,0,0,,among the billions of people on the earth, it's
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 20700, +1600: 8,0,Default,,0,0,0,,not that easy to find them.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 22840, +2980: 9,0,Default,,0,0,0,,Now that you have encountered them, don't let them go
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 25820, +2660: 10,0,Default,,0,0,0,,and leave them to you. Time is running
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 28480, +2900: 11,0,Default,,0,0,0,,out and we are going to die no matter what,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 31660, +1580: 12,0,Default,,0,0,0,,so why not give it a try?
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 33820, +2760: 13,0,Default,,0,0,0,,As the saying goes, if you give it a try, your
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 36580, +2180: 14,0,Default,,0,0,0,,bicycle will turn into a motorcycle.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 39460, +2820: 15,0,Default,,0,0,0,,If you fight hard, black soil will turn into
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 42280, +2800: 16,0,Default,,0,0,0,,gold. If you want to play, play big.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 45740, +2640: 17,0,Default,,0,0,0,,Suhan's tone revealed madness and perseverance
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 48380, +2580: 18,0,Default,,0,0,0,,and venom was excited when he heard it.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 50960, +2880: 19,0,Default,,0,0,0,,Tusk, Tusk, I didn't expect that you,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 54120, +2840: 20,0,Default,,0,0,0,,a little human, would be crazier and crueler than
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 56960, +1700: 21,0,Default,,0,0,0,,me, but I like it he he.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 59260, +2720: 22,0,Default,,0,0,0,,Suhan ignored Venom's words but paid
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 61980, +2800: 23,0,Default,,0,0,0,,close attention to the movements of the three people
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 64780, +820: 24,0,Default,,0,0,0,,opposite him.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 66180, +2940: 25,0,Default,,0,0,0,,The three of them came straight to the chocolate aisle.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 69760, +2420: 26,0,Default,,0,0,0,,Obviously, their purpose was the same as
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 72180, +2820: 27,0,Default,,0,0,0,,Suhan to buy chocolate to replenish energy.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 75540, +2820: 28,0,Default,,0,0,0,,Suhan quietly moved to the shells at the back,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 78720, +2640: 29,0,Default,,0,0,0,,where daily necessities were sold. Hammer,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 81740, +2980: 30,0,Default,,0,0,0,,wire, plastic, rope, shovel, electric saw,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 85040, +1380: 31,0,Default,,0,0,0,,everything is available.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 86940, +2980: 32,0,Default,,0,0,0,,Suhan glanced back and forth and finally
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 89920, +2300: 33,0,Default,,0,0,0,,locked his eyes on the chainsaw and shovel.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 92740, +2760: 34,0,Default,,0,0,0,,A chainsaw makes a sound when it starts, but a
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 95500, +1440: 35,0,Default,,0,0,0,,shovel is more convenient.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 97760, +2700: 36,0,Default,,0,0,0,,Suhan shouldn't picked up a shovel and hid it beside
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 100460, +380: 37,0,Default,,0,0,0,,him.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 101360, +2720: 38,0,Default,,0,0,0,,Venom, how long does it take for you to devour a
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 104080, +2680: 39,0,Default,,0,0,0,,symbiote? You don't need to kill the opponent,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 107120, +2940: 40,0,Default,,0,0,0,,but you can devour it directly, right? Venom
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 110060, +2720: 41,0,Default,,0,0,0,,heard this and immediately said excitedly, no,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 113100, +2860: 42,0,Default,,0,0,0,,as long as the other party can't resist, you can
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 115960, +2920: 43,0,Default,,0,0,0,,devour it. As long as I devour one, I
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 118880, +1700: 44,0,Default,,0,0,0,,can recover most of my injuries.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 121280, +2420: 45,0,Default,,0,0,0,,The devouring time can be long or short.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 124200, +2820: 46,0,Default,,0,0,0,,If you don't feel sick, I'll take one bite you
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 127020, +1460: 47,0,Default,,0,0,0,,can eat each other up.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 129060, +2880: 48,0,Default,,0,0,0,,Suhan's expression was cold, the corners of his
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 131940, +2840: 49,0,Default,,0,0,0,,lips raised, and he tightened the shovel in his
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 134780, +2980: 50,0,Default,,0,0,0,,hand. His ears were listening to the footsteps
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 137760, +2440: 51,0,Default,,0,0,0,,of the three people, three two one prepare.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 140820, +2920: 52,0,Default,,0,0,0,,Yuh, Suhan suddenly raised the shovel
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 143740, +2560: 53,0,Default,,0,0,0,,and slammed it down, just hearing at
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 146300, +2760: 54,0,Default,,0,0,0,,Wang's sound and a strong blow in his hand,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 149420, +1800: 55,0,Default,,0,0,0,,someone immediately fell to the ground.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 151840, +2920: 56,0,Default,,0,0,0,,Suhan took a look and saw that it was one of
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 154760, +1020: 57,0,Default,,0,0,0,,the two white men.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 156340, +920: 58,0,Default,,0,0,0,,Venom, now,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 157820, +2900: 59,0,Default,,0,0,0,,Suhan growled in his heart and Venom
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 160720, +2420: 60,0,Default,,0,0,0,,immediately responded excitedly, nice.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 163900, +2920: 61,0,Default,,0,0,0,,Then Suhan's body surface was suddenly covered
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 166820, +1660: 62,0,Default,,0,0,0,,with a layer of black mucus.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 169060, +2960: 63,0,Default,,0,0,0,,In an instant, Suhan completely transformed
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 172020, +2700: 64,0,Default,,0,0,0,,into a somewhat funny but extremely ferocious
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 174720, +500: 65,0,Default,,0,0,0,,creature.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 175740, +2840: 66,0,Default,,0,0,0,,I saw his big white teeth exposed and then
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 178580, +2940: 67,0,Default,,0,0,0,,opened them with a loud bang and nod at the white
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 181520, +2880: 68,0,Default,,0,0,0,,man on the ground without hesitation there should be a
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 184400, +2660: 69,0,Default,,0,0,0,,dubbing here. Exclamation chapter three
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 187060, +2860: 70,0,Default,,0,0,0,,royal or chapter three the royal atmosphere please
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 189920, +2900: 71,0,Default,,0,0,0,,ask for flower evaluation votes to collect
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 192820, +2480: 72,0,Default,,0,0,0,,the unexpected move leaves the other party
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 195300, +2780: 73,0,Default,,0,0,0,,defenseless, especially the guy who was
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 198080, +2660: 74,0,Default,,0,0,0,,knocked down by Suhan with a shovel didn't
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 200740, +2700: 75,0,Default,,0,0,0,,react. When he realized he was being
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 203440, +2520: 76,0,Default,,0,0,0,,attacked, he was greeted by a bloody mouth.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 206560, +2620: 77,0,Default,,0,0,0,,Ouch tilted the mouth of the Venom is like a
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 209180, +2840: 78,0,Default,,0,0,0,,snake's mouth, expanding to exceed one's
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 212020, +620: 79,0,Default,,0,0,0,,own body.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 213200, +2860: 80,0,Default,,0,0,0,,It swallows the other person into its mouth and
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 216060, +2600: 81,0,Default,,0,0,0,,then choose it up. The sound of cracking
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 218660, +2700: 82,0,Default,,0,0,0,,bones makes the hairs stand on the scalp
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 221360, +560: 83,0,Default,,0,0,0,,tingling,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 222460, +2680: 84,0,Default,,0,0,0,,seeing their companion being swallowed, the
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 225140, +2260: 85,0,Default,,0,0,0,,remaining two people reacted suddenly.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 228080, +3000: 86,0,Default,,0,0,0,,They entered the transformation state almost at the
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 231080, +2800: 87,0,Default,,0,0,0,,same time, two symbiot manifestations
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 233880, +2740: 88,0,Default,,0,0,0,,similar to Venom but distinctly different.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 236620, +2900: 89,0,Default,,0,0,0,,One on two the atmosphere instantly
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 239520, +2960: 90,0,Default,,0,0,0,,became tense. Click till to click till to
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 242480, +2820: 91,0,Default,,0,0,0,,the Venom was still chewing the man's body but the
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 245300, +2980: 92,0,Default,,0,0,0,,big and narrow eyes were staring at the remaining two
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 248280, +2740: 93,0,Default,,0,0,0,,people. To be honest the vitality
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 251020, +2900: 94,0,Default,,0,0,0,,replenished by swallowing the symbiote is enough to
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 253920, +1520: 95,0,Default,,0,0,0,,recover most of his injuries.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 256200, +2820: 96,0,Default,,0,0,0,,Under nonfatal circumstances he has many
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 259020, +3000: 97,0,Default,,0,0,0,,ways to recover from his injuries and there is
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 262020, +2860: 98,0,Default,,0,0,0,,no need to hunt down his own kind to replenish his
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 264880, +2740: 99,0,Default,,0,0,0,,vitality. In other words, Venom would
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 267620, +1840: 100,0,Default,,0,0,0,,choose not to fight if he could,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 270000, +2940: 101,0,Default,,0,0,0,,but if the other party won't let you go, then you
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 272940, +1440: 102,0,Default,,0,0,0,,can only give it a try.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 274960, +1120: 103,0,Default,,0,0,0,,You bastard, traitor,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 276600, +1920: 104,0,Default,,0,0,0,,you actually devour your own people.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 279060, +2980: 105,0,Default,,0,0,0,,The two symbiotes on the opposite side pointed at
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 282040, +1620: 106,0,Default,,0,0,0,,Venom and cursed angrily.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 284180, +2940: 107,0,Default,,0,0,0,,As for the Venom, Shen Harmony used her long tongue
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 287120, +2400: 108,0,Default,,0,0,0,,Harmony to lick her big white teeth.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 289960, +2020: 109,0,Default,,0,0,0,,I'll just eat it, how about it?
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 292500, +3000: 110,0,Default,,0,0,0,,The symbiote family also has its own rules and
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 295500, +660: 111,0,Default,,0,0,0,,regulations.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 296980, +2920: 112,0,Default,,0,0,0,,For example, you cannot devour your own kind.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 300560, +2940: 113,0,Default,,0,0,0,,Devouring one's own race is equivalent to a death
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 303500, +2840: 114,0,Default,,0,0,0,,penalty under human law and it is the kind
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 306340, +1620: 115,0,Default,,0,0,0,,that implicates nine races.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 308660, +2880: 116,0,Default,,0,0,0,,Therefore, once it is discovered that the symbiote
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 311540, +2580: 117,0,Default,,0,0,0,,is devouring its own race, it will definitely
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 314120, +2580: 118,0,Default,,0,0,0,,trigger a hunt by the entire population.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 317180, +2960: 119,0,Default,,0,0,0,,If not forced to do so, Venom would not choose
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 320140, +2860: 120,0,Default,,0,0,0,,to devour his own kind to save his life,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 323460, +2940: 121,0,Default,,0,0,0,,but now that he has made the decision he will not be
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 326400, +1280: 122,0,Default,,0,0,0,,afraid of the consequences.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 328500, +2240: 123,0,Default,,0,0,0,,Okay, you are asking for death.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 331260, +2900: 124,0,Default,,0,0,0,,The two symbiotes looked at each other and reached an
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 334160, +1880: 125,0,Default,,0,0,0,,agreement to kill Venom together.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 336580, +2760: 126,0,Default,,0,0,0,,I saw two monsters jumping up instantly
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 339340, +2740: 127,0,Default,,0,0,0,,and rushing towards Venom. But Venom
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 342080, +2720: 128,0,Default,,0,0,0,,grinned cruelly with big white teeth and then
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 344800, +2740: 129,0,Default,,0,0,0,,opened his hands and the sticky hands immediately
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 347540, +2900: 130,0,Default,,0,0,0,,turned into two giant eagle claws and
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 350440, +2800: 131,0,Default,,0,0,0,,fought back towards one of them. I saw
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 353240, +2880: 132,0,Default,,0,0,0,,him grabbing one of the symbiote, then raising it
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 356120, +3000: 133,0,Default,,0,0,0,,over his head, grabbing the head with one hand and
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 359120, +2580: 134,0,Default,,0,0,0,,the feet with the other and pulling hard to both
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 361700, +600: 135,0,Default,,0,0,0,,sides.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 362920, +160: 136,0,Default,,0,0,0,,His.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 363800, +2760: 137,0,Default,,0,0,0,,The symbiote was immediately torn apart by the
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 366560, +2780: 138,0,Default,,0,0,0,,Venom like a piece of pizza with muscles and
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 369340, +2940: 139,0,Default,,0,0,0,,flesh torn in half alive. What's even
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 372280, +2800: 140,0,Default,,0,0,0,,more cruel is that Venom immediately opened his
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 375080, +3000: 141,0,Default,,0,0,0,,mouth and stuffed the second symbiote into his mouth
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 378080, +2240: 142,0,Default,,0,0,0,,in half. Click, click,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 380800, +2840: 143,0,Default,,0,0,0,,there was another sound of chewing bones and meat.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 384200, +2520: 144,0,Default,,0,0,0,,At the same time, another symbiote's attack
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 386720, +2880: 145,0,Default,,0,0,0,,arrived. However, the symbiote's attack
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 389600, +2000: 146,0,Default,,0,0,0,,on Venom was ignored by Venom.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 392120, +2760: 147,0,Default,,0,0,0,,While chewing, he looked back and stared at the
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 394880, +2720: 148,0,Default,,0,0,0,,last symbiote, his narrow eyes full of
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 397600, +2540: 149,0,Default,,0,0,0,,teasing and ridicule. Little bastard,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 400560, +2020: 150,0,Default,,0,0,0,,can't you smell the royal aura on me?
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 403160, +2940: 151,0,Default,,0,0,0,,As soon as Venom said these words, the remaining
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 406100, +2960: 152,0,Default,,0,0,0,,symbiote suddenly woke up. Yes, they
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 409060, +2880: 153,0,Default,,0,0,0,,completely ignored this one they were attacked by Venom
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 411940, +780: 154,0,Default,,0,0,0,,just now.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 413300, +2940: 155,0,Default,,0,0,0,,Now being reminded by Venom, he realized that
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 416240, +1620: 156,0,Default,,0,0,0,,Venom's aura was unusual.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 418480, +1120: 157,0,Default,,0,0,0,,Emperorio family,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 420280, +2640: 158,0,Default,,0,0,0,,the symbiote said tremblingly. Venom
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 422920, +2920: 159,0,Default,,0,0,0,,bared his big white teeth and licked the head of
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 425840, +2060: 160,0,Default,,0,0,0,,his tongue harmony at the other party.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 428420, +2980: 161,0,Default,,0,0,0,,Although I am a loser among the royal family, I
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 431400, +2200: 162,0,Default,,0,0,0,,am still a royal family after all.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 434200, +2000: 163,0,Default,,0,0,0,,How can I be compared to you bastards?
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 437000, +1920: 164,0,Default,,0,0,0,,Any clan has a clear hierarchy.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 439700, +2960: 165,0,Default,,0,0,0,,Venom happened to be a high level one, so he ignored
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 442660, +1240: 166,0,Default,,0,0,0,,the opponent's attack.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 444480, +2900: 167,0,Default,,0,0,0,,At least, there won't be any big problems with
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 447380, +2940: 168,0,Default,,0,0,0,,this heart attack. It will only be a little painful
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 450320, +680: 169,0,Default,,0,0,0,,at most.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 451540, +3000: 170,0,Default,,0,0,0,,Spare my life. After the last symbiote
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 454540, +2980: 171,0,Default,,0,0,0,,realized Venom's identity, he immediately backed
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 457520, +2160: 172,0,Default,,0,0,0,,away in horror and begged for mercy.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 460260, +2620: 173,0,Default,,0,0,0,,However, Venom counter -attacked the moment he
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 462880, +2920: 174,0,Default,,0,0,0,,retreated. I saw him grabbing the opponent's
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 465800, +2860: 175,0,Default,,0,0,0,,body with both hands, then split open his mouth,
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 469060, +2940: 176,0,Default,,0,0,0,,and nod off the opponent's entire head. At
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 472000, +2680: 177,0,Default,,0,0,0,,this point, all three symbiotes were killed by
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 474680, +2780: 178,0,Default,,0,0,0,,Venom. Moreover, all three symbiotes
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 477460, +2880: 179,0,Default,,0,0,0,,were wiped clean by the Venom. Hiccup tilled
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 480340, +840: 180,0,Default,,0,0,0,,until diso -full.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 481740, +2980: 181,0,Default,,0,0,0,,Venom burped and retreated, letting Suhan take
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 484720, +1760: 182,0,Default,,0,0,0,,control of his body again vomit.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 487040, +1940: 183,0,Default,,0,0,0,,Exclamation Venom was content.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 489620, +2640: 184,0,Default,,0,0,0,,But the moment Suhan gained control of his
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 492260, +2140: 185,0,Default,,0,0,0,,body, he knelt down and vomited.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 494960, +2820: 186,0,Default,,0,0,0,,Because of the permanent fusion, he and Venom share
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 497780, +2940: 187,0,Default,,0,0,0,,one body and are truly one body, so
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 500720, +2860: 188,0,Default,,0,0,0,,now he can clearly feel the full smell of blood
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 503580, +860: 189,0,Default,,0,0,0,,and raw meat.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 505020, +2860: 190,0,Default,,0,0,0,,The swelling in his stomach made him feel like he
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 507880, +1420: 191,0,Default,,0,0,0,,was carrying a baby alone.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 509840, +2820: 192,0,Default,,0,0,0,,After all, that is the energy of three people.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 512900, +2280: 193,0,Default,,0,0,0,,I'll write legends. That's it for today.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 515740, +3000: 194,0,Default,,0,0,0,,If you're ready for the next chapter, smash that like
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 518740, +2360: 195,0,Default,,0,0,0,,button and flood the comments right now.
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 521540, +2720: 196,0,Default,,0,0,0,,Remember, we've got three days to prove this
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 524260, +2960: 197,0,Default,,0,0,0,,story needs to continue. Subscribe so you
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 527220, +2600: 198,0,Default,,0,0,0,,don't miss the drop, and I'll meet you in the next
+[Parsed_subtitles_5 @ 0x5a88c9682040] Event at 529820, +580: 199,0,Default,,0,0,0,,audiobook.
+[AVIOContext @ 0x5a88c968e340] Statistics: 18433 bytes read, 0 seeks
+[Parsed_fps_3 @ 0x5a88c9681ac0] 0 frames in, 0 frames out; 0 frames dropped, 0 frames duplicated.
+[AVIOContext @ 0x5a88c9673300] Statistics: 80976 bytes read, 0 seeks
+    Last message repeated 61 times
+Input #0, image2, from '/home/dibakar/Desktop/idonotknowimadeagod/Novels/Active Novels/MARVEL_ The Symbiote Catalyst/temp_render_files/temp_thumb_1.jpg':
+  Duration: 00:00:00.04, start: 0.000000, bitrate: 16195 kb/s
+  Stream #0:0: Video: mjpeg (Baseline), 1 reference frame, yuvj420p(pc, bt470bg/unknown/unknown, center), 854x480 [SAR 1:1 DAR 427:240], 25 fps, 25 tbr, 25 tbn
+[mp3 @ 0x5a88c9673d80] Skipping 0 bytes of junk at 670.
+Input #1, mp3, from '/home/dibakar/Desktop/idonotknowimadeagod/Novels/Active Novels/MARVEL_ The Symbiote Catalyst/audio/MARVEL_ The Symbiote Catalyst (Ch 2-2)_render_mix.mp3':
+  Metadata:
+    encoder         : Lavf61.1.100
+  Duration: 00:08:51.07, start: 0.025057, bitrate: 192 kb/s
+  Stream #1:0: Audio: mp3, 44100 Hz, stereo, fltp, 192 kb/s
+    Metadata:
+      encoder         : Lavc61.3.
+[out#0/mp4 @ 0x5a88c96e9640] Adding streams from explicit maps...
+[out#0/mp4 @ 0x5a88c96e9640] Creating output stream from an explicitly mapped complex filtergraph 0, output [s5]
+[vost#0:0/libx264 @ 0x5a88c96f5680] Created video stream from complex filtergraph 0:[subtitles:default]
+[vost#0:0/libx264 @ 0x5a88c96f5680] 
+[aost#0:1/aac @ 0x5a88c96ddec0] Created audio stream from input stream 1:0
+Stream mapping:
+  Stream #0:0 (mjpeg) -> scale:default (graph 0)
+  subtitles:default (graph 0) -> Stream #0:0 (libx264)
+  Stream #1:0 -> #0:1 (mp3 (mp3float) -> aac (native))
+Press [q] to stop, [?] for help
+[Parsed_scale_0 @ 0x5a88c96c1e00] w:1280 h:480 flags:'' interl:0
+[Parsed_subtitles_5 @ 0x5a88c969a040] libass API version: 0x1701000
+[Parsed_subtitles_5 @ 0x5a88c969a040] libass source: tarball: 0.17.1
+[Parsed_subtitles_5 @ 0x5a88c969a040] Raster: FreeType 2.13.2
+[Parsed_subtitles_5 @ 0x5a88c969a040] Shaper: FriBidi 1.0.13 (SIMPLE) HarfBuzz-ng 8.3.0 (COMPLEX)
+[Parsed_subtitles_5 @ 0x5a88c969a040] Initialized
+[Parsed_subtitles_5 @ 0x5a88c969a040] Using font provider fontconfig
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event: [Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 480
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Montserrat-Bold,45,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,0,2,32,32,33,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+[Parsed_subtitles_5 @ 0x5a88c969a040] 
+[Parsed_subtitles_5 @ 0x5a88c969a040] [0x5a88c96a6170] Style: Default,Montserrat-Bold,45,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,0,2,32,32,33,1
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 0, +2800: 0,0,Default,,0,0,0,,This video continues with chapter 2, Marvel,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 3200, +2240: 1,0,Default,,0,0,0,,the symbiote catalyst, chapter 2.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 5760, +2980: 2,0,Default,,0,0,0,,Suhan narrowed his eyes and the fine and white
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 8740, +2660: 3,0,Default,,0,0,0,,teeth in his mouth bit his lip until it turned
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 11400, +460: 4,0,Default,,0,0,0,,blue.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 12420, +2000: 5,0,Default,,0,0,0,,Hump, looking for something else.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 14980, +2780: 6,0,Default,,0,0,0,,Millions of symbiants are a lot to say, but
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 17760, +2940: 7,0,Default,,0,0,0,,among the billions of people on the earth, it's
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 20700, +1600: 8,0,Default,,0,0,0,,not that easy to find them.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 22840, +2980: 9,0,Default,,0,0,0,,Now that you have encountered them, don't let them go
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 25820, +2660: 10,0,Default,,0,0,0,,and leave them to you. Time is running
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 28480, +2900: 11,0,Default,,0,0,0,,out and we are going to die no matter what,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 31660, +1580: 12,0,Default,,0,0,0,,so why not give it a try?
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 33820, +2760: 13,0,Default,,0,0,0,,As the saying goes, if you give it a try, your
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 36580, +2180: 14,0,Default,,0,0,0,,bicycle will turn into a motorcycle.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 39460, +2820: 15,0,Default,,0,0,0,,If you fight hard, black soil will turn into
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 42280, +2800: 16,0,Default,,0,0,0,,gold. If you want to play, play big.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 45740, +2640: 17,0,Default,,0,0,0,,Suhan's tone revealed madness and perseverance
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 48380, +2580: 18,0,Default,,0,0,0,,and venom was excited when he heard it.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 50960, +2880: 19,0,Default,,0,0,0,,Tusk, Tusk, I didn't expect that you,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 54120, +2840: 20,0,Default,,0,0,0,,a little human, would be crazier and crueler than
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 56960, +1700: 21,0,Default,,0,0,0,,me, but I like it he he.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 59260, +2720: 22,0,Default,,0,0,0,,Suhan ignored Venom's words but paid
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 61980, +2800: 23,0,Default,,0,0,0,,close attention to the movements of the three people
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 64780, +820: 24,0,Default,,0,0,0,,opposite him.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 66180, +2940: 25,0,Default,,0,0,0,,The three of them came straight to the chocolate aisle.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 69760, +2420: 26,0,Default,,0,0,0,,Obviously, their purpose was the same as
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 72180, +2820: 27,0,Default,,0,0,0,,Suhan to buy chocolate to replenish energy.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 75540, +2820: 28,0,Default,,0,0,0,,Suhan quietly moved to the shells at the back,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 78720, +2640: 29,0,Default,,0,0,0,,where daily necessities were sold. Hammer,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 81740, +2980: 30,0,Default,,0,0,0,,wire, plastic, rope, shovel, electric saw,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 85040, +1380: 31,0,Default,,0,0,0,,everything is available.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 86940, +2980: 32,0,Default,,0,0,0,,Suhan glanced back and forth and finally
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 89920, +2300: 33,0,Default,,0,0,0,,locked his eyes on the chainsaw and shovel.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 92740, +2760: 34,0,Default,,0,0,0,,A chainsaw makes a sound when it starts, but a
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 95500, +1440: 35,0,Default,,0,0,0,,shovel is more convenient.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 97760, +2700: 36,0,Default,,0,0,0,,Suhan shouldn't picked up a shovel and hid it beside
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 100460, +380: 37,0,Default,,0,0,0,,him.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 101360, +2720: 38,0,Default,,0,0,0,,Venom, how long does it take for you to devour a
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 104080, +2680: 39,0,Default,,0,0,0,,symbiote? You don't need to kill the opponent,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 107120, +2940: 40,0,Default,,0,0,0,,but you can devour it directly, right? Venom
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 110060, +2720: 41,0,Default,,0,0,0,,heard this and immediately said excitedly, no,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 113100, +2860: 42,0,Default,,0,0,0,,as long as the other party can't resist, you can
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 115960, +2920: 43,0,Default,,0,0,0,,devour it. As long as I devour one, I
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 118880, +1700: 44,0,Default,,0,0,0,,can recover most of my injuries.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 121280, +2420: 45,0,Default,,0,0,0,,The devouring time can be long or short.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 124200, +2820: 46,0,Default,,0,0,0,,If you don't feel sick, I'll take one bite you
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 127020, +1460: 47,0,Default,,0,0,0,,can eat each other up.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 129060, +2880: 48,0,Default,,0,0,0,,Suhan's expression was cold, the corners of his
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 131940, +2840: 49,0,Default,,0,0,0,,lips raised, and he tightened the shovel in his
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 134780, +2980: 50,0,Default,,0,0,0,,hand. His ears were listening to the footsteps
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 137760, +2440: 51,0,Default,,0,0,0,,of the three people, three two one prepare.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 140820, +2920: 52,0,Default,,0,0,0,,Yuh, Suhan suddenly raised the shovel
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 143740, +2560: 53,0,Default,,0,0,0,,and slammed it down, just hearing at
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 146300, +2760: 54,0,Default,,0,0,0,,Wang's sound and a strong blow in his hand,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 149420, +1800: 55,0,Default,,0,0,0,,someone immediately fell to the ground.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 151840, +2920: 56,0,Default,,0,0,0,,Suhan took a look and saw that it was one of
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 154760, +1020: 57,0,Default,,0,0,0,,the two white men.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 156340, +920: 58,0,Default,,0,0,0,,Venom, now,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 157820, +2900: 59,0,Default,,0,0,0,,Suhan growled in his heart and Venom
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 160720, +2420: 60,0,Default,,0,0,0,,immediately responded excitedly, nice.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 163900, +2920: 61,0,Default,,0,0,0,,Then Suhan's body surface was suddenly covered
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 166820, +1660: 62,0,Default,,0,0,0,,with a layer of black mucus.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 169060, +2960: 63,0,Default,,0,0,0,,In an instant, Suhan completely transformed
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 172020, +2700: 64,0,Default,,0,0,0,,into a somewhat funny but extremely ferocious
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 174720, +500: 65,0,Default,,0,0,0,,creature.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 175740, +2840: 66,0,Default,,0,0,0,,I saw his big white teeth exposed and then
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 178580, +2940: 67,0,Default,,0,0,0,,opened them with a loud bang and nod at the white
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 181520, +2880: 68,0,Default,,0,0,0,,man on the ground without hesitation there should be a
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 184400, +2660: 69,0,Default,,0,0,0,,dubbing here. Exclamation chapter three
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 187060, +2860: 70,0,Default,,0,0,0,,royal or chapter three the royal atmosphere please
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 189920, +2900: 71,0,Default,,0,0,0,,ask for flower evaluation votes to collect
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 192820, +2480: 72,0,Default,,0,0,0,,the unexpected move leaves the other party
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 195300, +2780: 73,0,Default,,0,0,0,,defenseless, especially the guy who was
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 198080, +2660: 74,0,Default,,0,0,0,,knocked down by Suhan with a shovel didn't
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 200740, +2700: 75,0,Default,,0,0,0,,react. When he realized he was being
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 203440, +2520: 76,0,Default,,0,0,0,,attacked, he was greeted by a bloody mouth.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 206560, +2620: 77,0,Default,,0,0,0,,Ouch tilted the mouth of the Venom is like a
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 209180, +2840: 78,0,Default,,0,0,0,,snake's mouth, expanding to exceed one's
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 212020, +620: 79,0,Default,,0,0,0,,own body.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 213200, +2860: 80,0,Default,,0,0,0,,It swallows the other person into its mouth and
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 216060, +2600: 81,0,Default,,0,0,0,,then choose it up. The sound of cracking
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 218660, +2700: 82,0,Default,,0,0,0,,bones makes the hairs stand on the scalp
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 221360, +560: 83,0,Default,,0,0,0,,tingling,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 222460, +2680: 84,0,Default,,0,0,0,,seeing their companion being swallowed, the
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 225140, +2260: 85,0,Default,,0,0,0,,remaining two people reacted suddenly.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 228080, +3000: 86,0,Default,,0,0,0,,They entered the transformation state almost at the
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 231080, +2800: 87,0,Default,,0,0,0,,same time, two symbiot manifestations
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 233880, +2740: 88,0,Default,,0,0,0,,similar to Venom but distinctly different.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 236620, +2900: 89,0,Default,,0,0,0,,One on two the atmosphere instantly
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 239520, +2960: 90,0,Default,,0,0,0,,became tense. Click till to click till to
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 242480, +2820: 91,0,Default,,0,0,0,,the Venom was still chewing the man's body but the
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 245300, +2980: 92,0,Default,,0,0,0,,big and narrow eyes were staring at the remaining two
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 248280, +2740: 93,0,Default,,0,0,0,,people. To be honest the vitality
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 251020, +2900: 94,0,Default,,0,0,0,,replenished by swallowing the symbiote is enough to
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 253920, +1520: 95,0,Default,,0,0,0,,recover most of his injuries.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 256200, +2820: 96,0,Default,,0,0,0,,Under nonfatal circumstances he has many
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 259020, +3000: 97,0,Default,,0,0,0,,ways to recover from his injuries and there is
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 262020, +2860: 98,0,Default,,0,0,0,,no need to hunt down his own kind to replenish his
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 264880, +2740: 99,0,Default,,0,0,0,,vitality. In other words, Venom would
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 267620, +1840: 100,0,Default,,0,0,0,,choose not to fight if he could,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 270000, +2940: 101,0,Default,,0,0,0,,but if the other party won't let you go, then you
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 272940, +1440: 102,0,Default,,0,0,0,,can only give it a try.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 274960, +1120: 103,0,Default,,0,0,0,,You bastard, traitor,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 276600, +1920: 104,0,Default,,0,0,0,,you actually devour your own people.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 279060, +2980: 105,0,Default,,0,0,0,,The two symbiotes on the opposite side pointed at
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 282040, +1620: 106,0,Default,,0,0,0,,Venom and cursed angrily.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 284180, +2940: 107,0,Default,,0,0,0,,As for the Venom, Shen Harmony used her long tongue
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 287120, +2400: 108,0,Default,,0,0,0,,Harmony to lick her big white teeth.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 289960, +2020: 109,0,Default,,0,0,0,,I'll just eat it, how about it?
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 292500, +3000: 110,0,Default,,0,0,0,,The symbiote family also has its own rules and
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 295500, +660: 111,0,Default,,0,0,0,,regulations.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 296980, +2920: 112,0,Default,,0,0,0,,For example, you cannot devour your own kind.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 300560, +2940: 113,0,Default,,0,0,0,,Devouring one's own race is equivalent to a death
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 303500, +2840: 114,0,Default,,0,0,0,,penalty under human law and it is the kind
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 306340, +1620: 115,0,Default,,0,0,0,,that implicates nine races.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 308660, +2880: 116,0,Default,,0,0,0,,Therefore, once it is discovered that the symbiote
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 311540, +2580: 117,0,Default,,0,0,0,,is devouring its own race, it will definitely
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 314120, +2580: 118,0,Default,,0,0,0,,trigger a hunt by the entire population.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 317180, +2960: 119,0,Default,,0,0,0,,If not forced to do so, Venom would not choose
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 320140, +2860: 120,0,Default,,0,0,0,,to devour his own kind to save his life,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 323460, +2940: 121,0,Default,,0,0,0,,but now that he has made the decision he will not be
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 326400, +1280: 122,0,Default,,0,0,0,,afraid of the consequences.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 328500, +2240: 123,0,Default,,0,0,0,,Okay, you are asking for death.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 331260, +2900: 124,0,Default,,0,0,0,,The two symbiotes looked at each other and reached an
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 334160, +1880: 125,0,Default,,0,0,0,,agreement to kill Venom together.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 336580, +2760: 126,0,Default,,0,0,0,,I saw two monsters jumping up instantly
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 339340, +2740: 127,0,Default,,0,0,0,,and rushing towards Venom. But Venom
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 342080, +2720: 128,0,Default,,0,0,0,,grinned cruelly with big white teeth and then
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 344800, +2740: 129,0,Default,,0,0,0,,opened his hands and the sticky hands immediately
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 347540, +2900: 130,0,Default,,0,0,0,,turned into two giant eagle claws and
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 350440, +2800: 131,0,Default,,0,0,0,,fought back towards one of them. I saw
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 353240, +2880: 132,0,Default,,0,0,0,,him grabbing one of the symbiote, then raising it
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 356120, +3000: 133,0,Default,,0,0,0,,over his head, grabbing the head with one hand and
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 359120, +2580: 134,0,Default,,0,0,0,,the feet with the other and pulling hard to both
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 361700, +600: 135,0,Default,,0,0,0,,sides.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 362920, +160: 136,0,Default,,0,0,0,,His.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 363800, +2760: 137,0,Default,,0,0,0,,The symbiote was immediately torn apart by the
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 366560, +2780: 138,0,Default,,0,0,0,,Venom like a piece of pizza with muscles and
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 369340, +2940: 139,0,Default,,0,0,0,,flesh torn in half alive. What's even
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 372280, +2800: 140,0,Default,,0,0,0,,more cruel is that Venom immediately opened his
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 375080, +3000: 141,0,Default,,0,0,0,,mouth and stuffed the second symbiote into his mouth
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 378080, +2240: 142,0,Default,,0,0,0,,in half. Click, click,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 380800, +2840: 143,0,Default,,0,0,0,,there was another sound of chewing bones and meat.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 384200, +2520: 144,0,Default,,0,0,0,,At the same time, another symbiote's attack
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 386720, +2880: 145,0,Default,,0,0,0,,arrived. However, the symbiote's attack
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 389600, +2000: 146,0,Default,,0,0,0,,on Venom was ignored by Venom.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 392120, +2760: 147,0,Default,,0,0,0,,While chewing, he looked back and stared at the
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 394880, +2720: 148,0,Default,,0,0,0,,last symbiote, his narrow eyes full of
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 397600, +2540: 149,0,Default,,0,0,0,,teasing and ridicule. Little bastard,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 400560, +2020: 150,0,Default,,0,0,0,,can't you smell the royal aura on me?
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 403160, +2940: 151,0,Default,,0,0,0,,As soon as Venom said these words, the remaining
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 406100, +2960: 152,0,Default,,0,0,0,,symbiote suddenly woke up. Yes, they
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 409060, +2880: 153,0,Default,,0,0,0,,completely ignored this one they were attacked by Venom
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 411940, +780: 154,0,Default,,0,0,0,,just now.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 413300, +2940: 155,0,Default,,0,0,0,,Now being reminded by Venom, he realized that
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 416240, +1620: 156,0,Default,,0,0,0,,Venom's aura was unusual.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 418480, +1120: 157,0,Default,,0,0,0,,Emperorio family,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 420280, +2640: 158,0,Default,,0,0,0,,the symbiote said tremblingly. Venom
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 422920, +2920: 159,0,Default,,0,0,0,,bared his big white teeth and licked the head of
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 425840, +2060: 160,0,Default,,0,0,0,,his tongue harmony at the other party.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 428420, +2980: 161,0,Default,,0,0,0,,Although I am a loser among the royal family, I
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 431400, +2200: 162,0,Default,,0,0,0,,am still a royal family after all.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 434200, +2000: 163,0,Default,,0,0,0,,How can I be compared to you bastards?
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 437000, +1920: 164,0,Default,,0,0,0,,Any clan has a clear hierarchy.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 439700, +2960: 165,0,Default,,0,0,0,,Venom happened to be a high level one, so he ignored
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 442660, +1240: 166,0,Default,,0,0,0,,the opponent's attack.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 444480, +2900: 167,0,Default,,0,0,0,,At least, there won't be any big problems with
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 447380, +2940: 168,0,Default,,0,0,0,,this heart attack. It will only be a little painful
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 450320, +680: 169,0,Default,,0,0,0,,at most.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 451540, +3000: 170,0,Default,,0,0,0,,Spare my life. After the last symbiote
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 454540, +2980: 171,0,Default,,0,0,0,,realized Venom's identity, he immediately backed
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 457520, +2160: 172,0,Default,,0,0,0,,away in horror and begged for mercy.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 460260, +2620: 173,0,Default,,0,0,0,,However, Venom counter -attacked the moment he
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 462880, +2920: 174,0,Default,,0,0,0,,retreated. I saw him grabbing the opponent's
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 465800, +2860: 175,0,Default,,0,0,0,,body with both hands, then split open his mouth,
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 469060, +2940: 176,0,Default,,0,0,0,,and nod off the opponent's entire head. At
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 472000, +2680: 177,0,Default,,0,0,0,,this point, all three symbiotes were killed by
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 474680, +2780: 178,0,Default,,0,0,0,,Venom. Moreover, all three symbiotes
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 477460, +2880: 179,0,Default,,0,0,0,,were wiped clean by the Venom. Hiccup tilled
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 480340, +840: 180,0,Default,,0,0,0,,until diso -full.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 481740, +2980: 181,0,Default,,0,0,0,,Venom burped and retreated, letting Suhan take
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 484720, +1760: 182,0,Default,,0,0,0,,control of his body again vomit.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 487040, +1940: 183,0,Default,,0,0,0,,Exclamation Venom was content.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 489620, +2640: 184,0,Default,,0,0,0,,But the moment Suhan gained control of his
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 492260, +2140: 185,0,Default,,0,0,0,,body, he knelt down and vomited.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 494960, +2820: 186,0,Default,,0,0,0,,Because of the permanent fusion, he and Venom share
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 497780, +2940: 187,0,Default,,0,0,0,,one body and are truly one body, so
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 500720, +2860: 188,0,Default,,0,0,0,,now he can clearly feel the full smell of blood
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 503580, +860: 189,0,Default,,0,0,0,,and raw meat.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 505020, +2860: 190,0,Default,,0,0,0,,The swelling in his stomach made him feel like he
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 507880, +1420: 191,0,Default,,0,0,0,,was carrying a baby alone.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 509840, +2820: 192,0,Default,,0,0,0,,After all, that is the energy of three people.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 512900, +2280: 193,0,Default,,0,0,0,,I'll write legends. That's it for today.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 515740, +3000: 194,0,Default,,0,0,0,,If you're ready for the next chapter, smash that like
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 518740, +2360: 195,0,Default,,0,0,0,,button and flood the comments right now.
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 521540, +2720: 196,0,Default,,0,0,0,,Remember, we've got three days to prove this
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 524260, +2960: 197,0,Default,,0,0,0,,story needs to continue. Subscribe so you
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 527220, +2600: 198,0,Default,,0,0,0,,don't miss the drop, and I'll meet you in the next
+[Parsed_subtitles_5 @ 0x5a88c969a040] Event at 529820, +580: 199,0,Default,,0,0,0,,audiobook.
+[AVIOContext @ 0x5a88c96e7d00] Statistics: 18433 bytes read, 0 seeks
+[graph 0 input from stream 0:0 @ 0x5a88c9673200] w:854 h:480 pixfmt:yuvj420p tb:1/25 fr:25/1 sar:1/1
+[swscaler @ 0x5a88c9f5b8c0] deprecated pixel format used, make sure you did set range correctly
+[Parsed_scale_0 @ 0x5a88c96c1e00] w:854 h:480 fmt:yuvj420p sar:1/1 -> w:854 h:480 fmt:yuv420p sar:1/1 flags:0x00000004
+[Parsed_pad_1 @ 0x5a88c96a6b00] w:854 h:480 -> w:1280 h:480 x:212 y:0 color:0x000000FF
+[Parsed_fps_3 @ 0x5a88c9685900] fps=24/1
+[swscaler @ 0x5a88ca00e0c0] deprecated pixel format used, make sure you did set range correctly
+[Parsed_scale_0 @ 0x5a88c96c1e00] w:854 h:480 fmt:yuvj420p sar:1/1 -> w:854 h:480 fmt:yuv420p sar:1/1 flags:0x00000004
+[swscaler @ 0x5a88ca00e0c0] deprecated pixel format used, make sure you did set range correctly
+[Parsed_scale_0 @ 0x5a88c96c1e00] w:854 h:480 fmt:yuvj420p sar:1/1 -> w:854 h:480 fmt:yuv420p sar:1/1 flags:0x00000004
+[swscaler @ 0x5a88ca00e0c0] deprecated pixel format used, make sure you did set range correctly
+[Parsed_scale_0 @ 0x5a88c96c1e00] w:854 h:480 fmt:yuvj420p sar:1/1 -> w:854 h:480 fmt:yuv420p sar:1/1 flags:0x00000004
+[Parsed_fps_3 @ 0x5a88c9685900] Set first pts to 0
+[Parsed_subtitles_5 @ 0x5a88c969a040] fontselect: (Montserrat-Bold, 700, 0) -> /usr/share/fonts/truetype/noto/NotoSans-Bold.ttf, 0, NotoSans-Bold
+[libx264 @ 0x5a88c96f5a40] using SAR=1/1
+[libx264 @ 0x5a88c96f5a40] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2
+[libx264 @ 0x5a88c96f5a40] profile Constrained Baseline, level 3.1, 4:2:0, 8-bit
+[libx264 @ 0x5a88c96f5a40] 264 - core 164 r3108 31e19f9 - H.264/MPEG-4 AVC codec - Copyleft 2003-2023 - http://www.videolan.org/x264.html - options: cabac=0 ref=1 deblock=0:0:0 analyse=0:0 me=dia subme=0 psy=1 psy_rd=1.00:0.00 mixed_ref=0 me_range=16 chroma_me=1 trellis=0 8x8dct=0 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=0 threads=15 lookahead_threads=2 sliced_threads=0 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=0 weightp=0 keyint=250 keyint_min=24 scenecut=0 intra_refresh=0 rc=crf mbtree=0 crf=30.0 qcomp=0.60 qpmin=0 qpmax=69 qpstep=4 ip_ratio=1.40 aq=0
+[graph_1_in_1_0 @ 0x5a88ca7a8b00] tb:1/44100 samplefmt:fltp samplerate:44100 chlayout:stereo
+Output #0, mp4, to '/home/dibakar/Desktop/idonotknowimadeagod/Novels/Active Novels/MARVEL_ The Symbiote Catalyst/youtubevideo/MARVEL_ The Symbiote Catalyst (Ch 2-2).mp4':
+  Metadata:
+    encoder         : Lavf60.16.100
+  Stream #0:0: Video: h264, 1 reference frame (avc1 / 0x31637661), yuv420p(tv, bt470bg/unknown/unknown, progressive, center), 1280x480 (0x0) [SAR 1:1 DAR 8:3], q=2-31, 24 fps, 12288 tbn
+    Metadata:
+      encoder         : Lavc60.31.102 libx264
+    Side data:
+      cpb: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+  Stream #0:1: Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, delay 1024, 128 kb/s
+    Metadata:
+      encoder         : Lavc60.31.102 aac
+[AVIOContext @ 0x7b0ef0000e40] Statistics: 80976 bytes read, 0 seeks
+    Last message repeated 13218 times
+[in#1/mp3 @ 0x5a88c97060c0] EOF while reading input
+[in#1/mp3 @ 0x5a88c97060c0] Terminating demuxer thread
+[AVIOContext @ 0x7b0ef0000e40] Statistics: 80976 bytes read, 0 seeks
+    Last message repeated 5 times
+[aist#1:0/mp3 @ 0x5a88c968bb00] Decoder thread received EOF packet
+[aist#1:0/mp3 @ 0x5a88c968bb00] Decoder returned EOF, finishing
+[aist#1:0/mp3 @ 0x5a88c968bb00] Terminating decoder thread
+No more output streams to write to, finishing.
+[vist#0:0/mjpeg @ 0x5a88c96dcf80] Decoder thread received EOF packet
+[vist#0:0/mjpeg @ 0x5a88c96dcf80] Decoder returned EOF, finishing
+[vist#0:0/mjpeg @ 0x5a88c96dcf80] Terminating decoder thread
+[out#0/mp4 @ 0x5a88c96e9640] All streams finished
+[out#0/mp4 @ 0x5a88c96e9640] Terminating muxer thread
+[AVIOContext @ 0x5a88c96f6ec0] Statistics: 15526965 bytes written, 14 seeks, 71 writeouts
+[out#0/mp4 @ 0x5a88c96e9640] Output file #0 (/home/dibakar/Desktop/idonotknowimadeagod/Novels/Active Novels/MARVEL_ The Symbiote Catalyst/youtubevideo/MARVEL_ The Symbiote Catalyst (Ch 2-2).mp4):
+[out#0/mp4 @ 0x5a88c96e9640]   Output stream #0:0 (video): 12744 frames encoded; 12744 packets muxed (6155415 bytes); 
+[out#0/mp4 @ 0x5a88c96e9640]   Output stream #0:1 (audio): 22870 frames encoded (23418864 samples); 22871 packets muxed (9062609 bytes); 
+[out#0/mp4 @ 0x5a88c96e9640]   Total: 35615 packets (15218024 bytes) muxed
+[out#0/mp4 @ 0x5a88c96e9640] video:6011kB audio:8850kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 2.029915%
+frame=12744 fps=336 q=-1.0 Lsize=   15163kB time=00:08:51.01 bitrate= 233.9kbits/s speed=  14x    
+[AVIOContext @ 0x5a88c9672640] Statistics: 15882 bytes written, 0 seeks, 77 writeouts
+[Parsed_fps_3 @ 0x5a88c9685900] 13277 frames in, 12746 frames out; 531 frames dropped, 0 frames duplicated.
+[libx264 @ 0x5a88c96f5a40] frame I:51    Avg QP:16.88  size: 63586
+[libx264 @ 0x5a88c96f5a40] frame P:12693 Avg QP:19.70  size:   229
+[libx264 @ 0x5a88c96f5a40] mb I  I16..4: 100.0%  0.0%  0.0%
+[libx264 @ 0x5a88c96f5a40] mb P  I16..4:  0.0%  0.0%  0.0%  P16..4:  0.4%  0.0%  0.0%  0.0%  0.0%    skip:99.5%
+[libx264 @ 0x5a88c96f5a40] coded y,uvDC,uvAC intra: 37.7% 17.7% 8.4% inter: 0.2% 0.0% 0.0%
+[libx264 @ 0x5a88c96f5a40] i16 v,h,dc,p: 55% 18%  9% 18%
+[libx264 @ 0x5a88c96f5a40] i8c dc,h,v,p: 80%  7% 10%  3%
+[libx264 @ 0x5a88c96f5a40] kb/s:92.73
+[aac @ 0x5a88c96de180] Qavg: 675.364
+[in#0/image2 @ 0x5a88c9682140] Terminating demuxer thread
+[in#0/image2 @ 0x5a88c9682140] Input file #0 (/home/dibakar/Desktop/idonotknowimadeagod/Novels/Active Novels/MARVEL_ The Symbiote Catalyst/temp_render_files/temp_thumb_1.jpg):
+[in#0/image2 @ 0x5a88c9682140]   Input stream #0:0 (video): 13287 packets read (1075928112 bytes); 13278 frames decoded; 0 decode errors; 
+[in#0/image2 @ 0x5a88c9682140]   Total: 13287 packets (1075928112 bytes) demuxed
+[AVIOContext @ 0x5a88c96db5c0] Statistics: 32768 bytes read, 0 seeks
+[in#1/mp3 @ 0x5a88c97060c0] Input file #1 (/home/dibakar/Desktop/idonotknowimadeagod/Novels/Active Novels/MARVEL_ The Symbiote Catalyst/audio/MARVEL_ The Symbiote Catalyst (Ch 2-2)_render_mix.mp3):
+[in#1/mp3 @ 0x5a88c97060c0]   Input stream #1:0 (audio): 20330 packets read (12745665 bytes); 20330 frames decoded; 0 decode errors (23418864 samples); 
+[in#1/mp3 @ 0x5a88c97060c0]   Total: 20330 packets (12745665 bytes) demuxed
+[AVIOContext @ 0x5a88c9673300] Statistics: 12746335 bytes read, 0 seeks

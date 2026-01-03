@@ -92,17 +92,15 @@ class CheckpointManager:
         """Ask user if they want to resume from checkpoint"""
         if not self.has_checkpoint():
             return False
-        
-        self.display_checkpoint_info()
-        
-        choice = input("\n👉 Resume from checkpoint? (y/n, default y): ").strip().lower()
+            
+        choice = input(f"\n   {CP('👉 Resume from checkpoint?', 'cyan')} (y/n, default y): ").strip().lower()
         
         if choice == 'n':
             print("   ℹ️  Starting fresh (checkpoint will be overwritten)")
             self.clear_checkpoint()
             return False
         
-        print("   ✅ Resuming from checkpoint...")
+        print(f"   {CP('✅ Resuming from checkpoint...', 'green')}")
         return True
 
 
@@ -116,8 +114,15 @@ def save_progress_checkpoint(book_title: str, batch_num: int, total_batches: int
     )
 
 
-def check_for_resume() -> Optional[Dict[str, Any]]:
-    """Check if user wants to resume from checkpoint"""
+def get_checkpoint_if_exists() -> Optional[Dict[str, Any]]:
+    """Get checkpoint data WITHOUT prompting (use for UI indicators)"""
+    manager = CheckpointManager()
+    if manager.has_checkpoint():
+        return manager.get_checkpoint()
+    return None
+
+def ask_to_resume_checkpoint() -> Optional[Dict[str, Any]]:
+    """Prompt user and return checkpoint if they want to resume"""
     manager = CheckpointManager()
     if manager.ask_resume():
         return manager.get_checkpoint()
@@ -125,20 +130,7 @@ def check_for_resume() -> Optional[Dict[str, Any]]:
 
 
 if __name__ == "__main__":
+    from core.utils import CP # Import for test mode
     # Test checkpoint system
     manager = CheckpointManager()
-    
-    # Simulate saving a checkpoint
-    manager.save_checkpoint(
-        book_title="Test Novel",
-        batch_info={"batch_number": 2, "total_batches": 5},
-        progress={"completed_chapters": [1, 2, 3, 4, 5]}
-    )
-    
-    print("✅ Checkpoint saved")
-    
-    # Test loading
-    manager2 = CheckpointManager()
-    if manager2.has_checkpoint():
-        manager2.display_checkpoint_info()
-        print("\n✅ Checkpoint system working!")
+    # ... rest of tests

@@ -265,3 +265,38 @@ def generate_smart_tags(title, summary, fandom_tags):
     unique_tags = list(set(tags))
     return " ".join(unique_tags)
 
+def simple_resize_image(input_path, output_path, target_size=(1280, 720)):
+    """Simple resize and center-crop without any effects/blur"""
+    from PIL import Image
+    try:
+        with Image.open(input_path) as img:
+            img = img.convert("RGB")
+            W, H = target_size
+            
+            # 1. Resize maintaining aspect ratio to cover the target area
+            img_aspect = img.width / img.height
+            target_aspect = W / H
+            
+            if img_aspect > target_aspect:
+                # Image is wider than target
+                new_h = H
+                new_w = int(H * img_aspect)
+            else:
+                # Image is taller than target
+                new_w = W
+                new_h = int(W / img_aspect)
+                
+            img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+            
+            # 2. Center crop
+            left = (img.width - W) // 2
+            top = (img.height - H) // 2
+            img = img.crop((left, top, left + W, top + H))
+            
+            # 3. Save
+            img.save(output_path, "JPEG", quality=95)
+            return True
+    except Exception as e:
+        logger.error(f"Simple resize failed: {e}")
+        return False
+

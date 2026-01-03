@@ -1,0 +1,411 @@
+{
+    "document_title": "Complete Decision Tree - What You See At Every Step",
+    "description": "Every possible path through the program with the exact screens and messages you see",
+    "when_you_start_the_program": {
+        "step_1_initial_screen": {
+            "what_you_see": [
+                "═══════════════════════════════════════════════════",
+                "  EPUB TO AUDIOBOOK CONVERTER",
+                "═══════════════════════════════════════════════════"
+            ]
+        },
+        "step_2_checkpoint_check": {
+            "if_you_crashed_or_closed_mid_processing": {
+                "what_you_see": [
+                    "📌 CHECKPOINT FOUND",
+                    "   Book: The Uzumaki Legend",
+                    "   Progress: 7 of 25 chapters completed",
+                    "   Last saved: 2025-12-15 14:30",
+                    "",
+                    "Resume from where you left off? (y/n):"
+                ],
+                "if_you_type_y": {
+                    "what_happens": "Jumps directly to chapter 8, skips all configuration",
+                    "what_you_see_next": "'📖 Resuming Chapter 8: The Battle Continues...'"
+                },
+                "if_you_type_n": {
+                    "what_happens": "Checkpoint is deleted",
+                    "what_you_see_next": "'🗑️ Checkpoint cleared. Starting fresh...'"
+                }
+            },
+            "if_no_checkpoint_exists": {
+                "what_happens": "This step is skipped, you go straight to temp cleanup check"
+            }
+        },
+        "step_3_temp_cleanup_check": {
+            "if_old_temp_files_exist": {
+                "what_you_see": [
+                    "🧹 Found 523 MB of temp files older than 5 days.",
+                    "Clean up to save disk space? (y/n):"
+                ],
+                "if_you_type_y": {
+                    "what_you_see": "'✅ Cleaned up 523 MB'",
+                    "what_happens": "Old files deleted, continues to main menu"
+                },
+                "if_you_type_n": {
+                    "what_you_see": "'Skipped cleanup.'",
+                    "what_happens": "Files kept, continues to main menu"
+                }
+            },
+            "if_no_old_files": {
+                "what_happens": "This step is skipped, you go straight to main menu"
+            }
+        }
+    },
+    "main_menu_screen": {
+        "what_you_see": [
+            "",
+            "═══════════════════════════════════════════════════",
+            "  MAIN MENU",
+            "═══════════════════════════════════════════════════",
+            "  1. Process a new EPUB file",
+            "  2. Continue existing project",
+            "  3. Manage processing queue",
+            "  4. Look up a novel",
+            "  5. Settings",
+            "  6. Exit",
+            "",
+            "Select option (1-6):"
+        ],
+        "if_you_type_1": "→ Go to 'epub_selection_screen' below",
+        "if_you_type_2": "→ Go to 'existing_projects_screen' below",
+        "if_you_type_3": "→ Go to 'queue_menu_screen' below",
+        "if_you_type_4": "→ Go to 'novel_lookup_screen' below",
+        "if_you_type_5": "→ Opens config.json in your text editor",
+        "if_you_type_6": "→ Program closes"
+    },
+    "epub_selection_screen": {
+        "what_you_see": [
+            "",
+            "📚 Available EPUB files in _NEW_EPUBS_HERE:",
+            "─────────────────────────────────────────────────",
+            "  1. My Hero Academia - Volume 1.epub (2.5 MB)",
+            "  2. Naruto Fanfiction - The Uzumaki Legend.epub (1.8 MB)",
+            "  3. One Piece SI - Become Pirate King.epub (3.1 MB)",
+            "─────────────────────────────────────────────────",
+            "",
+            "Enter number (1-3) or full path to EPUB file:"
+        ],
+        "if_you_type_a_number": {
+            "what_happens": "That EPUB is selected",
+            "next_step": "→ Go to 'epub_validation' below"
+        },
+        "if_you_type_a_file_path": {
+            "what_happens": "Program tries to load that file",
+            "next_step": "→ Go to 'epub_validation' below"
+        },
+        "if_no_epub_files_found": {
+            "what_you_see": [
+                "❌ No EPUB files found.",
+                "Please add EPUB files to: _NEW_EPUBS_HERE/",
+                "",
+                "Press Enter to return to main menu..."
+            ]
+        }
+    },
+    "epub_validation": {
+        "what_you_see_while_validating": "'⏳ Validating EPUB file...'",
+        "if_file_is_valid": {
+            "what_you_see": [
+                "✅ EPUB validated successfully!",
+                "   Title: The Uzumaki Legend",
+                "   Chapters found: 50",
+                "   Cover image: Yes"
+            ],
+            "next_step": "→ Go to 'duplicate_check' below"
+        },
+        "if_file_is_corrupted": {
+            "what_you_see": [
+                "❌ Failed to parse EPUB file.",
+                "   The file may be corrupted or in an unsupported format.",
+                "",
+                "Suggestions:",
+                "  • Try opening the file in an e-reader app first",
+                "  • Re-download the file",
+                "  • Convert using Calibre",
+                "",
+                "Press Enter to return to EPUB selection..."
+            ]
+        },
+        "if_file_has_no_chapters": {
+            "what_you_see": [
+                "❌ No readable chapters found in EPUB.",
+                "   The file may be image-only or use unsupported formatting.",
+                "",
+                "Press Enter to return to EPUB selection..."
+            ]
+        }
+    },
+    "duplicate_check": {
+        "if_same_epub_processed_before": {
+            "what_you_see": [
+                "⚠️ This EPUB was processed before:",
+                "   • Previously processed: December 15, 2025",
+                "   • Chapters done: 1-25",
+                "",
+                "What would you like to do?",
+                "  1. Continue from where you left off (Chapter 26+)",
+                "  2. Start a new project (keep old files)",
+                "  3. Reprocess same chapters (replace old files)",
+                "",
+                "Select (1-3):"
+            ],
+            "if_you_type_1": {
+                "what_happens": "Chapter range auto-set to start from 26",
+                "what_you_see": "'📖 Will process chapters 26-50'"
+            },
+            "if_you_type_2": {
+                "what_happens": "New project folder created, old one preserved",
+                "what_you_see": "'📁 Creating new project folder...'"
+            },
+            "if_you_type_3": {
+                "what_you_see": "'⚠️ This will overwrite existing output files. Continue? (y/n)'",
+                "if_yes": "Proceeds to overwrite",
+                "if_no": "Returns to options"
+            }
+        },
+        "if_not_processed_before": {
+            "what_happens": "This step is skipped, continue to title confirmation"
+        }
+    },
+    "title_confirmation": {
+        "what_you_see": [
+            "",
+            "📖 Detected title from EPUB:",
+            "   'The Uzumaki Legend - A Naruto Fanfiction'",
+            "",
+            "Use this title? Press Enter to accept, or type a new name:"
+        ],
+        "if_you_press_enter": {
+            "what_happens": "Detected title is used",
+            "what_you_see": "'✅ Using: The Uzumaki Legend - A Naruto Fanfiction'"
+        },
+        "if_you_type_a_new_name": {
+            "what_happens": "Your custom title is used instead",
+            "what_you_see": "'✅ Using: [Your Custom Title]'"
+        }
+    },
+    "tts_engine_selection": {
+        "what_you_see": [
+            "",
+            "🔊 Select TTS Engine:",
+            "─────────────────────────────────────────────────",
+            "  1. Edge-TTS (Microsoft neural voices - online)",
+            "  2. Piper (High-quality offline - RECOMMENDED)",
+            "  3. pyttsx3 (Basic offline system voices)",
+            "  4. Chatterbox (Premium quality - GPU needed)",
+            "─────────────────────────────────────────────────",
+            "",
+            "Select (1-4):"
+        ],
+        "if_you_type_1_edge_tts": {
+            "what_you_see_next": [
+                "Edge-TTS voice (default: en-US-GuyNeural):",
+                "Press Enter for default or type voice name:"
+            ],
+            "if_you_press_enter": "'✅ Using voice: en-US-GuyNeural'",
+            "if_you_type_a_voice": "'✅ Using voice: [your voice]'"
+        },
+        "if_you_type_2_piper": {
+            "what_you_see_next": [
+                "Available Piper voice models:",
+                "  1. en_US-lessac-medium (Male, American)",
+                "  2. en_US-amy-medium (Female, American)",
+                "  3. en_GB-alan-medium (Male, British)",
+                "",
+                "Select (1-3):"
+            ],
+            "after_selection": "'✅ Using Piper model: en_US-lessac-medium'"
+        },
+        "if_you_type_3_pyttsx3": {
+            "what_you_see_next": [
+                "System voices available:",
+                "  1. Microsoft David",
+                "  2. Microsoft Zira",
+                "",
+                "Select (1-2):"
+            ]
+        },
+        "if_you_type_4_chatterbox": {
+            "what_program_checks": "Looking for GPU...",
+            "if_gpu_found": "'✅ GPU detected: NVIDIA RTX 3060'",
+            "if_no_gpu": {
+                "what_you_see": [
+                    "⚠️ Chatterbox requires a GPU with 4GB+ VRAM.",
+                    "   No compatible GPU found.",
+                    "",
+                    "Would you like to use Piper instead? (y/n)"
+                ]
+            }
+        }
+    },
+    "processing_mode_selection": {
+        "what_you_see": [
+            "",
+            "⚡ Processing Mode:",
+            "  1. Sequential (one chapter at a time - safer)",
+            "  2. Concurrent (multiple at once - faster)",
+            "",
+            "Select (1-2):"
+        ],
+        "if_low_memory_detected": {
+            "additional_warning": "⚠️ Low RAM detected (1.5 GB free). Sequential mode recommended."
+        },
+        "if_you_type_1": "'✅ Will process chapters one at a time'",
+        "if_you_type_2": "'✅ Will process 4 chapters at a time'"
+    },
+    "chapter_range_selection": {
+        "what_you_see": [
+            "",
+            "📑 Chapter Selection:",
+            "   This book has 50 chapters.",
+            "",
+            "Enter range (e.g., '1-10', '11-25'), or press Enter for all:"
+        ],
+        "if_you_press_enter": "'✅ Processing all 50 chapters'",
+        "if_you_type_1_to_10": "'✅ Processing chapters 1-10 (10 total)'",
+        "if_range_overlaps_with_previous": {
+            "what_you_see": [
+                "⚠️ Chapters 1-10 were already processed.",
+                "   Your selection: 1-20",
+                "",
+                "Options:",
+                "  1. Process only new chapters (11-20)",
+                "  2. Process all selected (1-20, will redo 1-10)",
+                "  3. Choose a different range",
+                "",
+                "Select (1-3):"
+            ]
+        }
+    },
+    "batch_size_selection": {
+        "what_you_see": [
+            "",
+            "📦 Batch Size:",
+            "   How many chapters per video?",
+            "",
+            "Enter number (default: 10):"
+        ],
+        "if_you_press_enter": "'✅ 10 chapters per video'",
+        "if_you_type_5": "'✅ 5 chapters per video'",
+        "if_you_type_more_than_max": "'⚠️ Capped at 50 (max batch size limit)'"
+    },
+    "quality_selection": {
+        "what_you_see": [
+            "",
+            "🎬 Video Quality:",
+            "  1. Fast (480p - quick rendering)",
+            "  2. Balanced (720p - recommended)",
+            "  3. High (1080p - best quality)",
+            "",
+            "Select (1-3):"
+        ],
+        "if_you_type_1": "'✅ Quality: Fast (480p)'",
+        "if_you_type_2": "'✅ Quality: Balanced (720p)'",
+        "if_you_type_3": "'✅ Quality: High (1080p)'"
+    },
+    "preflight_confirmation": {
+        "what_you_see": [
+            "",
+            "═══════════════════════════════════════════════════",
+            "📋 READY TO PROCESS",
+            "═══════════════════════════════════════════════════",
+            "📖 Book: The Uzumaki Legend",
+            "📑 Chapters: 1-10 (10 total)",
+            "🔊 Engine: Piper (en_US-lessac-medium)",
+            "⚡ Mode: Concurrent",
+            "🎬 Quality: Balanced (720p)",
+            "💾 Est. output: ~200 MB",
+            "═══════════════════════════════════════════════════",
+            "",
+            "Start processing? (y/n):"
+        ],
+        "if_you_type_y": "→ Processing begins (see processing_flow)",
+        "if_you_type_n": "→ Returns to configuration to change settings"
+    },
+    "processing_flow": {
+        "intro_generation": {
+            "what_you_see": "'🎤 Generating intro...'",
+            "when_done": "'✅ Intro generated (15 seconds)'"
+        },
+        "chapter_by_chapter": {
+            "sequential_mode": {
+                "what_you_see_per_chapter": [
+                    "'📖 Processing Chapter 1: The Beginning...'",
+                    "'   ⏳ Generating audio...'",
+                    "'   ✅ Done! (2.3 MB, 4:32)'"
+                ]
+            },
+            "concurrent_mode": {
+                "what_you_see": "Generating chapters ━━━━━━━━━━━╸━━━━━━━ 65% 0:01:23"
+            }
+        },
+        "if_chapter_fails": {
+            "what_you_see": [
+                "'   ❌ Failed to generate Chapter 3'",
+                "'   🔄 Retrying in 3 seconds... (Attempt 2/5)'"
+            ],
+            "after_5_failures": {
+                "what_you_see": [
+                    "'❌ Chapter 3 failed after 5 attempts.'",
+                    "",
+                    "Options:",
+                    "  1. Try with different TTS engine",
+                    "  2. Skip this chapter and continue",
+                    "  3. Stop processing entirely",
+                    "",
+                    "Select (1-3):"
+                ]
+            }
+        },
+        "video_creation": {
+            "what_you_see_in_order": [
+                "'🖼️ Creating thumbnail...'",
+                "'📝 Generating subtitles...'",
+                "'   Loading Whisper model...'",
+                "'   Transcribing audio... (Chapter 3/10)'",
+                "'🎬 Rendering video...'",
+                "'   Rendering: 45% complete'"
+            ],
+            "if_rendering_fails": {
+                "what_you_see": [
+                    "'❌ Video rendering failed.'",
+                    "",
+                    "Options:",
+                    "  1. Try with simpler settings",
+                    "  2. Keep audio file only (skip video)",
+                    "  3. View error log",
+                    "",
+                    "Select (1-3):"
+                ]
+            }
+        }
+    },
+    "completion_screen": {
+        "what_you_see_on_success": [
+            "",
+            "═══════════════════════════════════════════════════",
+            "🎉 PROCESSING COMPLETE!",
+            "═══════════════════════════════════════════════════",
+            "",
+            "📁 Files created:",
+            "   🎬 The_Uzumaki_Legend_Ch1-10.mp4 (480 MB)",
+            "   🎵 The_Uzumaki_Legend_Ch1-10.mp3 (65 MB)",
+            "   📝 The_Uzumaki_Legend_Ch1-10.srt",
+            "   📋 description_ch1-10.txt",
+            "",
+            "⏱️ Total time: 12 minutes 34 seconds",
+            "",
+            "═══════════════════════════════════════════════════",
+            "",
+            "What next?",
+            "  1. Process more chapters from this book",
+            "  2. Process a different book",
+            "  3. Open output folder",
+            "  4. Return to main menu",
+            "  5. Exit",
+            "",
+            "Select (1-5):"
+        ]
+    }
+}

@@ -1,0 +1,185 @@
+{
+    "document_title": "Video and Subtitle Settings - All Options Explained",
+    "description": "What each video and subtitle setting does and what you see when you enable or disable them",
+    "video_quality_options": {
+        "when_asked": "During configuration: 'Select video quality preset:'",
+        "fast_480p": {
+            "what_you_type": "1 or 'fast'",
+            "what_this_creates": "480p resolution video (854x480 pixels)",
+            "file_size": "Roughly 50-100 MB per hour of video",
+            "rendering_time": "About 2-3 minutes for a 45-minute video",
+            "when_to_use": [
+                "Testing to make sure everything looks right",
+                "Quick previews",
+                "When you're in a hurry"
+            ],
+            "quality_tradeoff": "Visible compression, text may be harder to read"
+        },
+        "balanced_720p": {
+            "what_you_type": "2 or 'balanced'",
+            "what_this_creates": "720p HD resolution (1280x720 pixels)",
+            "file_size": "Roughly 200-400 MB per hour of video",
+            "rendering_time": "About 5-10 minutes for a 45-minute video",
+            "when_to_use": [
+                "Standard YouTube uploads",
+                "Good balance of quality and file size",
+                "Most common choice"
+            ],
+            "quality_tradeoff": "Looks good on most devices"
+        },
+        "high_1080p": {
+            "what_you_type": "3 or 'high'",
+            "what_this_creates": "1080p Full HD resolution (1920x1080 pixels)",
+            "file_size": "Roughly 400-800 MB per hour of video",
+            "rendering_time": "About 15-30 minutes for a 45-minute video",
+            "when_to_use": [
+                "Final uploads where quality matters most",
+                "When viewers watch on large screens",
+                "Professional appearance"
+            ],
+            "quality_tradeoff": "Best quality, but takes much longer"
+        }
+    },
+    "subtitle_options": {
+        "enable_subtitles": {
+            "setting": "Enabled by default",
+            "what_happens_when_enabled": [
+                "The program transcribes your audio using AI (Whisper)",
+                "Word-by-word captions appear at the bottom of the video",
+                "Subtitle file (.srt) is also created separately"
+            ],
+            "what_happens_when_disabled": [
+                "No subtitles in the video",
+                "Faster processing (skips transcription)",
+                "No .srt file created"
+            ]
+        },
+        "embed_subtitles": {
+            "setting": "Enabled by default",
+            "what_happens_when_enabled": [
+                "Subtitles are burned into the video",
+                "Viewers always see subtitles, cannot turn them off",
+                "Works on all platforms including social media"
+            ],
+            "what_happens_when_disabled": [
+                "Subtitles are in a separate .srt file",
+                "Viewers can toggle subtitles on/off on YouTube",
+                "Upload both video and .srt to YouTube"
+            ]
+        },
+        "subtitle_style_options": {
+            "what_you_can_customize": {
+                "font": "Default is Montserrat-Bold (modern YouTube style)",
+                "size": "How big the text appears",
+                "color": "Text color (white is most readable)",
+                "outline": "Black outline around text for visibility",
+                "position": "Bottom center, bottom left, top, etc."
+            },
+            "preset_styles": {
+                "modern": "Bold white text with thick black outline (YouTube style)",
+                "classic": "Simple white text with thin outline",
+                "minimal": "Clean subtle text"
+            }
+        },
+        "word_level_vs_chapter_level": {
+            "word_level_subtitles": {
+                "what_it_looks_like": "Each word appears as it is spoken",
+                "requires": "Whisper AI transcription (takes extra time)",
+                "result": "Professional looking, synchronized captions"
+            },
+            "chapter_level_subtitles": {
+                "what_it_looks_like": "Just shows chapter title at the start of each chapter",
+                "used_when": "Whisper is not installed or transcription is skipped",
+                "result": "Basic but functional"
+            }
+        }
+    },
+    "thumbnail_options": {
+        "text_overlay": {
+            "setting": "Enabled by default",
+            "what_happens_when_enabled": [
+                "Book title is displayed on the thumbnail",
+                "Chapter range is shown (e.g., 'Ch 1-10')",
+                "Text is styled to be readable and attractive"
+            ],
+            "what_happens_when_disabled": [
+                "Just the cover image, no text",
+                "Cleaner look if your cover already has text"
+            ]
+        },
+        "custom_thumbnail": {
+            "when_asked": "After selecting an EPUB: 'Use extracted cover or select custom image?'",
+            "option_1_extracted_cover": "Uses the cover image from inside the EPUB file",
+            "option_2_custom_image": "You can select any image from your computer",
+            "what_you_see": [
+                "'Enter path to custom thumbnail image:' (or drag and drop)",
+                "Image is resized to match video resolution",
+                "Text overlay applied if enabled"
+            ]
+        }
+    },
+    "chapter_markers": {
+        "setting": "Enabled by default",
+        "what_happens_when_enabled": [
+            "YouTube shows clickable chapters in the video progress bar",
+            "Viewers can jump directly to specific chapters",
+            "Each chapter is labeled with its title"
+        ],
+        "what_happens_when_disabled": [
+            "Video is just one continuous segment",
+            "No chapter navigation for viewers"
+        ],
+        "how_youtube_uses_them": "YouTube automatically detects the chapter metadata and displays it"
+    },
+    "background_options": {
+        "static_background": {
+            "what_it_is": "The cover image stays completely still for the entire video",
+            "result": "Most common, simple and clean"
+        },
+        "zoom_effect": {
+            "what_it_is": "The cover image slowly zooms in during the video",
+            "result": "Adds subtle movement, feels more dynamic"
+        },
+        "pan_effect": {
+            "what_it_is": "The cover image slowly moves horizontally or vertically",
+            "result": "Ken Burns style effect"
+        }
+    },
+    "advanced_vs_simple_renderer": {
+        "advanced_renderer": {
+            "setting": "Enabled by default",
+            "what_it_does": [
+                "Uses FFmpeg with complex filter graphs",
+                "Supports all effects, word-level subtitles, GPU acceleration",
+                "Best quality output"
+            ],
+            "requirements": "FFmpeg must be installed properly"
+        },
+        "simple_renderer": {
+            "when_used": "Automatically falls back if advanced renderer fails",
+            "what_it_does": [
+                "Uses MoviePy for basic video creation",
+                "No effects, basic subtitles",
+                "Always works as long as Python runs"
+            ],
+            "quality": "Lower quality but very reliable"
+        }
+    },
+    "branding_options": {
+        "intro_text": {
+            "what_it_is": "The text that is spoken at the very start of each video",
+            "default_example": "Yo legends! Welcome back to the channel. Grab your headphones...",
+            "customizable_in": "config.json under 'branding.intro'"
+        },
+        "outro_text": {
+            "what_it_is": "The text spoken at the very end of each video",
+            "default_example": "Alright legends, that's it for today! If you're ready for the next chapter...",
+            "customizable_in": "config.json under 'branding.outro'"
+        },
+        "tagline": {
+            "what_it_is": "Your channel's catchphrase, added to YouTube description",
+            "default_example": "For fans… by a legend.",
+            "customizable_in": "config.json under 'branding.tagline'"
+        }
+    }
+}

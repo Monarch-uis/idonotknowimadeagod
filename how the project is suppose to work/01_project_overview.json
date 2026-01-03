@@ -1,0 +1,183 @@
+{
+    "document_title": "Complete User Experience Guide - EPUB to Audiobook/Video Converter",
+    "description": "This document describes exactly what you will see and experience when using this project, from start to finish",
+    "what_this_project_does": "This project converts your EPUB books (novels, fanfiction, etc.) into professional audiobook videos ready for YouTube upload. It reads the book out loud using AI voices, adds subtitles, creates a thumbnail, and produces a complete video file.",
+    "when_you_first_start_the_program": {
+        "what_you_see": "A terminal window opens with a colorful banner showing the project name. The program then runs some automatic checks.",
+        "automatic_startup_checks": {
+            "temp_file_cleanup": {
+                "what_happens": "The program looks for old temporary files from previous runs and asks if you want to delete them to save disk space.",
+                "if_old_files_found": "You see: 'Found X MB of temp files older than 5 days. Clean up? (y/n)'",
+                "if_you_say_yes": "Files are deleted and you see: '✅ Cleaned up X MB'",
+                "if_you_say_no": "Files are kept and program continues"
+            },
+            "checkpoint_detection": {
+                "what_happens": "The program checks if you were in the middle of processing a book when you last closed the program.",
+                "if_checkpoint_found": "You see a box saying: '📌 CHECKPOINT FOUND - Book: [Title] - Progress: Batch 2/5 - ✅ Completed Chapters: 10'",
+                "then_you_are_asked": "'Resume from checkpoint? (y/n)'",
+                "if_you_say_yes": "The program continues exactly where it left off",
+                "if_you_say_no": "The checkpoint is deleted and you start fresh"
+            },
+            "system_check": {
+                "what_happens": "The program verifies that FFmpeg and other required tools are installed correctly.",
+                "if_something_missing": "You see a warning like: '⚠️ FFmpeg not found. Video creation will not work.'",
+                "if_everything_ok": "No message is shown, the program just continues"
+            }
+        }
+    },
+    "the_main_menu": {
+        "what_you_see": "After startup checks, you see a menu with numbered options.",
+        "menu_options": [
+            "1. Process a new EPUB file",
+            "2. Continue working on an existing project",
+            "3. Manage the processing queue (add multiple books for batch processing)",
+            "4. Look up a novel by name",
+            "5. Settings and configuration",
+            "6. Exit"
+        ],
+        "how_to_choose": "Type the number and press Enter"
+    },
+    "selecting_an_epub_file": {
+        "option_1_new_epub": {
+            "what_you_see": "A list of all EPUB files found in the '_NEW_EPUBS_HERE' folder",
+            "example_display": [
+                "Available EPUB files:",
+                "  1. My Hero Academia - Volume 1.epub (2.5 MB)",
+                "  2. Naruto Fanfiction - The Uzumaki Legend.epub (1.8 MB)",
+                "  3. One Piece SI - Become Pirate King.epub (3.1 MB)"
+            ],
+            "if_no_files_found": "You see: '❌ No EPUB files found. Please add files to _NEW_EPUBS_HERE folder.'",
+            "what_you_do": "Type the number of the book you want to process, or type a full path to an EPUB file anywhere on your computer"
+        },
+        "what_happens_after_selection": {
+            "validation": {
+                "what_the_program_does": "Checks if the EPUB file is valid and can be read",
+                "if_file_corrupted": "You see: '❌ Failed to parse EPUB. The file may be corrupted.'",
+                "if_file_ok": "You see: '✅ EPUB validated successfully. Found 25 chapters.'"
+            },
+            "duplicate_check": {
+                "what_the_program_does": "Checks if you have processed this exact same EPUB file before",
+                "if_already_processed": "You see: '⚠️ This EPUB was already processed on 2025-12-15 (Chapters 1-10). Process again?'",
+                "if_not_processed": "Program continues to configuration"
+            }
+        }
+    },
+    "configuring_the_project": {
+        "step_1_project_name": {
+            "what_you_see": "The book's title is extracted from the EPUB and shown to you",
+            "example": "'📖 Detected title: The Uzumaki Legend - A Naruto Fanfiction'",
+            "then_asked": "'Use this title? (y) or enter a custom name:'",
+            "if_you_press_enter": "The detected title is used",
+            "if_you_type_something": "Your custom title is used instead"
+        },
+        "step_2_checking_for_existing_work": {
+            "what_happens": "Program checks if you previously worked on a book with a similar name",
+            "if_found": {
+                "what_you_see": "'🔍 Found existing project: The Uzumaki Legend (processed Ch 1-10 on Dec 15)'",
+                "options_given": [
+                    "1. Continue this project (add more chapters)",
+                    "2. Start a completely new project",
+                    "3. Re-process the same chapters (replace old files)"
+                ]
+            }
+        },
+        "step_3_select_tts_engine": {
+            "what_you_see": "A list of available voice engines",
+            "options_shown": {
+                "if_internet_available": [
+                    "1. Edge-TTS (Microsoft neural voices - requires internet)",
+                    "2. Piper (High-quality offline voices - RECOMMENDED)",
+                    "3. pyttsx3 (Basic offline system voices)",
+                    "4. Chatterbox (Premium quality - GPU recommended)"
+                ],
+                "if_no_internet": [
+                    "1. Piper (High-quality offline voices - RECOMMENDED)",
+                    "2. pyttsx3 (Basic offline system voices)"
+                ]
+            },
+            "what_each_option_means": {
+                "edge_tts": "Uses Microsoft's online AI voices. Sounds natural but needs internet and can fail if servers are busy.",
+                "piper": "Uses AI voice models stored on your computer. Works offline, sounds great, very reliable.",
+                "pyttsx3": "Uses your computer's built-in text-to-speech. Works offline but sounds robotic.",
+                "chatterbox": "Premium AI voices with emotional expression. Needs a good GPU and more processing time."
+            }
+        },
+        "step_4_select_voice": {
+            "depends_on_engine_selected": {
+                "if_edge_tts": {
+                    "what_you_see": "'Enter Edge-TTS voice (default: en-US-GuyNeural):'",
+                    "popular_options": "en-US-GuyNeural, en-US-JennyNeural, en-GB-RyanNeural",
+                    "if_you_press_enter": "Default male voice is used"
+                },
+                "if_piper": {
+                    "what_you_see": "A list of available voice models found in your piper_models folder",
+                    "example": [
+                        "Available Piper models:",
+                        "  1. en_US-lessac-medium (Male, American)",
+                        "  2. en_US-amy-medium (Female, American)",
+                        "  3. en_GB-alan-medium (Male, British)"
+                    ],
+                    "what_you_do": "Type the number of the voice model you want"
+                },
+                "if_pyttsx3": {
+                    "what_you_see": "A list of system voices installed on your computer",
+                    "example": "1. Microsoft David, 2. Microsoft Zira, 3. Microsoft Mark"
+                }
+            }
+        },
+        "step_5_processing_mode": {
+            "what_you_are_asked": "'Process chapters one at a time or multiple at once?'",
+            "options": {
+                "sequential": {
+                    "what_it_means": "Processes one chapter, waits for it to finish, then processes the next",
+                    "when_to_use": "If you have limited RAM or want to watch progress",
+                    "what_you_see_during": "Each chapter displays one by one: 'Processing Chapter 1... ✅ Done (2.3 MB)'"
+                },
+                "concurrent": {
+                    "what_it_means": "Processes multiple chapters at the same time",
+                    "when_to_use": "If you have good RAM (8GB+) and want faster processing",
+                    "what_you_see_during": "Progress bar showing all chapters being processed simultaneously"
+                }
+            }
+        },
+        "step_6_select_chapters": {
+            "what_you_see": "'This book has 50 chapters. Which chapters do you want to process?'",
+            "how_to_answer": {
+                "all_chapters": "Press Enter to process all chapters",
+                "specific_range": "Type '1-10' to process chapters 1 through 10",
+                "starting_from": "Type '11' to process from chapter 11 onwards"
+            },
+            "if_previously_processed": {
+                "what_you_see": "'Note: You already processed chapters 1-10. Suggested: start from chapter 11.'",
+                "if_overlap_detected": "'⚠️ This range overlaps with previously processed chapters. Continue anyway?'"
+            }
+        },
+        "step_7_batch_size": {
+            "what_you_are_asked": "'How many chapters per video? (default: 10)'",
+            "what_this_means": {
+                "batch_of_10": "Every 10 chapters become one video. Chapters 1-10 = Video 1, Chapters 11-20 = Video 2",
+                "batch_of_5": "Shorter videos, more files",
+                "batch_of_all": "One very long video with all chapters"
+            },
+            "recommendation": "10-15 chapters per video is ideal for YouTube"
+        },
+        "step_8_video_quality": {
+            "what_you_are_asked": "'Select video quality preset:'",
+            "options": {
+                "fast": {
+                    "description": "480p resolution, quick to render",
+                    "when_to_use": "Testing or when you want to see results quickly"
+                },
+                "balanced": {
+                    "description": "720p resolution, good quality",
+                    "when_to_use": "Most YouTube uploads"
+                },
+                "high": {
+                    "description": "1080p resolution, best quality",
+                    "when_to_use": "Final upload when quality matters most",
+                    "warning": "Takes significantly longer to render"
+                }
+            }
+        }
+    }
+}

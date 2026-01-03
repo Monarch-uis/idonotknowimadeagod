@@ -1,0 +1,215 @@
+{
+    "document_title": "What Happens During Processing - Step by Step User Experience",
+    "description": "This describes exactly what you see on screen while your book is being converted",
+    "before_processing_starts": {
+        "preflight_summary": {
+            "what_you_see": "A summary box showing all your settings before processing begins",
+            "example_display": [
+                "═══════════════════════════════════════════════════",
+                "📋 PREFLIGHT SUMMARY",
+                "═══════════════════════════════════════════════════",
+                "📖 Book: The Uzumaki Legend",
+                "📑 Chapters: 1-10 (10 total)",
+                "🔊 TTS Engine: Piper (en_US-lessac-medium)",
+                "⚡ Processing: Concurrent (4 at a time)",
+                "🎬 Video Quality: Balanced (720p)",
+                "💾 Estimated Output: ~500 MB",
+                "═══════════════════════════════════════════════════"
+            ],
+            "what_you_are_asked": "'Everything look good? (y) to start, (n) to go back:'",
+            "if_you_say_yes": "Processing begins",
+            "if_you_say_no": "You go back to change settings"
+        },
+        "connection_test": {
+            "when_this_happens": "Only if you selected Edge-TTS (online voice)",
+            "what_you_see": "'🔌 Testing Edge-TTS connection...'",
+            "if_connection_works": "'✅ Connection successful!'",
+            "if_connection_fails": [
+                "'❌ Cannot connect to Edge-TTS servers.'",
+                "'Would you like to switch to Piper (offline)? (y/n)'"
+            ]
+        }
+    },
+    "during_audio_generation": {
+        "intro_creation": {
+            "what_you_see": "'🎤 Generating intro...'",
+            "what_is_happening": "The program creates an audio clip with your channel's intro (the text from config about 'Yo legends, welcome back to the channel...')",
+            "when_complete": "'✅ Intro generated (15 seconds)'"
+        },
+        "chapter_processing_sequential": {
+            "when_this_mode_is_used": "When you chose 'one at a time' processing",
+            "what_you_see_for_each_chapter": [
+                "'📖 Processing Chapter 1: The Beginning...'",
+                "'   ⏳ Generating audio...'",
+                "'   ✅ Done! (2.3 MB, 4:32 duration)'",
+                "",
+                "'📖 Processing Chapter 2: Strange Events...'",
+                "'   ⏳ Generating audio...'",
+                "'   ✅ Done! (1.8 MB, 3:45 duration)'"
+            ],
+            "if_a_chapter_fails": {
+                "what_you_see": [
+                    "'   ❌ Failed to generate Chapter 3'",
+                    "'   🔄 Attempting recovery...'"
+                ],
+                "what_happens_next": {
+                    "if_using_edge_tts": "'   ⚡ Switching to Piper for this chapter...'",
+                    "if_retry_works": "'   ✅ Recovery successful!'",
+                    "if_retry_fails": "'   ⚠️ Skipping Chapter 3 after 3 attempts. Moving to next chapter.'"
+                }
+            }
+        },
+        "chapter_processing_concurrent": {
+            "when_this_mode_is_used": "When you chose 'multiple at once' processing",
+            "what_you_see": "A progress bar that fills up as chapters complete",
+            "example_display": [
+                "Generating chapters ━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━━ 65% 0:01:23"
+            ],
+            "what_the_numbers_mean": {
+                "percentage": "How much is complete",
+                "time": "How long it has been running"
+            },
+            "when_all_complete": [
+                "'✅ All 10 chapters generated successfully!'",
+                "'⏱️ Total time: 3 minutes 45 seconds'"
+            ],
+            "if_some_failed": [
+                "'⚠️ 8 of 10 chapters completed. 2 failed:'",
+                "'   - Chapter 3: Network timeout'",
+                "'   - Chapter 7: TTS rate limited'",
+                "'Retry failed chapters? (y/n)'"
+            ]
+        },
+        "outro_creation": {
+            "what_you_see": "'🎤 Generating outro...'",
+            "when_complete": "'✅ Outro generated (20 seconds)'"
+        },
+        "audio_merging": {
+            "what_you_see": [
+                "'🔗 Merging audio clips...'",
+                "'   Combining intro + 10 chapters + outro'",
+                "'   Applying crossfade between clips'"
+            ],
+            "when_complete": "'✅ Final audio created: 45 minutes 32 seconds'"
+        }
+    },
+    "during_video_creation": {
+        "thumbnail_generation": {
+            "what_you_see": "'🖼️ Creating thumbnail...'",
+            "what_is_happening": "The cover image from your EPUB is being resized and enhanced with text overlay",
+            "text_overlay_options": {
+                "if_text_overlay_enabled": "The book title and chapter range are added to the image",
+                "if_text_overlay_disabled": "The image is used as-is"
+            },
+            "when_complete": "'✅ Thumbnail created: cover_ch1-10.jpg'"
+        },
+        "subtitle_generation": {
+            "when_this_happens": "Only if subtitles are enabled in your settings",
+            "what_you_see_first": "'📝 Generating subtitles...'",
+            "transcription_process": {
+                "what_you_see": [
+                    "'   Loading Whisper AI model (this may take 30 seconds first time)...'",
+                    "'   Model loaded: small'"
+                ],
+                "during_transcription": "'   Transcribing audio... (Chapter 3/10)'",
+                "progress_display": "A progress bar shows transcription progress"
+            },
+            "if_whisper_not_installed": {
+                "what_you_see": "'⚠️ Whisper not available. Using simple timestamp-based subtitles instead.'",
+                "difference": "Subtitles will show chapter titles only, not word-by-word captions"
+            },
+            "when_complete": "'✅ Subtitles generated: 847 caption entries'"
+        },
+        "video_rendering": {
+            "what_you_see": [
+                "'🎬 Rendering video...'",
+                "'   Quality: Balanced (720p)'",
+                "'   Estimated time: 5-10 minutes'"
+            ],
+            "progress_display": "A percentage counter that updates every few seconds",
+            "example": "'   Rendering: 32% complete (frame 2400/7500)'",
+            "what_determines_speed": {
+                "fast_quality": "About 2-3 minutes for a 45-minute video",
+                "balanced_quality": "About 5-10 minutes",
+                "high_quality": "About 15-30 minutes"
+            },
+            "if_rendering_fails": {
+                "what_you_see": "'❌ Video rendering failed: FFmpeg error'",
+                "recovery_options_shown": [
+                    "'1. Try with simpler settings (disable effects)'",
+                    "'2. Try with lower quality'",
+                    "'3. Skip video, keep audio only'",
+                    "'4. View error log'"
+                ],
+                "if_you_choose_simpler": "'🔄 Retrying with basic settings...'"
+            },
+            "when_complete": "'✅ Video rendered: The_Uzumaki_Legend_Ch1-10.mp4 (480 MB)'"
+        },
+        "chapter_markers": {
+            "when_this_happens": "Only if chapter markers are enabled",
+            "what_you_see": "'📌 Embedding chapter markers...'",
+            "what_this_does": "YouTube will automatically show chapter timestamps in the video player",
+            "when_complete": "'✅ 10 chapter markers embedded'"
+        }
+    },
+    "after_processing_completes": {
+        "success_summary": {
+            "what_you_see": [
+                "═══════════════════════════════════════════════════",
+                "🎉 PROCESSING COMPLETE!",
+                "═══════════════════════════════════════════════════",
+                "📁 Output folder: Novels/Active Novels/The Uzumaki Legend/output/",
+                "",
+                "Generated files:",
+                "  🎬 Video: The_Uzumaki_Legend_Ch1-10.mp4 (480 MB)",
+                "  🎵 Audio: The_Uzumaki_Legend_Ch1-10.mp3 (65 MB)",
+                "  📝 Subtitles: The_Uzumaki_Legend_Ch1-10.srt",
+                "  🖼️ Thumbnail: cover_ch1-10.jpg",
+                "  📋 YouTube Description: description_ch1-10.txt",
+                "",
+                "⏱️ Total processing time: 12 minutes 34 seconds",
+                "═══════════════════════════════════════════════════"
+            ]
+        },
+        "notification_sound": {
+            "what_happens": "Your computer plays a notification sound to alert you that processing is done",
+            "if_processing_failed": "A different alarm sound plays to get your attention"
+        },
+        "what_to_do_next": {
+            "options_shown": [
+                "'What would you like to do?'",
+                "  1. Process more chapters from this book",
+                "  2. Process a different book",
+                "  3. Open output folder",
+                "  4. Return to main menu",
+                "  5. Exit"
+            ]
+        }
+    },
+    "output_files_explained": {
+        "video_file": {
+            "filename_format": "{BookTitle}_Ch{Start}-{End}.mp4",
+            "what_it_contains": "The cover image displayed for the entire video, with your audio playing and subtitles appearing",
+            "ready_for": "Direct upload to YouTube"
+        },
+        "audio_file": {
+            "filename_format": "{BookTitle}_Ch{Start}-{End}.mp3",
+            "what_it_contains": "Just the audio without video, in case you want an audiobook-only version"
+        },
+        "subtitle_file": {
+            "filename_format": "{BookTitle}_Ch{Start}-{End}.srt",
+            "what_it_contains": "All the subtitles in a separate file",
+            "use_case": "Upload to YouTube for auto-captions, or for accessibility"
+        },
+        "youtube_description": {
+            "filename_format": "description_ch{Start}-{End}.txt",
+            "what_it_contains": [
+                "Chapter timestamps (00:00 - Intro, 00:15 - Chapter 1, etc.)",
+                "Story summary",
+                "Auto-generated hashtags based on detected fandoms",
+                "Your channel tagline"
+            ],
+            "how_to_use": "Copy and paste this into YouTube's description box"
+        }
+    }
+}

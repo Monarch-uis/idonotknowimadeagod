@@ -39,15 +39,24 @@ try:
     if PIPER_AVAILABLE:
         print("✅ Piper TTS detected (PATH)")
 except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
-    # Fallback: check for local piper.exe
-    local_piper = os.path.join(os.getcwd(), 'piper', 'piper.exe')
-    if os.path.exists(local_piper):
+    # Fallback: check for local binaries
+    local_piper_dir = os.path.join(os.getcwd(), 'piper')
+    local_piper_linux = os.path.join(local_piper_dir, 'piper')
+    local_piper_windows = os.path.join(local_piper_dir, 'piper.exe')
+    
+    if os.name != 'nt' and os.path.exists(local_piper_linux):
         PIPER_AVAILABLE = True
-        PIPER_EXE_PATH = local_piper
-        print(f"✅ Piper TTS detected (local: {local_piper})")
+        PIPER_EXE_PATH = local_piper_linux
+        # Ensure executable
+        try: os.chmod(PIPER_EXE_PATH, 0o755)
+        except: pass
+        print(f"✅ Piper TTS detected (local Linux: {local_piper_linux})")
+    elif os.path.exists(local_piper_windows):
+        PIPER_AVAILABLE = True
+        PIPER_EXE_PATH = local_piper_windows
+        print(f"✅ Piper TTS detected (local Windows: {local_piper_windows})")
     else:
         PIPER_AVAILABLE = False
-        PIPER_EXE_PATH = None
         PIPER_EXE_PATH = None
         print("⚠️  'piper' not found. Install: https://github.com/rhasspy/piper")
 
@@ -459,13 +468,23 @@ def gen_single_clip_piper_with_retry(text, filename, model_path, max_retries=7, 
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 
+            # Environment setup for Linux shared libraries
+            env = os.environ.copy()
+            if os.name != 'nt' and PIPER_EXE_PATH and os.path.isabs(PIPER_EXE_PATH):
+                piper_dir = os.path.dirname(PIPER_EXE_PATH)
+                if 'LD_LIBRARY_PATH' in env:
+                    env['LD_LIBRARY_PATH'] = f"{piper_dir}:{env['LD_LIBRARY_PATH']}"
+                else:
+                    env['LD_LIBRARY_PATH'] = piper_dir
+
             process = subprocess.run(
                 piper_cmd,
                 input=text.encode('utf-8'),
                 capture_output=True,
                 timeout=300,
                 check=True,
-                startupinfo=startupinfo
+                startupinfo=startupinfo,
+                env=env
             )
             
             if os.path.exists(filename) and os.path.getsize(filename) > 1000:

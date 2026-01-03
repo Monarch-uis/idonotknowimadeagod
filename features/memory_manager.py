@@ -36,17 +36,18 @@ class MemoryManager:
         except:
             return 4096 # Assume enough if we can't check
             
-    def check_memory(self) -> Tuple[bool, str]:
+    def check_memory(self, custom_threshold_mb: Optional[int] = None) -> Tuple[bool, str]:
         """
         Check if memory is low
         Returns: (is_low, status_message)
         """
+        threshold = custom_threshold_mb if custom_threshold_mb is not None else self.threshold_mb
         free_mb = self.get_free_memory_mb()
-        is_low = free_mb < self.threshold_mb
+        is_low = free_mb < threshold
         
         status = f"RAM: {free_mb}MB Free"
         if is_low:
-            status += " (LOW - Optimizing)"
+            status += f" (LOW - Threshold: {threshold}MB)"
         return is_low, status
         
     def aggressive_cleanup(self):
@@ -63,6 +64,39 @@ class MemoryManager:
         is_low, _ = self.check_memory()
         return is_low
 
+    def get_recommended_whisper_model(self, requested_model: str) -> str:
+        """
+        Recommend a Whisper model size based on free RAM.
+        Approx requirements: 
+        - large-v3: ~4GB+
+        - medium: ~2.5GB+
+        - small: ~1.5GB+
+        - base/tiny: <1GB
+        """
+        free_mb = self.get_free_memory_mb()
+        
+        model_hierarchy = ["tiny", "base", "small", "medium", "large", "large-v3"]
+        try:
+            req_idx = model_hierarchy.index(requested_model.replace("deep", "large")) # Handle some aliases
+        except ValueError:
+            req_idx = 2 # default small
+            
+        # Hard limits based on free RAM
+        if free_mb < 700:
+            safe_idx = 0 # tiny
+        elif free_mb < 1200:
+            safe_idx = 1 # base
+        elif free_mb < 2200:
+            safe_idx = 2 # small
+        elif free_mb < 3500:
+            safe_idx = 3 # medium
+        else:
+            safe_idx = 5 # large
+            
+        if safe_idx < req_idx:
+            return model_hierarchy[safe_idx]
+        return requested_model
+
 # Global instance
 memory_manager = MemoryManager()
 
@@ -74,6 +108,10 @@ def optimize_memory():
     """Run optimization"""
     memory_manager.aggressive_cleanup()
 
-def is_low_memory() -> bool:
+def is_low_memory(threshold_mb: Optional[int] = None) -> bool:
     """Check if we are in low memory state"""
-    return memory_manager.check_memory()[0]
+    return memory_manager.check_memory(threshold_mb)[0]
+
+def get_recommended_whisper_model(requested: str) -> str:
+    """Proxy for model recommendation"""
+    return memory_manager.get_recommended_whisper_model(requested)

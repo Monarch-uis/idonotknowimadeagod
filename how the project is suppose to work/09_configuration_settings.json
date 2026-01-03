@@ -1,0 +1,233 @@
+{
+    "document_title": "Configuration File - How Each Setting Affects What You See",
+    "description": "What each setting in config.json does and what changes in your experience when you modify it",
+    "where_to_find_config": {
+        "location": "config.json in your main project folder",
+        "how_to_edit": "Open with any text editor (Notepad, VS Code, etc.)",
+        "when_changes_take_effect": "Next time you start the program or process a new book"
+    },
+    "audio_settings_section": {
+        "voice": {
+            "what_you_see_normally": "When you select Edge-TTS, it suggests: 'Enter voice (default: en-US-GuyNeural):'",
+            "if_you_change_default": "The suggested voice in the prompt changes to your new default",
+            "example_change": "Change 'en-US-GuyNeural' to 'en-US-JennyNeural' for a female voice"
+        },
+        "background_volume": {
+            "what_this_affects": "If you have added a background music file, this controls how loud it plays",
+            "default_value": "0.1 (very quiet, 10% volume)",
+            "if_set_to_0": "Background music is completely silent (disabled)",
+            "if_set_to_0.5": "Background music plays at half volume",
+            "if_set_to_1.0": "Background music is at full volume (may overpower the narration)"
+        },
+        "tts_speed_default": {
+            "what_you_see_during_config": "'TTS Speed adjustment? (default: +0%)'",
+            "if_you_change_to_plus_10": "The prompt shows '(default: +10%)' and your audiobooks will be 10% faster by default",
+            "what_faster_sounds_like": "Narrator speaks more quickly, good for action scenes",
+            "what_slower_sounds_like": "Narrator speaks more slowly, more dramatic"
+        },
+        "max_concurrent_tts": {
+            "what_you_see_when_set_to_4": "Progress bar shows 4 chapters processing at the same time",
+            "what_you_see_when_set_to_1": "Chapters process one by one (safer but slower)",
+            "if_set_too_high": "You might see: '⚠️ High concurrent TTS may cause memory issues'",
+            "recommendation": "Keep at 4 unless you have less than 8GB RAM"
+        },
+        "retry_attempts": {
+            "what_this_controls": "How many times the program tries again if audio generation fails",
+            "what_you_see_during_retry": "'🔄 Retrying in 3 seconds... (Attempt 2/5)'",
+            "if_set_to_3": "Only retries 3 times before giving up",
+            "if_set_to_10": "Tries 10 times (good for unstable internet)"
+        },
+        "piper_model_path": {
+            "what_this_affects": "Which voice model is used when you select Piper without choosing a specific model",
+            "default_value": "en_US-lessac-medium.onnx (high-quality male American voice)",
+            "how_to_change": "Put the filename of any .onnx model in your piper_models folder"
+        },
+        "piper_length_scale": {
+            "what_this_controls": "Piper speaking speed (separate from the general speed setting)",
+            "default_1.0": "Normal speaking speed",
+            "if_0.8": "Speaks faster (80% of normal duration)",
+            "if_1.2": "Speaks slower (120% of normal duration)"
+        }
+    },
+    "video_settings_section": {
+        "enable_text_overlay": {
+            "when_true": {
+                "what_your_thumbnail_looks_like": "Book title and chapter range appear on the cover image",
+                "example": "'The Uzumaki Legend' and 'Chapters 1-10' displayed on thumbnail"
+            },
+            "when_false": {
+                "what_your_thumbnail_looks_like": "Just the plain cover image from the EPUB, no text",
+                "when_to_use_this": "If your cover already has text or you want a cleaner look"
+            }
+        },
+        "enable_chapter_markers": {
+            "when_true": {
+                "what_happens_on_youtube": "Viewers see clickable chapters in the video progress bar",
+                "example": "They can click 'Chapter 3: The Battle' and jump right to it"
+            },
+            "when_false": {
+                "what_happens_on_youtube": "Video is one continuous segment with no navigation"
+            }
+        },
+        "enable_subtitles": {
+            "when_true": {
+                "what_you_see_during_processing": "'📝 Generating subtitles...' followed by transcription progress",
+                "what_your_video_has": "Word-by-word captions at the bottom of the screen"
+            },
+            "when_false": {
+                "what_you_see_during_processing": "Subtitle step is skipped entirely (faster)",
+                "what_your_video_has": "No captions, just the cover image and audio"
+            }
+        },
+        "embed_subtitles": {
+            "when_true": {
+                "what_your_video_has": "Subtitles are permanently burned into the video",
+                "benefit": "Works everywhere, viewers always see subtitles",
+                "downside": "Viewers cannot turn subtitles off"
+            },
+            "when_false": {
+                "what_you_get": "Separate .srt file alongside your video",
+                "on_youtube": "Upload both files, viewers can toggle subtitles on/off"
+            }
+        },
+        "current_quality_preset": {
+            "options": {
+                "Fast": {
+                    "resolution": "480p (854x480)",
+                    "file_size": "About 50-100 MB per hour",
+                    "render_time": "2-3 minutes for a 45-minute video",
+                    "when_to_use": "Quick tests to check if everything looks right"
+                },
+                "Balanced": {
+                    "resolution": "720p HD (1280x720)",
+                    "file_size": "About 200-400 MB per hour",
+                    "render_time": "5-10 minutes for a 45-minute video",
+                    "when_to_use": "Standard YouTube uploads"
+                },
+                "High": {
+                    "resolution": "1080p Full HD (1920x1080)",
+                    "file_size": "About 400-800 MB per hour",
+                    "render_time": "15-30 minutes for a 45-minute video",
+                    "when_to_use": "Final uploads where quality matters most"
+                }
+            }
+        },
+        "caption_style": {
+            "what_you_can_customize": {
+                "font": "Default 'Montserrat-Bold' is the modern YouTube style",
+                "font_size": "70 is default, increase for larger text",
+                "color": "#FFFFFF is white (most readable)",
+                "stroke_color": "#000000 is black outline (improves visibility)",
+                "stroke_width": "5 is default, increase for thicker outline"
+            },
+            "presets": {
+                "Modern": "Bold white text with thick black outline (YouTube style)",
+                "Classic": "Standard subtitle appearance",
+                "Minimal": "Clean, subtle text"
+            }
+        }
+    },
+    "branding_section": {
+        "intro": {
+            "what_this_is": "The text spoken at the very beginning of every video",
+            "default_text": "Yo legends! Welcome back to the channel...",
+            "if_you_change_it": "Every new video starts with your custom intro instead",
+            "tip": "Keep it short (under 30 seconds spoken) to not annoy viewers"
+        },
+        "outro": {
+            "what_this_is": "The text spoken at the very end of every video",
+            "default_text": "Alright legends, that's it for today! If you're ready for the next chapter...",
+            "if_you_change_it": "Every video ends with your custom call to action",
+            "tip": "Include: like, subscribe, comment reminders"
+        },
+        "tagline": {
+            "what_this_is": "Your channel catchphrase added to YouTube descriptions",
+            "default": "For fans… by a legend.",
+            "where_it_appears": "At the bottom of auto-generated YouTube description files"
+        }
+    },
+    "system_limits_section": {
+        "max_batch_size": {
+            "what_you_see": "When selecting chapters, you cannot select more than this number per batch",
+            "default_50": "Maximum 50 chapters per video",
+            "if_you_try_more": "'⚠️ Batch size capped at 50 (max_batch_size limit)'"
+        },
+        "ram_warning_threshold_mb": {
+            "what_this_triggers": "A warning when your free RAM drops below this amount",
+            "default_1500": "Warning appears if less than 1.5 GB RAM available",
+            "what_you_see": "'⚠️ Low memory warning: Only 1200 MB available'"
+        },
+        "min_disk_space_gb": {
+            "what_this_triggers": "A warning before processing if you don't have enough disk space",
+            "default_2.0": "Warning if less than 2 GB free",
+            "what_you_see": "'⚠️ Low disk space: Only 1.5 GB available. Videos may fail to save.'"
+        }
+    },
+    "cleanup_settings_section": {
+        "auto_cleanup_on_startup": {
+            "when_true": {
+                "what_you_see_at_startup": "'🧹 Cleaning up old temp files...'",
+                "then": "'✅ Cleaned up 500 MB of temp files older than 5 days'"
+            },
+            "when_false": {
+                "what_happens": "No automatic cleanup, temp files accumulate",
+                "warning": "Your disk may fill up over time"
+            }
+        },
+        "max_temp_age_days": {
+            "default_5": "Files older than 5 days are deleted",
+            "if_set_to_1": "Files older than 1 day are deleted (more aggressive)",
+            "if_set_to_30": "Only files older than 30 days are deleted (keeps more)"
+        }
+    },
+    "recovery_settings_section": {
+        "enable_auto_recovery": {
+            "when_true": {
+                "what_happens_on_error": "Program tries to fix the problem automatically",
+                "what_you_see": "'🔄 Attempting recovery...' followed by the fix"
+            },
+            "when_false": {
+                "what_happens_on_error": "Processing stops immediately with error message",
+                "when_to_use_this": "If you want to manually handle all errors"
+            }
+        },
+        "auto_approve_safe_fixes": {
+            "when_false": {
+                "what_you_see": "'Apply fix: Switch to Piper offline voice? (y/n)'",
+                "you_must": "Manually approve each recovery action"
+            },
+            "when_true": {
+                "what_happens": "Safe fixes are applied automatically without asking",
+                "what_you_see": "'✅ Auto-applied fix: Switched to Piper'"
+            }
+        }
+    },
+    "pronunciation_fixes_section": {
+        "what_this_does": "Replaces words before sending to TTS so they're pronounced correctly",
+        "example": {
+            "problem": "TTS says 'Sass-oo-kay' instead of 'Soss-kay'",
+            "solution": "Add entry: 'Sasuke': 'Soss-kay'",
+            "result": "Every time 'Sasuke' appears, TTS sees 'Soss-kay' instead"
+        },
+        "how_to_add_new": "Add a new line: \"YourWord\": \"How-to-pronounce-it\""
+    },
+    "banned_words_section": {
+        "what_this_does": "Censors words in subtitles only (audio is unchanged)",
+        "what_happens": {
+            "in_subtitles": "Banned words appear as '***'",
+            "in_audio": "Words are still spoken normally (TTS doesn't censor)"
+        },
+        "why_use_this": "Keep subtitles advertiser-friendly for YouTube monetization"
+    },
+    "fandom_tags_section": {
+        "what_this_does": "Auto-generates YouTube hashtags based on detected fandoms in your book",
+        "example": {
+            "if_book_title_contains": "'naruto' or 'uzumaki' or 'konoha'",
+            "auto_added_to_description": "#Naruto #NarutoShippuden #FanFiction #Anime"
+        },
+        "how_to_add_new_fandom": {
+            "add_entry": "'one piece': ['#OnePiece', '#Luffy', '#Anime']",
+            "result": "Books with 'one piece' in title get those tags"
+        }
+    }
+}

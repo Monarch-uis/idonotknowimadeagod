@@ -1,0 +1,162 @@
+{
+    "document_title": "Continuing Existing Projects and History System",
+    "description": "What happens when you return to a book you've worked on before",
+    "the_history_system": {
+        "what_it_tracks": [
+            "Every book you've ever processed",
+            "Which chapters were processed",
+            "When you processed them",
+            "What settings you used"
+        ],
+        "where_stored": "In your home folder under .epub_project_history/"
+    },
+    "opening_the_same_epub_again": {
+        "scenario": "You processed chapters 1-10 last week, now you open the same EPUB again",
+        "what_you_see": [
+            "'📖 The Uzumaki Legend'",
+            "",
+            "'⚠️ This book has been processed before:'",
+            "'   • Previously processed: Chapters 1-10 (December 15, 2025)'",
+            "'   • Total chapters in book: 50'",
+            "'   • Remaining: 40 chapters'",
+            "",
+            "'What would you like to do?'"
+        ],
+        "options_given": {
+            "option_1_continue": {
+                "what_you_type": "1",
+                "description": "Continue where you left off",
+                "what_happens": [
+                    "Program automatically suggests starting from chapter 11",
+                    "Uses same settings as last time (voice, quality, etc.)",
+                    "Output goes to same project folder"
+                ]
+            },
+            "option_2_new_project": {
+                "what_you_type": "2",
+                "description": "Start a new project with different settings",
+                "what_happens": [
+                    "Creates a new project folder",
+                    "Full configuration from scratch",
+                    "Previous work is preserved separately"
+                ]
+            },
+            "option_3_reprocess": {
+                "what_you_type": "3",
+                "description": "Redo the same chapters (replace old files)",
+                "what_happens": [
+                    "Warning shown: '⚠️ This will overwrite existing output files!'",
+                    "You confirm with 'y'",
+                    "Same chapters processed again with current settings"
+                ]
+            }
+        }
+    },
+    "different_epub_same_story": {
+        "scenario": "You downloaded a different version of the same novel (different file name)",
+        "how_detected": "The program calculates a unique fingerprint for each EPUB file",
+        "if_same_content": {
+            "what_you_see": "'🔍 This appears to be the same book as: The Uzumaki Legend (processed Dec 15)'",
+            "explanation": "Even though file name is different, the content is identical",
+            "option": "Treat as same project or create new one"
+        },
+        "if_different_content": {
+            "what_you_see": "No warning - treated as a completely new book",
+            "example": "You had 'Uzumaki Legend v1.epub' and now have 'Uzumaki Legend v2.epub' with new chapters"
+        }
+    },
+    "similar_book_names": {
+        "scenario": "You're processing 'The Legend Returns' but have an old project called 'The Legend'",
+        "what_you_see": [
+            "'🔍 Found a similar existing project:'",
+            "'   Existing: The Legend (Chapters 1-25)'",
+            "'   New: The Legend Returns'",
+            "",
+            "'Are these the same story? (y/n)'"
+        ],
+        "if_you_say_yes": "The new book is linked to the existing project",
+        "if_you_say_no": "A separate new project is created"
+    },
+    "chapter_range_overlap": {
+        "scenario_1_complete_overlap": {
+            "you_try_to_process": "Chapters 1-10",
+            "already_processed": "Chapters 1-10",
+            "what_you_see": "'⚠️ These exact chapters were already processed!'",
+            "options": [
+                "Reprocess and overwrite",
+                "Choose different chapters",
+                "Cancel"
+            ]
+        },
+        "scenario_2_partial_overlap": {
+            "you_try_to_process": "Chapters 1-15",
+            "already_processed": "Chapters 1-10",
+            "what_you_see": "'⚠️ Chapters 1-10 overlap with previous work. 11-15 are new.'",
+            "options": [
+                "Process only new chapters (11-15)",
+                "Process all 1-15 (redo overlapping ones)",
+                "Choose different range"
+            ]
+        },
+        "scenario_3_boundary_overlap": {
+            "you_try_to_process": "Chapters 10-20",
+            "already_processed": "Chapters 1-10",
+            "what_you_see": "'ℹ️ Chapter 10 was in your previous batch. Start from 10 or 11?'",
+            "recommendation": "Start from 11 to avoid duplicate chapter"
+        }
+    },
+    "project_folder_structure": {
+        "where_projects_live": "Novels/Active Novels/{Book Title}/",
+        "inside_each_project": {
+            "audio_clips": "Individual chapter audio files (for recovery/debugging)",
+            "cover_images": "Thumbnails and cover images",
+            "output": "Final video and audio files",
+            "temp": "Temporary files (auto-cleaned)",
+            "book_profile.json": "Saved settings for this book"
+        },
+        "continuation_benefit": "When you continue a project, all your settings are remembered"
+    },
+    "saved_settings_book_profile": {
+        "what_is_saved": [
+            "TTS engine (Piper, Edge-TTS, etc.)",
+            "Voice selection",
+            "Speed setting",
+            "Processing mode (sequential/concurrent)"
+        ],
+        "when_you_return": {
+            "what_you_see": [
+                "'📋 Found saved settings for this book:'",
+                "'   Engine: Piper'",
+                "'   Voice: en_US-lessac-medium'",
+                "'   Speed: +5%'",
+                "",
+                "'Use these settings? (y/n)'"
+            ],
+            "if_you_say_yes": "Same settings are used automatically",
+            "if_you_say_no": "You reconfigure from scratch"
+        }
+    },
+    "archiving_completed_projects": {
+        "when_you_finish_a_book": {
+            "all_chapters_done": "You've processed all 50 chapters of a 50-chapter book"
+        },
+        "what_you_might_see": "'📦 This book is fully processed! Archive project? (y/n)'",
+        "if_you_archive": {
+            "what_happens": "Project folder moves from 'Active Novels' to 'Archived Novels'",
+            "why": "Keeps your active projects list clean",
+            "files_preserved": "All your output files are kept in the archive"
+        }
+    },
+    "novel_name_mapping": {
+        "what_this_solves": "You might upload to YouTube with a different title than the EPUB had",
+        "example": {
+            "epub_title": "Naruto_fanfiction_v2_final_FIXED.epub",
+            "youtube_title": "The Uzumaki Legend - Naruto Fanfiction",
+            "mapping_saved": "Program remembers that these are the same story"
+        },
+        "later_benefit": {
+            "when_searching": "'What's the original file for The Uzumaki Legend?'",
+            "answer_provided": "Naruto_fanfiction_v2_final_FIXED.epub"
+        }
+    }
+}

@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
 import os
 import sys
+import gc
 import asyncio
 import re
 import subprocess
@@ -7,6 +9,7 @@ import time
 import glob
 import shutil
 import argparse
+import json
 from datetime import datetime, timedelta
 from rich.progress import (
     Progress, 
@@ -40,10 +43,12 @@ from core.utils import (
     censor_text, fix_pronunciation, generate_smart_tags,
     logger
 )
+from core import ui_manager
 from core.epub_io import (
     setup_global_input, cleanup_temp_dir, setup_project_folders,
     load_history, save_to_history, check_history_conflict,
-    calculate_epub_hash, check_duplicate_epub,
+    calculate_epub_hash, check_duplicate_epub, get_history_summary,
+    delete_book_from_history,
     load_book_profile, save_book_profile,
     clean_html_for_tts, clean_html_summary, parse_full_epub,
     extract_cover_to_project, generate_description_file, validate_epub
@@ -59,16 +64,16 @@ from core.tts import (
     gen_single_clip_chatterbox,
     CHATTERBOX_AVAILABLE
 )
-from features.checkpoint_manager import CheckpointManager, save_progress_checkpoint, check_for_resume
-from core import ui_manager
-from features.auto_recovery import (
-    AutoRecovery, try_auto_recover, ErrorCategory
-)
+from features.multispeaker_tts import gen_multispeaker_chapter # [AI] Correct import path
+from core.gemini_client import create_gemini_client, GeminiClientError # [AI] Import Gemini Client
+
+from features.checkpoint_manager import CheckpointManager, save_progress_checkpoint, get_checkpoint_if_exists, ask_to_resume_checkpoint
 from features.memory_manager import optimize_memory, check_memory_status
 from features.queue_manager import QueueManager
 from features.novel_name_mapper import auto_save_mapping
+from features.auto_recovery import AutoRecovery
 from core.subtitle_generator import generate_subtitles_for_video
-from core.video_pipeline import generate_timeline_from_audio, render_video_with_timeline, check_dependencies
+from core.video_pipeline import generate_timeline_with_alignment, render_video_with_timeline, check_dependencies
 from core.profiler import enable_profiling, disable_profiling, get_profiler
 from core.logging_config import setup_logging, get_logger
 from core.path_utils import ensure_path, ensure_dir, safe_path_join, get_file_size_mb
@@ -81,6 +86,47 @@ UPLOADED_NOVELS_DIR = os.path.join(MASTER_NOVEL_DIR, "Uploaded in Youtube")
 # ---------------------------
 # LOCAL HELPERS (not duplicated - unique to main file)
 # ---------------------------
+
+def show_chapter_overview(all_chapters):
+    """
+    Unified chapter overview and gap detection logic.
+    """
+    print(f"\n{'=' * 50}")
+    print(f"TOTAL CHAPTERS: {len(all_chapters)}")
+    print(f"{'=' * 50}")
+    print("First 30:")
+    for i in range(min(30, len(all_chapters))):
+        title = all_chapters[i][0]
+        num = extract_smart_number(title)
+        if num is not None:
+            print(f"   [{i+1:3}] → Ch {num:4} | {title[:50]}")
+        else:
+            print(f"   [{i+1:3}] → {'':10} | {title[:60]}")
+    
+    if len(all_chapters) > 60:
+        print("   ...")
+        print("Last 30:")
+        for i in range(max(len(all_chapters) - 30, 0), len(all_chapters)):
+            title = all_chapters[i][0]
+            num = extract_smart_number(title)
+            if num is not None:
+                print(f"   [{i+1:3}] → Ch {num:4} | {title[:50]}")
+            else:
+                print(f"   [{i+1:3}] → {'':10} | {title[:60]}")
+    
+    # Gap detection
+    nums = [extract_smart_number(t[0]) for t in all_chapters if extract_smart_number(t[0]) is not None]
+    if len(nums) > 1:
+        gaps = []
+        for i in range(len(nums) - 1):
+            if nums[i + 1] - nums[i] > 1:
+                gaps.append(f"{nums[i]+1}-{nums[i+1]-1}")
+        if gaps:
+            print(CP(f"\n⚠️  WARNING: Missing chapters: {', '.join(gaps)}", 'yellow'))
+            print("   → Consider smaller batch sizes\n")
+    
+    print(f"{'=' * 50}\n")
+
 def enforce_batch_size_limit(batch_size, max_batch):
     """Ensure batch size stays within configured limits"""
     if batch_size <= max_batch:
@@ -90,6 +136,121 @@ def enforce_batch_size_limit(batch_size, max_batch):
     print(CP(f"   ⚠️  {warning_msg}", 'yellow'))
     logger.warning(warning_msg)
     return False
+
+def resolve_project_name_and_history(selected_path, meta, cli_args, auto_resume=False):
+    """
+    Consolidated project detection UI.
+    Merges duplicate mapping info and previous history into one unified interface.
+    Returns: (final_title, updated_meta, history_reset_performed)
+    """
+    from features.novel_name_mapper import NovelNameMapper, check_duplicate_interactive
+    mapper = NovelNameMapper()
+    
+    epub_hash = calculate_epub_hash(selected_path)
+    original_title = meta['title']
+    mapping = mapper.lookup_by_original_title(original_title)
+    
+    # Check history
+    dup_info = None
+    if epub_hash:
+        dup_info = check_duplicate_epub(selected_path)
+    if not dup_info:
+        search_title = mapping['youtube_name'] if mapping else original_title
+        dup_info = get_history_summary(search_title)
+        
+    final_title = mapping['youtube_name'] if mapping else original_title
+    active_title = dup_info['title'] if dup_info else final_title
+    
+    if dup_info or mapping:
+        # Display Combined info (Image 2 style)
+        print(CP(f"\n{'='*60}", 'yellow'))
+        print(CP(f"⚠️  PREVIOUS PROJECT DETECTED", 'yellow'))
+        print(CP(f"{'='*60}", 'yellow'))
+        
+        # Details (Bullet points)
+        print(f"   💡 Found project details:")
+        print(f"      • YouTube Name: '{active_title}'")
+        print(f"      • Original EPUB: '{original_title}'")
+        
+        if dup_info:
+            print(f"      • Last Activity: {dup_info['date']}")
+            print(f"      • Progress:      Ch {dup_info['start']} - {dup_info['end']}")
+        elif mapping:
+            date_str = mapping.get('last_updated', mapping.get('created_date', 'Unknown'))
+            if 'T' in date_str: date_str = date_str.split('T')[0]
+            print(f"      • Last Sync:     {date_str}")
+            
+        if epub_hash:
+            print(f"      • Hash:          {epub_hash[:16]}...")
+        print(CP(f"{'='*60}", 'yellow'))
+        
+        # Options (Image 1 style)
+        print(f"\n   [1] " + CP("Open Existing Project", 'green') + " (Continue where you left off)")
+        print(f"   [2] " + CP("Full Reset", 'red') + "           (Wipe history and start fresh)")
+        print(f"   [3] " + CP("Partial Reset", 'blue') + "        (Wipe history only for current range)")
+        print(f"   [4] " + CP("Cancel", 'white'))
+        
+        # Handle Selection
+        if cli_args.auto:
+            choice = '2'
+            print(f"\n   ℹ️  Auto-selecting [2] Full Reset via CLI")
+        elif auto_resume:
+            choice = '1'
+            print(f"\n   ℹ️  Auto-selecting [1] Open Existing Project (Resume)")
+        else:
+            choice = input(f"\n   {CP('👉 Select (1-4):', 'cyan')} ").strip()
+            
+        if choice == '1':
+            final_title = active_title
+            meta['title'] = final_title
+            return final_title, meta, False
+            
+        elif choice == '2':
+            if not cli_args.auto:
+                confirm = input(f"\n   {CP('⚠️  REALLY WIPE ALL HISTORY?', 'red')} (y/n): ").strip().lower()
+                if confirm != 'y': return active_title, meta, False
+            
+            # Wipe
+            from core.epub_io import delete_book_from_history
+            target_t = active_title
+            success, count = delete_book_from_history(selected_path, title=target_t)
+            if success: print(CP(f"   ✅ History Purged ({count} entries).", 'green'))
+            
+            # Folder wipe?
+            if not cli_args.auto:
+                wipe_f = input(f"   {CP('🗑️  Also delete existing project files?', 'yellow')} (y/n): ").strip().lower()
+                if wipe_f == 'y' and dup_info:
+                    dup_path = os.path.join(ACTIVE_NOVELS_DIR, dup_info['key'])
+                    if os.path.exists(dup_path):
+                        try: shutil.rmtree(dup_path); print(CP("   ✅ Project folder deleted.", 'green'))
+                        except Exception as e: print(CP(f"   ❌ Folder deletion failed: {e}", 'red'))
+            
+            # New Name
+            new_title = input("\n   Enter new project name (Enter to keep original): ").strip()
+            if new_title:
+                final_title = check_duplicate_interactive(original_title, new_title)
+            else:
+                final_title = original_title
+            meta['title'] = final_title
+            return final_title, meta, True
+            
+        elif choice == '3':
+            print(f"\n   ℹ️  Partial reset will trigger based on the ranges you select next.")
+            meta['_partial_reset_pending'] = True
+            final_title = active_title
+            meta['title'] = final_title
+            return final_title, meta, False
+            
+        else: # Cancel
+            return None, None, False
+    else:
+        # Standard initial name prompt
+        print(CP(f"\n📘 Original Title: {original_title}", 'cyan'))
+        new_title = input("   Press Enter to keep, or type new name: ").strip()
+        if new_title:
+            final_title = check_duplicate_interactive(original_title, new_title)
+            meta['title'] = final_title
+        return final_title, meta, False
 
 # ---------------------------
 # PROCESSING ENGINES (wrappers using imported functions)
@@ -495,7 +656,7 @@ def gen_audio_with_recovery(text, output_path, engine, voice, speed_rate, max_re
 # ---------------------------
 # AUDIO ENGINE (MAIN)
 # ---------------------------
-def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, temp_dir, tts_engine, tts_voice, use_concurrent=False, force_align=False, whisper_model="small", whisper_threads=4):
+def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, temp_dir, tts_engine, tts_voice, use_concurrent=False, intro_override=None, skip_disclaimer=False):
     """Generate complete audiobook with retry logic"""
     print(f"   🎧 Generating audio ({CONFIG['audio_settings']['retry_attempts']} retries, {CONFIG['audio_settings']['retry_delay']}s delay)...", flush=True)
     
@@ -516,8 +677,9 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
         print("   🎬 Generating intro...", flush=True)
         intro_path = os.path.join(temp_dir, "00_intro.mp3")
         
+        intro_text = intro_override if intro_override else CONFIG["branding"]["intro"]
         success, error, tts_engine, tts_voice, tts_result = gen_audio_with_recovery(
-            CONFIG["branding"]["intro"], intro_path, tts_engine, tts_voice, 
+            intro_text, intro_path, tts_engine, tts_voice, 
             speed_rate, max_retries, delay, "Introduction"
         )
         
@@ -528,8 +690,9 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
         clips_to_merge.append(clip)
         timestamp_list.append((current_seconds, "Introduction"))
         
-        # Accumulate intro timing
-        if tts_result and tts_result.get('events'):
+        # Accumulate intro timing ONLY if high precision
+        is_precision = tts_result.get('is_high_precision', False) if tts_result else False
+        if is_precision and tts_result and tts_result.get('events'):
             for word in tts_result['events']:
                 word['start'] += current_seconds
                 word['end'] += current_seconds
@@ -556,31 +719,35 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                 print(CP(f"   ⚠️ Could not add silence gap: {e}", 'yellow'), flush=True)
 
         # === DISCLAIMER (CRITICAL) ===
-        print("   📜 Generating disclaimer...", flush=True)
-        disc_text = "Disclaimer. I do not claim ownership of this story. All rights belong to the original creators. Note: I’m constantly tweaking the settings to make it as immersive as possible!"
-        disc_path = os.path.join(temp_dir, "01_disclaimer.mp3")
-        
-        success, error, tts_engine, tts_voice, tts_result = gen_audio_with_recovery(
-            disc_text, disc_path, tts_engine, tts_voice,
-            speed_rate, max_retries, delay, "Disclaimer"
-        )
-        
-        if not success:
-            handle_critical_failure("Disclaimer", error)
-        
-        clip = AudioFileClip(disc_path)
-        clips_to_merge.append(clip)
-        timestamp_list.append((current_seconds, "Disclaimer"))
-        
-        # Accumulate disclaimer timing
-        if tts_result and tts_result.get('events'):
-            for word in tts_result['events']:
-                word['start'] += current_seconds
-                word['end'] += current_seconds
-                full_word_timeline.append(word)
-                
-        current_seconds += clip.duration
-        print(CP(f"   ✅ Disclaimer: {clip.duration:.1f}s", 'green'), flush=True)
+        if not skip_disclaimer:
+            print("   📜 Generating disclaimer...", flush=True)
+            disc_text = "Disclaimer. I do not claim ownership of this story. All rights belong to the original creators. Note: I’m constantly tweaking the settings to make it as immersive as possible!"
+            disc_path = os.path.join(temp_dir, "01_disclaimer.mp3")
+            
+            success, error, tts_engine, tts_voice, tts_result = gen_audio_with_recovery(
+                disc_text, disc_path, tts_engine, tts_voice,
+                speed_rate, max_retries, delay, "Disclaimer"
+            )
+            
+            if not success:
+                handle_critical_failure("Disclaimer", error)
+            
+            clip = AudioFileClip(disc_path)
+            clips_to_merge.append(clip)
+            timestamp_list.append((current_seconds, "Disclaimer"))
+            
+            # Accumulate disclaimer timing ONLY if high precision
+            is_precision = tts_result.get('is_high_precision', False) if tts_result else False
+            if is_precision and tts_result and tts_result.get('events'):
+                for word in tts_result['events']:
+                    word['start'] += current_seconds
+                    word['end'] += current_seconds
+                    full_word_timeline.append(word)
+            
+            current_seconds += clip.duration
+            print(CP(f"   ✅ Disclaimer: {clip.duration:.1f}s", 'green'), flush=True)
+        else:
+             print("   ⏭️  Skipping disclaimer (Continuation Video)", flush=True)
         
         # === TITLE (CRITICAL) ===
         print("   📖 Generating title...", flush=True)
@@ -599,8 +766,9 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
         clips_to_merge.append(clip)
         timestamp_list.append((current_seconds, "Title"))
         
-        # Accumulate title timing
-        if tts_result and tts_result.get('events'):
+        # Accumulate title timing ONLY if high precision
+        is_precision = tts_result.get('is_high_precision', False) if tts_result else False
+        if is_precision and tts_result and tts_result.get('events'):
             for word in tts_result['events']:
                 word['start'] += current_seconds
                 word['end'] += current_seconds
@@ -608,6 +776,9 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                 
         current_seconds += clip.duration
         print(CP(f"   ✅ Title: {clip.duration:.1f}s", 'green'), flush=True)
+        
+        # Save chapter start offset not needed for Whisper
+        # chapter_start_offset = current_seconds
         
         # === CHAPTERS ===
         print(f"\n   📚 Processing {len(chapters)} chapters...", flush=True)
@@ -656,8 +827,8 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     
                     clips_to_merge.append(clip)
                     
-                    # Accumulate timing data if available
-                    if timing_data:
+                    # Accumulate timing data ONLY if it's high precision (e.g. EdgeTTS)
+                    if timing_data and is_precision:
                         for word in timing_data:
                             word['start'] += current_seconds
                             word['end'] += current_seconds
@@ -709,10 +880,54 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                             max_retries=max_retries, delay=delay, silent=True
                         ))
                     elif tts_engine == "piper":
-                        tts_success, tts_error, tts_result = gen_single_clip_piper_with_retry(
-                            audio_text, chap_path, tts_voice,
-                            max_retries=max_retries, delay=delay
-                        )
+                        # [AI] Check for Gemini TTS Switching
+                        gemini_client = create_gemini_client()
+                        gemini_enabled = gemini_client and CONFIG.get("gemini_settings", {}).get("enabled", False)
+                        
+                        if gemini_enabled:
+                            print(f"      ✨ AI analyzing chapter for multi-speaker audio...", flush=True)
+                            
+                            # 1. Analyze for characters/segments
+                            # Load character list from Phase 1 metadata if available
+                            character_list = []
+                            try:
+                                # Find project root (one level up from temp)
+                                project_root = os.path.dirname(temp_dir)
+                                ai_meta_path = os.path.join(project_root, "ai_metadata.json")
+                                if os.path.exists(ai_meta_path):
+                                    with open(ai_meta_path, 'r', encoding='utf-8') as f_meta:
+                                        ai_data = json.load(f_meta)
+                                        character_list = ai_data.get('story_analysis', {}).get('characters', [])
+                            except Exception as e:
+                                logger.warning(f"Could not load character list for AI analysis: {e}")
+
+                            analysis = gemini_client.analyze_tts_segments(
+                                chapter_text=clean_body,
+                                chapter_number=i+1,
+                                character_list=character_list,
+                                chatterbox_used_count=0 
+                            )
+                            
+                            if analysis and 'segments' in analysis:
+                                from core.ai_schemas import TTSBatchScript, TTSSegment
+                                segments = [TTSSegment(**s) for s in analysis['segments']]
+                                script = TTSBatchScript(segments=segments)
+                                
+                                # 2. Generate Multi-Speaker Audio
+                                tts_success, tts_error, tts_result = asyncio.run(gen_multispeaker_chapter(script, chap_path))
+                            else:
+                                # Fallback to standard Piper
+                                tts_success, tts_error, tts_result = gen_single_clip_piper_with_retry(
+                                    audio_text, chap_path, tts_voice,
+                                    max_retries=max_retries, delay=delay
+                                )
+                        else:
+                            # Standard Piper
+                            tts_success, tts_error, tts_result = gen_single_clip_piper_with_retry(
+                                audio_text, chap_path, tts_voice,
+                                max_retries=max_retries, delay=delay
+                            )
+
                     elif tts_engine == "chatterbox":
                         tts_success, tts_error, tts_result = gen_single_clip_chatterbox(
                             audio_text, chap_path
@@ -744,8 +959,9 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     
                     clips_to_merge.append(clip)
                     
-                    # Accumulate timing data if available
-                    if tts_timing:
+                    # Accumulate timing data ONLY if it's high precision (e.g. EdgeTTS)
+                    # If inaccurate (Piper linear est), we skip it so Faster-Whisper runs later
+                    if tts_timing and is_precision:
                         for word in tts_timing:
                             word['start'] += current_seconds
                             word['end'] += current_seconds
@@ -778,8 +994,9 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
         clips_to_merge.append(clip)
         timestamp_list.append((current_seconds, "Outro"))
         
-        # Accumulate outro timing
-        if tts_result and tts_result.get('events'):
+        # Accumulate outro timing ONLY if high precision
+        is_precision = tts_result.get('is_high_precision', False) if tts_result else False
+        if is_precision and tts_result and tts_result.get('events'):
             for word in tts_result['events']:
                 word['start'] += current_seconds
                 word['end'] += current_seconds
@@ -839,81 +1056,36 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
         print(CP(f"   ✅ Complete: {seconds_to_time_str(total_duration)}", 'green'), flush=True)
         
         # === SUBTITLE GENERATION (IMMEDIATE) ===
-        # Generate subtitles immediately after audio, using the perfect timing data
-        print("   📝 Generating subtitles...", flush=True)
-        ass_path = final_filename.replace(".mp3", ".ass")
-        
-        # Determine if we need a high-precision Whisper pass
-        # CRITICAL FIX: Piper/pyttsx3 only provide estimated linear timings (is_high_precision=False)
-        # which results in chapter titles showing as captions instead of actual transcribed text.
-        # Force Whisper pass for any non-Edge-TTS engine to get real word-level transcription.
-        needs_precision_pass = False
-        if force_align:
-            print("      ℹ️  Force Align enabled - enforcing Whisper for accurate captions", flush=True)
-            needs_precision_pass = True
-        elif not full_word_timeline:
-            needs_precision_pass = True
-        elif tts_engine != "edge":
-            # Piper and pyttsx3 return 'is_high_precision': False
-            # Their estimated timings are just linear word distribution, not actual transcription
-            print("      ℹ️  Non-Edge TTS detected - using Whisper for accurate captions", flush=True)
-            needs_precision_pass = True
-
-        subtitle_generated = False
-        
-        # NEW: Universal Perfect Timing Logic
-        if needs_precision_pass:
-            print(CP("   ✨ PERFECT TIMING: Enhancing captions with Whisper...", 'cyan'), flush=True)
-            try:
-                from core.video_pipeline import generate_timeline_from_audio
-                project_id = sanitize_filename(os.path.basename(final_filename).replace(".mp3", ""))
-                
-                # Run Whisper on the final merged audio
-                whisper_timeline = generate_timeline_from_audio(
-                    final_filename,
-                    project_id=project_id,
-                    config=CONFIG,
-                    model_size=whisper_model,
-                    cpu_threads=whisper_threads
-                )
-                
-                # Extract word events from Whisper timeline
-                whisper_words = []
-                for item in whisper_timeline.get("timeline", []):
-                    if item.get("type") == "caption_fragment":
-                        payload = item.get("payload", {})
-                        if "words" in payload:
-                            whisper_words.extend(payload["words"])
-                        else:
-                            # If no word-level data, use fragment timing
-                            whisper_words.append({
-                                'start': item['start'],
-                                'end': item['end'],
-                                'text': payload.get('text', '')
-                            })
-                
-                if whisper_words:
-                    from core.subtitle_generator import generate_ass_from_word_timeline
-                    if generate_ass_from_word_timeline(whisper_words, ass_path, CONFIG):
-                         print(f"      ✅ PERFECT TIMING: Subtitles enhanced and saved", flush=True)
-                         subtitle_generated = True
-                         full_word_timeline = whisper_words # Update for video pass
-            except Exception as whisper_err:
-                print(f"      ⚠️  Perfect Timing enhancement failed: {whisper_err}", flush=True)
-
-        if not subtitle_generated and full_word_timeline:
-            print("      Found word-level timing data", flush=True)
-            from core.subtitle_generator import generate_ass_from_word_timeline
-            if generate_ass_from_word_timeline(full_word_timeline, ass_path, CONFIG):
-                 print(f"      ✅ ASS Subtitles generated: {os.path.basename(ass_path)}", flush=True)
-                 subtitle_generated = True
-        
-        if not subtitle_generated:
-            # Fallback to timestamp-based if no word data and Whisper failed
-            print("      Using chapter markers as fallback subtitles", flush=True)
-            from core.subtitle_generator import generate_ass_from_timestamps
-            if generate_ass_from_timestamps(timestamp_list, ass_path, CONFIG):
-                print(f"      ✅ ASS Subtitles generated: {os.path.basename(ass_path)}", flush=True)
+        # REFACTOR: Subtitle generation is now deferred to the video creation phase 
+        # where we use Faster-Whisper on the final audio file for perfect sync.
+        #
+        # print("   📝 Generating subtitles...", flush=True)
+        # ass_path = final_filename.replace(".mp3", ".ass")
+        # 
+        # # PERFECT TIMING: Always use Faster-Whisper transcription
+        # # This ensures word-level accuracy for ALL TTS engines by transcribing the final audio
+        # print("   ℹ️  Using Faster-Whisper for perfect word-level timing", flush=True)
+        # full_word_timeline = []  # Clear TTS timing, force Whisper transcription
+        #
+        # subtitle_generated = False
+        # 
+        # # NEW: Universal Perfect Timing Logic
+        # # Whisper (Precision Pass) has been replaced by CaptionGod integration in create_video
+        # # if needs_precision_pass: ... (removed)
+        #
+        # if not subtitle_generated and full_word_timeline:
+        #     print("      Found word-level timing data", flush=True)
+        #     from core.subtitle_generator import generate_ass_from_word_timeline
+        #     if generate_ass_from_word_timeline(full_word_timeline, ass_path, CONFIG):
+        #          print(f"      ✅ ASS Subtitles generated: {os.path.basename(ass_path)}", flush=True)
+        #          subtitle_generated = True
+        #
+        # if not subtitle_generated:
+        #     # Fallback to timestamp-based if no word data and Whisper failed
+        #     print("      Using chapter markers as fallback subtitles", flush=True)
+        #     from core.subtitle_generator import generate_ass_from_timestamps
+        #     if generate_ass_from_timestamps(timestamp_list, ass_path, CONFIG):
+        #         print(f"      ✅ ASS Subtitles generated: {os.path.basename(ass_path)}", flush=True)
         
         return True, timestamp_list, full_word_timeline
     
@@ -1009,6 +1181,8 @@ def generate_pro_cover_from_file(cover_path, output_folder, unique_id, book_titl
         
         # Add text overlay if enabled
         enable_overlay = CONFIG.get("video_settings", {}).get("enable_text_overlay", True)
+        print(f"🔍 DEBUG: enable_text_overlay = {enable_overlay}, book_title = {book_title}", flush=True)
+        
         if enable_overlay and book_title:
             draw = ImageDraw.Draw(background)
             
@@ -1087,7 +1261,7 @@ def generate_pro_cover_from_file(cover_path, output_folder, unique_id, book_titl
         traceback.print_exc()
         return None
 
-def create_video_with_recovery(audio_path, image_path, output_path, book_title=None, chapter_range=None, timestamps=None, word_timeline=None, max_retries=3, quality_preset=None):
+def create_video_with_recovery(audio_path, image_path, output_path, book_title=None, chapter_range=None, timestamps=None, word_timeline=None, max_retries=3, quality_preset=None, text_content=None):
     """
     Create video with auto-recovery on failure
     
@@ -1102,7 +1276,7 @@ def create_video_with_recovery(audio_path, image_path, output_path, book_title=N
             if attempt > 1:
                 print(CP(f"\n🔄 Video creation retry {attempt}/{max_retries}...", 'yellow'))
             
-            create_video(audio_path, image_path, output_path, book_title, chapter_range, timestamps, word_timeline, quality_preset)
+            create_video(audio_path, image_path, output_path, book_title, chapter_range, timestamps, word_timeline, quality_preset, text_content)
             
             # Verify video was created
             if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
@@ -1145,7 +1319,7 @@ def create_video_with_recovery(audio_path, image_path, output_path, book_title=N
     
     return False
 
-def create_video(audio_path, image_path, output_path, book_title=None, chapter_range=None, timestamps=None, word_timeline=None, quality_preset=None):
+def create_video(audio_path, image_path, output_path, book_title=None, chapter_range=None, timestamps=None, word_timeline=None, quality_preset=None, text_content=None):
     """Create video from audio + image with optional loudness normalization and chapter markers"""
     # Ensure MoviePy objects are available locally
     print(f"   🎬 Rendering: {os.path.basename(output_path)}", flush=True)
@@ -1374,12 +1548,9 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
                 if not ffmpeg_ok:
                     raise RuntimeError(f"FFmpeg not ready: {ffmpeg_msg}")
                 
-                # Only check faster-whisper if we DON'T have word_timeline (fallback path)
-                if not word_timeline or len(word_timeline) == 0:
-                    from features.video_diagnostics import validate_faster_whisper
-                    fw_ok, fw_msg = validate_faster_whisper()
-                    if not fw_ok:
-                        raise RuntimeError(f"faster-whisper not ready: {fw_msg}")
+                # Only check CaptionGod if we DON'T have word_timeline (fallback path)
+                # [REMOVED] CaptionGod check removed by user request
+
                 
                 render_audio_tmp = os.path.splitext(audio_path)[0] + "_render_mix.mp3"
                 if os.path.exists(render_audio_tmp):
@@ -1395,6 +1566,7 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
                 # Use Word Timeline from TTS if available (FASTER & MORE ACCURATE)
                 if word_timeline and len(word_timeline) > 0:
                     print(f"   ⚡ Using high-precision TTS timing data for captions...", flush=True)
+                    print(f"   📊 Word count: {len(word_timeline)} words with exact timestamps", flush=True)
                     from core.video_pipeline import generate_timeline_from_words
                     timeline_data = generate_timeline_from_words(
                         render_audio_tmp,
@@ -1403,12 +1575,14 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
                         config=CONFIG
                     )
                 else:
-                    # Fallback to Whisper (SLOW)
-                    print(f"   🧮 Generating caption timeline ({video_conf.get('caption_model_size', 'small')})...", flush=True)
-                    timeline_data = generate_timeline_from_audio(
+                    # Fallback to Faster-Whisper Transcription
+                    print(f"   🎙️  No TTS timing data available, using Faster-Whisper transcription...", flush=True)
+                    timeline_data = generate_timeline_with_alignment(
                         render_audio_tmp,
                         project_id=project_id,
-                        config=CONFIG
+                        config=CONFIG,
+                        text_content=None,  # Not needed for Whisper
+                        time_offset=0
                     )
 
                 print(f"   🎥 Advanced rendering via FFmpeg ({preset_name}, CRF {crf})...", flush=True)
@@ -1466,6 +1640,15 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
         if not advanced_render_succeeded:
             print(f"   🎥 Encoding ({preset_name}, H.264, CRF {crf})...", flush=True)
             video_clip = ImageClip(image_path).set_duration(final_duration)
+            
+            # [FIX] Ensure even dimensions for libx264
+            w, h = video_clip.size
+            if w % 2 != 0 or h % 2 != 0:
+                new_w = (w // 2) * 2
+                new_h = (h // 2) * 2
+                print(f"   ⚠️  Resizing to even dimensions: {w}x{h} -> {new_w}x{new_h}", flush=True)
+                video_clip = video_clip.resize(newsize=(new_w, new_h))
+                
             video_clip = video_clip.set_audio(final_audio)
 
             # Prepare ffmpeg parameters
@@ -1542,8 +1725,7 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
                 except:
                     pass
         
-        print(CP(f"\n   ✅ Video saved!", 'green'), flush=True)
-        logger.info(f"Video created: {output_path}")
+        # (Removed duplicate 'Video saved!' message - already printed at line 1497)
     
     except OSError as e:
         if hasattr(e, 'winerror') and e.winerror == 6:
@@ -1661,12 +1843,7 @@ Examples:
                        help="Input EPUB file path or filename within input folder")
     parser.add_argument("--auto", action="store_true",
                        help="Run in fully automated mode (skip confirmations)")
-    parser.add_argument("--force-align", action="store_true",
-                       help="Force Whisper alignment even if TTS provides timing data")
-    parser.add_argument("--whisper-model", type=str, default="small",
-                       help="Whisper model size (tiny, base, small, medium, large)")
-    parser.add_argument("--whisper-threads", type=int, default=4,
-                       help="Number of threads for Whisper CPU inference")
+
     
     # Novel Name Mapper commands
     parser.add_argument("--sync", action="store_true",
@@ -1678,7 +1855,363 @@ Examples:
     parser.add_argument("--search-mappings", type=str, metavar="QUERY",
                        help="Search novel mappings")
     
+    # Queue management mode
+    parser.add_argument("--queue-manager", action="store_true",
+                       help="Enter queue manager mode: configure EPUBs to process sequentially")
+    parser.add_argument("--worker", action="store_true",
+                       help="Run as queue worker: process jobs from the queue (usually auto-spawned)")
+    
     return parser.parse_args()
+
+def configure_book_for_queue(cli_args):
+    """Interactive script to select and configure an EPUB for the queue, without processing it."""
+    import glob
+    
+    # === FILE SELECTION ===
+    epub_files = glob.glob(os.path.join(INPUT_ZONE, "*.epub"))
+    if not epub_files:
+        print(f"\n   ℹ️  No files in '{INPUT_ZONE}'.")
+        return None
+    
+    print(CP(f"\n📚 SELECT EPUB FOR QUEUE:", 'cyan'))
+    for i, f in enumerate(epub_files):
+        print(f"   [{i+1}] {os.path.basename(f)}")
+    
+    selected_path = None
+    while not selected_path:
+        try:
+            choice = input("\n👉 Select book (or 'q' to cancel): ").strip()
+            if choice.lower() == 'q': return None
+            choice_idx = int(choice)
+            if 1 <= choice_idx <= len(epub_files):
+                selected_path = epub_files[choice_idx - 1]
+                break
+        except: pass
+
+    # === PARSING ===
+    valid, error = validate_epub(selected_path)
+    if not valid:
+        print(CP(f"❌ Invalid EPUB: {error}", 'red'))
+        return None
+
+    meta, all_chapters, book_obj = parse_full_epub(selected_path)
+    original_epub_title = meta['title']
+    final_title = meta['title']
+    
+    # === DUPLICATE DETECTION & RENAMING ===
+    final_title, meta, reset_done = resolve_project_name_and_history(selected_path, meta, cli_args)
+    if not final_title: return None
+    final_title_resolved = True 
+    
+    print(CP(f"\n📘 Project Name: {final_title}", 'cyan'))
+    
+    # === OPTIONS ===
+    tts_engine, use_concurrent = select_tts_engine_and_mode()
+    tts_voice = select_voice(tts_engine)
+    
+    spd = input(f"⚡ Speed (default +0%): ").strip()
+    speed = "+0%"
+    if spd:
+        if not spd.startswith(("+", "-")): spd = "+" + spd
+        speed = spd if "%" in spd else f"{spd}%"
+
+    # Smart Merge
+    merge = input("🧩 Enable Smart Chapter Merge? (y/n, default n): ").strip().lower() == 'y'
+    if merge:
+        print("   🔄 Applying Smart Chapter Merge...", flush=True)
+        try:
+            from features.chapter_merger import ChapterMerger
+            merger = ChapterMerger()
+            # Use a temporary paths dict for the merger
+            temp_paths = {"temp": os.path.join(ACTIVE_NOVELS_DIR, sanitize_filename(final_title), "temp_render_files")}
+            os.makedirs(temp_paths["temp"], exist_ok=True)
+            all_chapters = merger.merge_chapters(all_chapters, book_obj, temp_paths["temp"])
+        except Exception as e:
+            print(f"   ⚠️  Merge failed: {e}")
+
+    # Range & Batch
+    show_chapter_overview(all_chapters)
+    range_input = input(f"📍 Enter range (e.g. 1-100) or Enter for all: ").strip()
+    start_chap, end_chap = 1, len(all_chapters)
+    if range_input and "-" in range_input:
+        try:
+            parts = range_input.split("-")
+            start_chap = max(1, int(parts[0]))
+            end_chap = min(len(all_chapters), int(parts[1]))
+        except: pass
+    
+    selected_chapters = all_chapters[start_chap-1:end_chap]
+    print(f"   ✅ Selected: Chapter {start_chap} to {end_chap} ({len(selected_chapters)} chapters)")
+    
+    batch_size = 10
+    try:
+        bs_in = input(f"🔢 Chapters per video (default 10): ").strip()
+        if bs_in: batch_size = int(bs_in)
+    except: pass
+
+    # Create raw_batches
+    raw_batches = []
+    start_idx = start_chap - 1
+    selected_chapters = all_chapters[start_idx:end_chap]
+    for i in range(0, len(selected_chapters), batch_size):
+        b_start = start_idx + i
+        b_end = start_idx + min(i + batch_size, len(selected_chapters))
+        raw_batches.append((b_start, b_end))
+
+    # --- HISTORY CHECK ---
+    print(f"\n🔍 Checking processing history for '{final_title}'...")
+    any_conflict = False
+    for b_start, b_end in raw_batches:
+        # Extract smart numbers for the batch
+        batch_slice = all_chapters[b_start:b_end]
+        first_title = batch_slice[0][0]
+        last_title = batch_slice[-1][0]
+        real_start = extract_smart_number(first_title)
+        real_end = extract_smart_number(last_title)
+        
+        check_start = real_start if real_start is not None else b_start + 1
+        check_end = real_end if real_end is not None else b_end
+        
+        conflict, msg = check_history_conflict(final_title, check_start, check_end)
+        if conflict:
+            color = 'red' if conflict == True else 'yellow'
+            prefix = "⚠️  History Conflict" if conflict == True else "ℹ️  History Notice"
+            print(CP(f"   {prefix}: Ch {check_start}-{check_end} ({msg})", color))
+            any_conflict = True
+            
+    if any_conflict:
+        proceed = input(CP("\n👉 This book has been processed before. Add to queue anyway? (y/n, default n): ", 'white')).strip().lower()
+        if proceed == 'y':
+            meta['_partial_reset_pending'] = True
+        else:
+            print("   Exiting configuration.")
+            return None
+
+
+    # --- THUMBNAIL SELECTION & PROCESSING (During Configuration) ---
+    print(f"\n{CP('🎨 THUMBNAIL SELECTION', 'cyan')}")
+    print(f"   You are creating {len(raw_batches)} video(s).")
+    print(f"\n   Choose thumbnail mode:")
+    print(f"   {CP('[1]', 'cyan')} Use same thumbnail for all videos (EPUB cover or one custom image)")
+    print(f"   {CP('[2]', 'cyan')} Select different thumbnail for each video")
+    
+    thumb_mode = input(f"\n   👉 Select (1/2, default 1): ").strip()
+    
+    # Setup paths for thumbnail processing
+    # We need to create the project structure early to save processed thumbnails
+    safe_title = sanitize_filename(final_title)
+    project_root = os.path.join(ACTIVE_NOVELS_DIR, safe_title)
+    covers_folder = os.path.join(project_root, "cover_images")
+    temp_folder = os.path.join(project_root, "temp_render_files")
+    
+    print(f"\n   🔍 DEBUG: Project folder: {project_root}", flush=True)
+    print(f"   🔍 DEBUG: Covers folder: {covers_folder}", flush=True)
+    
+    # Create folders if they don't exist
+    os.makedirs(covers_folder, exist_ok=True)
+    os.makedirs(temp_folder, exist_ok=True)
+    
+    paths_for_processing = {
+        "root": project_root,
+        "covers": covers_folder,
+        "temp": temp_folder
+    }
+    
+    # Get quality settings for thumbnail sizing
+    curr_preset = CONFIG["video_settings"].get("current_quality_preset", "Balanced")
+    presets = CONFIG["video_settings"].get("quality_presets", {})
+    q_conf = presets.get(curr_preset, presets.get("Balanced", {"height": 720}))
+    target_h = q_conf.get("height", 720)
+    target_w = int(target_h * 16 / 9)
+    if target_w % 2 != 0: target_w += 1
+    
+    processed_thumbnails = {}  # Will store final processed thumbnail paths
+    
+    
+    if thumb_mode == '2':
+        # Per-video thumbnail selection - directly ask for custom images
+        print(f"\n   📸 Provide a custom thumbnail for each of the {len(raw_batches)} video(s)...")
+        print(f"   💡 TIP: Press Enter to use EPUB cover for any video\n")
+        
+        for idx, (start_i, end_i) in enumerate(raw_batches):
+            # Calculate chapter range for display
+            batch_chapters = all_chapters[start_i:end_i]
+            first_title = batch_chapters[0][0]
+            last_title = batch_chapters[-1][0]
+            real_start = extract_smart_number(first_title)
+            real_end = extract_smart_number(last_title)
+            
+            if real_start is not None and real_end is not None:
+                range_label = f"Ch {real_start}-{real_end}"
+            else:
+                range_label = f"Part {start_i+1}-{end_i}"
+            
+            print(f"   🎬 Video {idx+1}/{len(raw_batches)}: {range_label}")
+            custom_thumb = input(f"      🖼️  Drag image here (or press Enter for EPUB cover): ").strip().replace('"', '').replace("'", "")
+            
+            if custom_thumb and os.path.exists(custom_thumb):
+                # [USER REQUIREMENT] Use Simple Resize for Custom Image (no effects)
+                archive_name = f"{sanitize_filename(range_label)}.jpg"
+                archive_path = os.path.join(covers_folder, archive_name)
+                
+                print(f"      ⚙️  Resizing custom thumbnail...", flush=True)
+                from core.utils import simple_resize_image
+                success = simple_resize_image(custom_thumb, archive_path, target_size=(target_w, target_h))
+                
+                if success:
+                    processed_thumbnails[idx] = archive_path
+                    print(f"      ✅ Saved Custom Thumbnail: {archive_name}", flush=True)
+                else:
+                    processed_thumbnails[idx] = "auto"
+                    print(f"      ⚠️  Resize failed. Will use EPUB cover.", flush=True)
+            elif custom_thumb:
+                processed_thumbnails[idx] = "auto"
+                print(f"      ⚠️  File not found: '{custom_thumb}'. Will use EPUB cover.", flush=True)
+            else:
+                processed_thumbnails[idx] = "auto"
+                print(f"      ✅ Using EPUB cover", flush=True)
+                print(f"      ✅ Will use EPUB cover")
+    else:
+        # Single thumbnail for all videos
+        print(f"\n   [1] Use EPUB cover (Automatic)")
+        print(f"   [2] Custom Image (Drag & Drop)")
+        print(f"   💡 TIP: You can paste the image path directly!")
+        thumb_choice = input(f"   👉 Select (default 1): ").strip()
+        
+        # Smart detection: if user pasted a file path, treat it as option 2
+        if thumb_choice and thumb_choice not in ['1', '2']:
+            # User pasted a path directly
+            custom_thumb = thumb_choice.replace('"', '').replace("'", "")
+            print(f"   🔍 Detected file path, using as custom thumbnail...")
+        elif thumb_choice == "2":
+            custom_thumb = input("   🖼️  Drag image here: ").strip().replace('"', '').replace("'", "")
+        else:
+            custom_thumb = None
+        
+        if custom_thumb and os.path.exists(custom_thumb):
+            print(f"   ⚙️  Processing thumbnail for all {len(raw_batches)} video(s)...", flush=True)
+            
+            try:
+                # Process for each batch with appropriate chapter range
+                for idx, (start_i, end_i) in enumerate(raw_batches):
+                    # ... (label calculation as before)
+                    batch_chapters = all_chapters[start_i:end_i]
+                    first_title = batch_chapters[0][0]
+                    last_title = batch_chapters[-1][0]
+                    real_start = extract_smart_number(first_title)
+                    real_end = extract_smart_number(last_title)
+                    range_label = f"Ch {real_start}-{real_end}" if real_start is not None else f"Part {start_i+1}-{end_i}"
+                    
+                    archive_name = f"{sanitize_filename(range_label)}.jpg"
+                    archive_path = os.path.join(covers_folder, archive_name)
+                    
+                    # [USER REQUIREMENT] Use Simple Resize for Custom Image
+                    from core.utils import simple_resize_image
+                    success = simple_resize_image(custom_thumb, archive_path, target_size=(target_w, target_h))
+                    
+                    if success:
+                        processed_thumbnails[idx] = archive_path
+                        print(f"      ✅ Saved Custom Thumbnail: {archive_name}", flush=True)
+                    else:
+                        processed_thumbnails[idx] = "auto"
+                        print(f"      ⚠️  Resize failed for batch {idx+1}", flush=True)
+                
+                success_count = len([p for p in processed_thumbnails.values() if p != 'auto'])
+                print(f"   ✅ Processed and saved {success_count}/{len(raw_batches)} thumbnail(s)", flush=True)
+                
+            except Exception as e:
+                print(f"   ❌ ERROR processing thumbnails: {e}", flush=True)
+                import traceback
+                traceback.print_exc()
+                print(f"   ⚠️  Will use EPUB cover for all videos.", flush=True)
+                for idx in range(len(raw_batches)):
+                    processed_thumbnails[idx] = "auto"
+        elif custom_thumb:
+            print(f"   ⚠️  File not found: '{custom_thumb}'")
+            print("   ⚠️  Will use EPUB cover for all videos.")
+            for idx in range(len(raw_batches)):
+                processed_thumbnails[idx] = "auto"
+        else:
+            print("   ✅ Will use auto-extracted EPUB cover for all videos")
+            for idx in range(len(raw_batches)):
+                processed_thumbnails[idx] = "auto"
+
+    # Construct Job Settings
+    settings = {
+        "engine": tts_engine,
+        "voice": tts_voice,
+        "speed": speed,
+        "concurrent": "yes" if use_concurrent else "no",
+        "merge": merge,
+        "raw_batches": raw_batches,
+        "thumbnails": processed_thumbnails,  # Now contains processed paths or "auto"
+        "partial_reset": meta.get('_partial_reset_pending', False),
+        "quality_preset": CONFIG["video_settings"].get("current_quality_preset", "Balanced")
+    }
+    
+    return {
+        "path": selected_path,
+        "title": final_title,
+        "original_title": original_epub_title, # NEW
+        "settings": settings
+    }
+
+def run_queue_manager_mode(cli_args):
+    """Integrated Queue Manager wrapper for CLI --queue-manager flag"""
+    from features.queue_manager import QueueManager
+    qm = QueueManager()
+    
+    def add_to_queue_callback():
+        job_details = configure_book_for_queue(cli_args)
+        if job_details:
+            qm.add_to_queue(
+                job_details['path'], 
+                job_details['settings'],
+                title=job_details.get('title'),
+                original_title=job_details.get('original_title')
+            )
+            print(CP(f"\n   ✅ Added to queue: {job_details['title']}", 'green'))
+            time.sleep(1)
+
+    ui_manager.handle_queue_menu(qm, process_batch_queue, add_to_queue_callback)
+
+def run_worker_mode():
+    """Sequential worker that processes jobs from the processing_queue.json"""
+    from features.queue_manager import QueueManager
+    qm = QueueManager()
+    
+    print(f"\n{CP('⚙️ QUEUE WORKER ACTIVE', 'blue')}")
+    print(f"{'='*60}")
+    print("   Processing jobs from queue sequentially.")
+    print(f"{'='*60}\n")
+    
+    while True:
+        job = qm.claim_next_job()
+        if not job:
+            # Poll for a few seconds before giving up? or just exit?
+            # Plan says exit when empty.
+            print(f"\n{CP('🏁 Queue is empty. Worker exiting.', 'yellow')}")
+            break
+            
+        print(f"\n{'='*60}")
+        print(f"📦 PROCESSING JOB: {job['title']}")
+        print(f"⏰ Start time: {datetime.now().strftime('%H:%M:%S')}")
+        print(f"{'='*60}\n")
+        
+        try:
+            process_from_queue_job(job)
+            qm.mark_completed(job['id'], success=True)
+            print(CP(f"\n✅ SUCCESS: Completed {job['title']}", 'green'))
+        except Exception as e:
+            print(CP(f"\n❌ FAILED: {job['title']} - {e}", 'red'))
+            logger.error(f"Worker Job Failed: {e}")
+            qm.mark_completed(job['id'], success=False)
+            
+        # Cooldown and GC between books
+        import gc
+        gc.collect()
+        time.sleep(5)
+
 
 def process_batch_queue(qm):
     """Process all pending jobs in the queue"""
@@ -1690,11 +2223,8 @@ def process_batch_queue(qm):
     print(f"\n🚀 STARTING BATCH PROCESSING: {len(jobs)} Jobs")
     
     from rich.progress import track
-    for i, job in enumerate(track(
-        jobs, 
-        description="[bold green]Batch Processing...",
-        total=len(jobs)
-    )):
+    # Loop without rich track to avoid LiveError with nested progress bars
+    for i, job in enumerate(jobs):
         print(f"\n{'='*60}")
         print(f"📦 BATCH JOB {i+1}/{len(jobs)}: {job['title']}")
         print(f"{'='*60}")
@@ -1738,8 +2268,35 @@ def process_from_queue_job(job):
     if not all_chapters:
         raise ValueError("No chapters found in EPUB")
         
+    # Override title if specified in job (e.g. by rename)
+    if job.get('title'):
+        meta['title'] = job['title']
+        
+    # Apply partial reset setting if present
+    if settings.get('partial_reset'):
+        meta['_partial_reset_pending'] = True
+        
     # 2. Setup Project
     paths = setup_project_folders(meta['title'], ACTIVE_NOVELS_DIR)
+    
+    # [FIX] Copy EPUB to source folder for archival/reference (Matches interactive mode)
+    final_epub_path = os.path.join(paths["epub"], os.path.basename(epub_path))
+    if not os.path.exists(final_epub_path):
+        try:
+            shutil.copy2(epub_path, final_epub_path)
+            print(f"   ✅ Archived EPUB to source folder", flush=True)
+        except Exception as e:
+            logger.warning(f"Failed to archive EPUB: {e}")
+    
+    # Auto-save novel name mapping if user renamed it (Integrated for Queue/Worker)
+    original_title = job.get('original_title', meta.get('original_title', ''))
+    if job.get('title') and job['title'] != original_title:
+        from features.novel_name_mapper import auto_save_mapping
+        auto_save_mapping(
+            original_title=original_title,
+            youtube_name=job['title'],
+            project_path=paths["root"]
+        )
     
     # 3. Execution Data
     
@@ -1748,7 +2305,7 @@ def process_from_queue_job(job):
     if settings.get('merge'):
         print("   🔄 Applying Smart Chapter Merge (Batch)...", flush=True)
         try:
-            from chapter_merger import ChapterMerger
+            from features.chapter_merger import ChapterMerger
             merger = ChapterMerger()
             # Note: We pass book_obj but the new merger ignores it and uses text content directly
             all_chapters = merger.merge_chapters(all_chapters, book_obj, paths["temp"])
@@ -1761,7 +2318,38 @@ def process_from_queue_job(job):
     raw_batches = settings.get('raw_batches', [])
     execution_queue = []
     
-    # Re-construct execution queue (Phase 1 Logic - Simplified)
+    # --- COVER EXTRACTION (Once per job) ---
+    extracted_cover = None
+    # For backward compatibility, check both 'thumbnails' (new) and 'thumbnail' (old)
+    thumbnails_dict = settings.get('thumbnails', {})
+    legacy_thumbnail = settings.get('thumbnail', 'auto')
+    
+    # If using legacy single thumbnail, convert to dict format
+    if not thumbnails_dict and legacy_thumbnail:
+        thumbnails_dict = {i: legacy_thumbnail for i in range(len(raw_batches))}
+    
+    # Extract cover once if any batch uses 'auto'
+    if any(thumb == 'auto' for thumb in thumbnails_dict.values()):
+        extracted_cover = extract_cover_to_project(book_obj, paths, meta['title'])
+        
+        # Check for manual cover if extraction failed
+        if not extracted_cover:
+             manual_candidates = [
+                 os.path.join(paths["root"], "cover.jpg"),
+                 os.path.join(paths["root"], "cover.jpeg"),
+                 os.path.join(paths["root"], "cover.png"),
+                 os.path.join(paths["root"], "thumbnail.jpg"),
+                 os.path.join(paths["covers"], "cover.jpg"),
+                 os.path.join(paths["covers"], "cover.jpeg"),
+                 os.path.join(paths["covers"], "cover.png")
+             ]
+             for cand in manual_candidates:
+                 if os.path.exists(cand):
+                     extracted_cover = cand
+                     print(f"   ✅ Found manual cover: {os.path.basename(cand)}", flush=True)
+                     break
+
+    # Prepare batches
     print("   ⚙️  Preparing batches...")
     for idx, (start_i, end_i) in enumerate(raw_batches):
         selected_batch = all_chapters[start_i:end_i]
@@ -1778,32 +2366,103 @@ def process_from_queue_job(job):
             range_label = f"Part {start_i+1}-{end_i}"
             check_start, check_end = start_i + 1, end_i
 
-        # Auto-Generate Cover (Default behavior for batch)
-        # We always extract from EPUB or use placeholder
+        # --- HISTORY CLEANUP (Partial Reset) ---
+        if meta.get('_partial_reset_pending'):
+            conflict, msg = check_history_conflict(meta['title'], check_start, check_end)
+            if conflict:
+                # Note: path is needed for hash calculation, title for backup matching
+                delete_book_from_history(epub_path, title=meta['title'], chapters=(check_start, check_end))
+
+
+        # --- THUMBNAIL LOGIC (Use Pre-Processed Thumbnails) ---
+        # Thumbnails are now processed during queue configuration and saved to covers folder
+        # Worker just needs to check if they exist, or process EPUB cover as fallback
         
-        # Resolve Quality
+        # Get quality settings for thumbnail sizing (needed for EPUB cover fallback)
         batch_preset_name = settings.get("quality_preset", CONFIG["video_settings"].get("current_quality_preset", "Balanced"))
         batch_presets = CONFIG["video_settings"].get("quality_presets", {})
         batch_q_conf = batch_presets.get(batch_preset_name, batch_presets.get("Balanced", {"height": 720}))
         target_h = batch_q_conf.get("height", 720)
-        # Assuming 16:9 aspect ratio standard for YouTube/Video
         target_w = int(target_h * 16 / 9)
-        # Ensure even numbers
         if target_w % 2 != 0: target_w += 1
         
-        img_path_for_batch = None
-        extracted = extract_cover_to_project(book_obj, paths, meta['title'])
-        if extracted:
-            img_path_for_batch = generate_pro_cover_from_file(extracted, paths["temp"], idx, 
-                                                                book_title=meta['title'], 
-                                                                chapter_range=range_label,
-                                                                target_size=(target_w, target_h))
+        # FIX: Check both int and string keys for JSON compatibility
+        batch_thumbnail = thumbnails_dict.get(idx)
+        if batch_thumbnail is None:
+            batch_thumbnail = thumbnails_dict.get(str(idx), 'auto')
+        
+        # FIX: Ensure we can find the thumbnail if it's just a filename
+        if batch_thumbnail != 'auto' and batch_thumbnail and not os.path.exists(batch_thumbnail):
+             possible_path = os.path.join(paths["covers"], os.path.basename(batch_thumbnail))
+             if os.path.exists(possible_path):
+                 batch_thumbnail = possible_path
+
+        if batch_thumbnail != 'auto' and os.path.exists(batch_thumbnail):
+            # [USER REQUIREMENT] Use Simple Resize for Custom Image (no effects)
+            # Ensure it's in the covers folder and resized to 16:9
+            archive_name = f"{sanitize_filename(range_label)}.jpg"
+            archive_path = os.path.join(paths["covers"], archive_name)
+            
+            # Check if it's already a processed JPG in the right place
+            if batch_thumbnail == archive_path:
+                img_path_for_batch = batch_thumbnail
+                print(f"      ✅ Using already processed custom thumbnail: {archive_name}", flush=True)
+            else:
+                print(f"      ⚙️  Resizing custom thumbnail to 16:9 (No effects)...", flush=True)
+                from core.utils import simple_resize_image
+                success = simple_resize_image(batch_thumbnail, archive_path, target_size=(target_w, target_h))
+                if success:
+                    img_path_for_batch = archive_path
+                    print(f"      ✅ Prepared custom thumbnail: {archive_name}", flush=True)
+                else:
+                    img_path_for_batch = batch_thumbnail # Fallback to raw
         else:
-            # Fallback placeholder
-            placeholder = Image.new('RGB', (target_w, target_h), (20, 20, 20))
-            temp = os.path.join(paths["temp"], f"placeholder_{idx}.jpg")
-            placeholder.save(temp)
-            img_path_for_batch = temp
+            # Need to process EPUB cover as fallback (With Effects)
+            if not extracted_cover:
+                 manual_candidates = [
+                     os.path.join(paths["root"], "cover.jpg"),
+                     os.path.join(paths["root"], "cover.jpeg"),
+                     os.path.join(paths["root"], "cover.png"),
+                     os.path.join(paths["root"], "thumbnail.jpg"),
+                     os.path.join(paths["covers"], "cover.jpg"),
+                     os.path.join(paths["covers"], "cover.jpeg"),
+                     os.path.join(paths["covers"], "cover.png")
+                 ]
+                 for cand in manual_candidates:
+                     if os.path.exists(cand):
+                         extracted_cover = cand
+                         print(f"      ✅ Found manual cover (fallback): {os.path.basename(cand)}", flush=True)
+                         break
+            
+            if extracted_cover:
+                # [USER REQUIREMENT] Use professional styled thumbnail for EPUB cover
+                try:
+                    unique_id = sanitize_filename(range_label)
+                    pro_thumb_path = generate_pro_cover_from_file(
+                        extracted_cover, paths["covers"], unique_id,
+                        book_title=meta.get('title'),
+                        chapter_range=range_label,
+                        target_size=(target_w, target_h)
+                    )
+                    
+                    if pro_thumb_path:
+                        img_path_for_batch = pro_thumb_path
+                        print(f"      ✅ Generated professional thumbnail from cover: {os.path.basename(pro_thumb_path)}", flush=True)
+                    else:
+                        raise RuntimeError("Pro thumbnail generation failed")
+                except Exception as e:
+                    print(f"      ⚠️  Pro processing failed: {e}. Using simple resize fallback.", flush=True)
+                    archive_name = f"{sanitize_filename(range_label)}.jpg"
+                    archive_path = os.path.join(paths["covers"], archive_name)
+                    from core.utils import simple_resize_image
+                    simple_resize_image(extracted_cover, archive_path, target_size=(target_w, target_h))
+                    img_path_for_batch = archive_path
+            else:
+                # Fallback placeholder
+                placeholder = Image.new('RGB', (target_w, target_h), (20, 20, 20))
+                temp = os.path.join(paths["temp"], f"placeholder_{idx}.jpg")
+                placeholder.save(temp)
+                img_path_for_batch = temp
             
         execution_queue.append({
             "batch": selected_batch,
@@ -1811,7 +2470,7 @@ def process_from_queue_job(job):
             "image": img_path_for_batch,
             "start_chk": check_start,
             "end_chk": check_end,
-            "quality_preset": batch_preset_name # Pass preset to execution loop
+            "quality_preset": batch_preset_name
         })
         
     # 4. Processing Phase (Phase 2 Logic)
@@ -1821,7 +2480,8 @@ def process_from_queue_job(job):
     use_concurrent = settings.get('concurrent', 'yes') == "yes"
     
     # IMPORTANT: Enforce Memory Limits in Batch Mode
-    from features.memory_manager import check_memory_status, optimize_memory
+    # IMPORTANT: Enforce Memory Limits in Batch Mode
+    from features.memory_manager import check_memory_status, optimize_memory, is_low_memory
     
     print(f"   🚀 Processing {len(execution_queue)} videos...")
     
@@ -1831,17 +2491,57 @@ def process_from_queue_job(job):
         video_file = os.path.join(paths["video"], f"{range_name}.mp4")
         
         if os.path.exists(video_file):
-            print(f"      ⏭️  Skipping existing: {item['label']}")
+            print(f"      ⏭️  Skipping existing file: {item['label']}")
             continue
             
-        print(f"      ▶️  Generating: {item['label']}")
+        # History check (Double layer protection)
+        conflict, msg = check_history_conflict(meta['title'], item['start_chk'], item['end_chk'])
+        if conflict and conflict != "boundary":
+            print(f"      ⏭️  Skipping previously processed (History): {item['label']}")
+            continue
+            
+        # [SMART RESOURCE MGMT] Check Memory Status before each batch
+        current_low_mem = is_low_memory()
+        active_concurrent = use_concurrent and not current_low_mem
+        
+        if current_low_mem and use_concurrent:
+            print(CP(f"      ⚠️  Low RAM detected ({check_memory_status()}). Forcing Safe Mode (No Concurrency) for stability.", 'yellow'))
+        
+        print(f"      ▶️  Generating: {item['label']} (Mode: {'Fast' if active_concurrent else 'Safe'})")
         
         # Audio
         # Audio
+        # [STANDARD Mode] - Intro Override for Continuation Videos
+        current_intro_override = None
+        current_skip_disclaimer = False
+        
+        if i > 0:
+            current_skip_disclaimer = True
+            
+            # Check if Gemini is enabled (via global config, since queue worker might not have full context)
+            gemini_enabled = CONFIG.get("gemini_settings", {}).get("enabled", False)
+            if not gemini_enabled:
+                 # Standard Continuation Intro
+                 next_chapter_title_raw = item["batch"][0][0]
+                 # Try to clean it up slightly
+                 cleaned_title = next_chapter_title_raw.replace('.html', '').replace('_', ' ').strip()
+                 current_intro_override = f"This video continues with {cleaned_title}."
+                 print(f"      ℹ️  Continuation Video: Skipping disclaimer & using standard intro override.")
+
+
         success, timestamps, word_timeline = run_audio_gen_with_timestamps(
             item["batch"], meta, audio_file, speed, paths["temp"],
-            tts_engine, tts_voice, use_concurrent
+            tts_engine, tts_voice, active_concurrent,
+            intro_override=current_intro_override,
+            skip_disclaimer=current_skip_disclaimer
         )
+        
+        # [USER REQUIREMENT] Force Faster Whisper for all non-Edge engines
+        # Even if timestamps exist, we ignore them for anything other than Edge-TTS
+        if tts_engine != "edge":
+             if word_timeline:
+                 print(f"      🎙️  Prioritizing Faster-Whisper accuracy over TTS timing for {tts_engine}...")
+                 word_timeline = []
         
         if not success or not os.path.exists(audio_file):
              # Try auto-recover?
@@ -1851,6 +2551,11 @@ def process_from_queue_job(job):
              # Let's fail the job to be safe
              raise RuntimeError(f"Audio generation failed for {item['label']}")
 
+        # Prepare text content for forced alignment
+        full_text_content = ""
+        for _, ch_text in item["batch"]:
+             full_text_content += ch_text + "\n"
+
         # Video
         generate_description_file(meta, range_name, paths, timestamps, CONFIG)
         video_success = create_video_with_recovery(
@@ -1859,7 +2564,8 @@ def process_from_queue_job(job):
             chapter_range=item['label'],
             timestamps=timestamps,
             word_timeline=word_timeline,
-            max_retries=3
+            max_retries=3,
+            text_content=full_text_content
         )
         
         if video_success:
@@ -1962,37 +2668,67 @@ def main():
     auto_resume = False
     
     print("\n" + "="*50)
-    print("MAIN MENU")
+    print(CP("MAIN MENU", 'purple'))
     print("="*50)
-    print(f"{CP('[1]', 'cyan')} Process a New Book")
-    print(f"{CP('[2]', 'cyan')} Manage Batch Queue ({len(qm.get_pending_jobs())})")
-    print(f"{CP('[3]', 'cyan')} Resume Previous Session")
-    curr_q = CONFIG["video_settings"].get("current_quality_preset", "Balanced")
-    print(f"{CP('[4]', 'cyan')} Video Quality: {curr_q}")
+    print(f"  {CP('1.', 'cyan')} Process a New Book (one-by-one mode)")
+    print(f"  {CP('2.', 'cyan')} Continue a Previous Project (Resume)")
+    print(f"  {CP('3.', 'cyan')} Manage the processing queue (batch mode)")
+    print(f"  {CP('4.', 'cyan')} Search and View novel mappings")
+    print(f"  {CP('5.', 'cyan')} Video quality and system settings")
+    print(f"  {CP('6.', 'cyan')} Exit")
     
     # Resume check
-    resume_data = check_for_resume()
+    resume_data = get_checkpoint_if_exists()
     if resume_data:
-         print(f"{CP('NOTE:', 'yellow')} Checkpoint found. Select [3] to resume.")
+         qm.display_checkpoint_info() # Show info without asking
+         print(f"   {CP('💡 TIP:', 'yellow')} Select [2] to Continue/Resume this project.")
     
     if cli_args.input:
         main_choice = "1"
         print(f"\n   ℹ️  Auto-selecting [1] via CLI")
     else:
-        main_choice = input("\n👉 Select option (default 1): ").strip()
+        main_choice = input(f"\n   {CP('👉 Select option (1-6):', 'cyan')} ").strip()
     
-    if main_choice == '2':
-        ui_manager.handle_queue_menu(qm, process_batch_queue)
-        print("\n👇 Returning to book selection...")
-    elif main_choice == '4':
-        ui_manager.handle_video_quality_menu()
-        print("\n👇 Returning to book selection...")
+    if main_choice == '6':
+        print("\n   👋 Goodbye!")
+        sys.exit(0)
     elif main_choice == '3':
-        # Resume handled by check_for_resume() logic below
-        if not resume_data:
-            print(f"   {CP('⚠️  No active checkpoint found in memory.', 'yellow')}")
-            resume_data = check_for_resume()
+        def add_to_queue_callback():
+            job_details = configure_book_for_queue(cli_args)
+            if job_details:
+                qm.add_to_queue(
+                    job_details['path'], 
+                    job_details['settings'],
+                    title=job_details.get('title'),
+                    original_title=job_details.get('original_title')
+                )
+                print(CP(f"\n   ✅ Added to queue: {job_details['title']}", 'green'))
+                time.sleep(1)
         
+        from core import ui_manager
+        ui_manager.handle_queue_menu(qm, process_batch_queue, add_to_queue_callback)
+        print("\n👇 Returning to main menu...")
+        return main() # Recursion to main menu
+    elif main_choice == '4':
+        from features.novel_name_mapper import search_mappings_cli
+        query = input("\n   🔎 Enter novel name to search: ").strip()
+        search_mappings_cli(query)
+        input("\nPress Enter to return to main menu...")
+        return main()
+    elif main_choice == '5':
+        from core import ui_manager
+        ui_manager.handle_video_quality_menu()
+        print("\n👇 Returning to main menu...")
+        return main()
+    elif main_choice == '2':
+        # Resume handled by ask_to_resume_checkpoint() logic below
+        if not resume_data:
+            resume_data = get_checkpoint_if_exists()
+        
+        if resume_data:
+             # Now we actually ask
+             resume_data = ask_to_resume_checkpoint()
+             
         if resume_data:
             print(CP("\n   🚀 Initiating Resume Sequence...", "cyan"))
             r_title = resume_data.get('book_title')
@@ -2084,90 +2820,12 @@ def main():
         print(CP("❌ No chapters found.", 'red'))
         return
     
-    # Phase 2: Check for duplicate EPUB
-    epub_hash = calculate_epub_hash(selected_path)
-    if epub_hash:
-        dup_info = check_duplicate_epub(selected_path)
-        if dup_info:
-            print(CP(f"\n{'='*50}", 'yellow'))
-            print(CP(f"⚠️  DUPLICATE EPUB DETECTED (DANGER ZONE)", 'yellow'))
-            print(CP(f"{'='*50}", 'yellow'))
-            print(f"   Book: {dup_info['title']}")
-            print(f"   📅 Last Activity: {dup_info['date']}")
-            print(f"   📑 Finished Chapters: {dup_info['start']} - {dup_info['end']}")
-            print(f"   Hash: {epub_hash[:16]}...")
-            print(CP(f"{'='*50}", 'yellow'))
-            
-            print(f"\n   [1] " + CP("Open Existing Project", 'green') + " (Continue where you left off)")
-            print(f"   [2] " + CP("Full Reset", 'red') + "           (Wipe history for this book)")
-            print(f"   [3] " + CP("Partial Reset", 'blue') + "        (Wipe history only for current range)")
-            print(f"   [4] " + CP("Abogen / Exit", 'white'))
-            
-            if cli_args.auto:
-                choice = '2'
-                print(f"\n   ℹ️  Auto-selecting [2] Full Reset via CLI")
-            elif auto_resume:
-                choice = '1'
-                print(f"\n   ℹ️  Auto-selecting [1] Open Existing Project (Resume)")
-            else:
-                choice = input(f"\n   {CP('👉 Select (1-4):', 'cyan')} ").strip()
-            
-            if choice == '1':
-                duplicate_key = dup_info['key']
-                duplicate_title = dup_info['title']
-                existing_path = os.path.join(ACTIVE_NOVELS_DIR, duplicate_key)
-                if os.path.exists(existing_path):
-                    print(CP(f"\n   ✅ Switching context to existing project...", 'green'))
-                    meta['title'] = duplicate_title
-                else:
-                    print(CP(f"\n   ℹ️  Existing project folder not found. Creating new instance.", 'yellow'))
-                    meta['title'] = f"{meta['title']} (Resumed)"
-            elif choice == '2':
-                if cli_args.auto:
-                    confirm = 'y'
-                else:
-                    confirm = input(f"\n   {CP('⚠️  REALLY WIPE ALL HISTORY?', 'red')} (y/n): ").strip().lower()
-                if confirm == 'y':
-                    from core.epub_io import delete_book_from_history
-                    success, count = delete_book_from_history(selected_path, chapters=None)
-                    if success:
-                        print(CP(f"   ✅ History Purged: {count} entries removed.", 'green'))
-                        
-                        if cli_args.auto:
-                            wipe_folder = 'y'
-                        else:
-                            wipe_folder = input(f"   {CP('🗑️  Also delete existing project files?', 'yellow')} (y/n): ").strip().lower()
-                        if wipe_folder == 'y':
-                            dup_path = os.path.join(ACTIVE_NOVELS_DIR, dup_info['key'])
-                            if os.path.exists(dup_path):
-                                try:
-                                    shutil.rmtree(dup_path)
-                                    print(CP("   ✅ Project folder deleted.", 'green'))
-                                except Exception as e:
-                                    print(CP(f"   ❌ Folder deletion failed: {e}", 'red'))
-                    else:
-                        print(CP("   ❌ History reset failed or no entries found.", 'red'))
-            elif choice == '3':
-                print(f"\n   ℹ️  Partial reset will trigger based on the ranges you select next.")
-                meta['_partial_reset_pending'] = True
-            else:
-                print(CP("\n   👋 Exiting.", 'white'))
-                return
+    original_epub_title = meta['title']
     
-    original_epub_title = meta['title']  # Save original for mapping
-    print(CP(f"\n📘 Title: {meta['title']}", 'cyan'))
-    
-    new_title = ""
-    if not cli_args.auto and not auto_resume:
-        new_title = input("   Press Enter to keep, or type new name: ").strip()
-        
-    if new_title:
-        # Check for duplicates before accepting the new title
-        from features.novel_name_mapper import check_duplicate_interactive
-        final_title = check_duplicate_interactive(original_epub_title, new_title)
-        meta['title'] = final_title
-    else:
-        final_title = meta['title']
+    # Phase 2: Duplicate detection & naming
+    final_title, meta, reset_done = resolve_project_name_and_history(selected_path, meta, cli_args, auto_resume)
+    if not final_title: return
+    new_title = final_title if reset_done else ""
     
     print(CP("\n🏗️  Initializing project...", 'cyan'))
     book_title = meta['title']
@@ -2180,6 +2838,38 @@ def main():
             youtube_name=final_title,
             project_path=paths["root"]
         )
+    
+    # === AI GLOBAL ANALYSIS (Stage 1) ===
+    gemini_client = create_gemini_client()
+    if gemini_client and CONFIG.get("gemini_settings", {}).get("enabled", False):
+        ai_metadata_path = os.path.join(paths["root"], "ai_metadata.json")
+        if not os.path.exists(ai_metadata_path):
+            print(CP("\n🤖 Running AI Global Analysis...", 'cyan'))
+            try:
+                # Aggregate text from first 5 chapters for context
+                full_text_sample = ""
+                for _, content in all_chapters[:5]: 
+                     full_text_sample += content + "\n"
+                
+                # Strip HTML (simple regex or just pass it, Gemini handles HTML generally fine but plain text saves tokens)
+                clean_sample = re.sub(r'<[^>]+>', '', full_text_sample)
+                
+                # Cap at 50k chars
+                analysis = gemini_client.analyze_full_story(
+                    full_text=clean_sample[:50000],
+                    metadata=meta
+                )
+                
+                # Save
+                with open(ai_metadata_path, 'w', encoding='utf-8') as f:
+                    analysis['generated_at'] = datetime.now().isoformat()
+                    analysis['model'] = gemini_client.model_name
+                    json.dump(analysis, f, indent=2)
+                
+                print(f"   ✅ Analysis complete: {len(analysis.get('story_analysis', {}).get('characters', []))} characters identified")
+            except Exception as e:
+                print(CP(f"   ⚠️  AI Analysis failed: {e}", 'yellow'))
+
     
     # Phase 2: Load book profile if it exists
     book_profile = load_book_profile(paths["root"])
@@ -2223,41 +2913,7 @@ def main():
              # Merging might fix gaps or create weirdness, but usually fine.
     
     # === CHAPTER OVERVIEW ===
-    print(f"\n{'=' * 50}")
-    print(f"TOTAL CHAPTERS: {len(all_chapters)}")
-    print(f"{'=' * 50}")
-    print("First 30:")
-    for i in range(min(30, len(all_chapters))):
-        title = all_chapters[i][0]
-        num = extract_smart_number(title)
-        if num is not None:
-            print(f"   [{i+1:3}] → Ch {num:4} | {title[:50]}")
-        else:
-            print(f"   [{i+1:3}] → {'':10} | {title[:60]}")
-    
-    if len(all_chapters) > 60:
-        print("   ...")
-        print("Last 30:")
-        for i in range(max(len(all_chapters) - 30, 0), len(all_chapters)):
-            title = all_chapters[i][0]
-            num = extract_smart_number(title)
-            if num is not None:
-                print(f"   [{i+1:3}] → Ch {num:4} | {title[:50]}")
-            else:
-                print(f"   [{i+1:3}] → {'':10} | {title[:60]}")
-    
-    # Gap detection
-    nums = [extract_smart_number(t[0]) for t in all_chapters if extract_smart_number(t[0]) is not None]
-    if len(nums) > 1:
-        gaps = []
-        for i in range(len(nums) - 1):
-            if nums[i + 1] - nums[i] > 1:
-                gaps.append(f"{nums[i]+1}-{nums[i+1]-1}")
-        if gaps:
-            print(CP(f"\n⚠️  WARNING: Missing chapters: {', '.join(gaps)}", 'yellow'))
-            print("   → Consider smaller batch sizes\n")
-    
-    print(f"{'=' * 50}\n")
+    show_chapter_overview(all_chapters)
     
     # === BATCH CREATION ===
     raw_batches = []
@@ -2598,7 +3254,7 @@ def main():
             if meta.get('_partial_reset_pending'):
                 print(CP(f"   🔄 Partial Reset: Clearing existing history for {range_label}...", 'blue'))
                 from core.epub_io import delete_book_from_history
-                success, count = delete_book_from_history(selected_path, chapters=(check_start, check_end))
+                success, count = delete_book_from_history(selected_path, title=meta['title'], chapters=(check_start, check_end))
                 if success:
                     print(CP(f"   ✅ Cleared {count} overlapping entries.", 'green'))
                     # Continue as if no conflict
@@ -2794,19 +3450,53 @@ def main():
         audio_file = os.path.join(paths["audio"], f"{range_name}.mp3")
         video_file = os.path.join(paths["video"], f"{range_name}.mp4")
         
-        # Resume capability - skip if video exists
-        if os.path.exists(video_file):
+        # Resume capability - skip if video exists (unless in test mode)
+        if os.path.exists(video_file) and not cli_args.test_mode:
             print(f"   ⏭️  Video already exists! Skipping...", flush=True)
             continue
         
+        # === AI INTRO GENERATION ===
+        intro_override = None
+        if gemini_client and CONFIG.get("gemini_settings", {}).get("enabled", False):
+             features = CONFIG.get("gemini_settings", {}).get("features", {})
+             if features.get("custom_intros", True):
+                 try:
+                     print(f"      ✨ Generating AI Intro...", flush=True)
+                     chapter_titles = [c[0] for c in item['batch']]
+                     intro_res = gemini_client.generate_intro(
+                         batch_number=i+1,
+                         total_batches=len(execution_queue),
+                         story_context=f"Batch covers chapters: {chapter_titles[0]} to {chapter_titles[-1]}",
+                     )
+                     if intro_res and intro_res.get('intro_text'):
+                         intro_override = intro_res['intro_text']
+                         print(CP(f"      ✅ AI Intro: {intro_override[:60]}...", 'green'))
+                 except Exception as e:
+                     print(CP(f"      ⚠️  AI Intro generation failed: {e}", 'yellow'))
+
         # === AUDIO GENERATION ===
         print(f"\n   🎵 AUDIO GENERATION", flush=True)
         print(f"   Target: {audio_file}", flush=True)
         
+        # Standard Mode Logic: Continuation messages
+        skip_disclaimer = False
+        if i > 0:
+            skip_disclaimer = True
+            if not intro_override:
+                # Get the title of the first chapter in this batch
+                try:
+                    # item['batch'] is list of tuples (title, text)
+                    start_chap_title = item['batch'][0][0]
+                    intro_override = f"This video continues with {start_chap_title}."
+                    print(f"   ℹ️  Standard Intro Override: {intro_override}")
+                except:
+                    pass
+
         success, timestamps, word_timeline = run_audio_gen_with_timestamps(
             item["batch"], meta, audio_file, speed, paths["temp"],
-            tts_engine, tts_voice, use_concurrent, force_align=cli_args.force_align,
-            whisper_model=cli_args.whisper_model, whisper_threads=cli_args.whisper_threads
+            tts_engine, tts_voice, use_concurrent,
+            intro_override=intro_override, 
+            skip_disclaimer=skip_disclaimer
         )
         
         # === CRITICAL VERIFICATION ===
@@ -2868,13 +3558,28 @@ def main():
             time.sleep(5)
             
             print(f"\n   🎬 VIDEO GENERATION", flush=True)
+            
+            # Prepare text content for alignment
+            batch_text_content = ""
+            for _, ch_txt in item.get('batch', []):
+                 batch_text_content += ch_txt + "\n"
+            
+            # [USER REQUIREMENT] Force Faster Whisper for all non-Edge engines
+            # Even if timestamps exist, we ignore them for anything other than Edge-TTS
+            if tts_engine != "edge":
+                 if word_timeline:
+                     print(f"      🎙️  Prioritizing Faster-Whisper accuracy over TTS timing for {tts_engine}...")
+                     word_timeline = []
+
             video_success = create_video_with_recovery(
                 audio_file, item["image"], video_file,
                 book_title=meta['title'],
                 chapter_range=item['label'],
                 timestamps=timestamps,
                 word_timeline=word_timeline,
-                max_retries=3
+                max_retries=3,
+                quality_preset=quality_preset,
+                text_content=batch_text_content
             )
             
             # Verify video was created
@@ -3037,10 +3742,16 @@ if __name__ == "__main__":
         
         print(CP("   ⚠️  No permanent history will be saved!\\n", 'yellow'))
 
-
-
-
+    # Queue Manager Mode
+    if cli_args.queue_manager:
+        run_queue_manager_mode(cli_args)
+        sys.exit(0)
     
+    # Worker Mode
+    if cli_args.worker:
+        run_worker_mode()
+        sys.exit(0)
+
     try:
         main()
     except KeyboardInterrupt:

@@ -1,0 +1,9 @@
+Hello, and welcome to this demonstration of the TTS Subtitle Generator.
+
+This tool generates accurate SRT subtitles by aligning known text with TTS-generated audio. It uses forced alignment technology to achieve precise word-level timing.
+
+The process works in three main steps. First, we preprocess the text to clean and normalize it. Second, we extract audio features and align them to phonemes. Finally, we generate readable SRT captions that respect timing constraints.
+
+This approach is much faster than speech recognition models like Whisper, and it works on CPU without requiring a GPU.
+
+Thank you for trying this tool!

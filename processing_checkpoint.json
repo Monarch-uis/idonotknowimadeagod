@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-01-01T21:19:12.179174",
+  "book_title": "Marvel: Infinite evolution starting with Venom",
+  "batch_info": {
+    "batch_number": 2,
+    "total_batches": 5
+  },
+  "progress": {
+    "completed_chapters": [
+      "Ch 1-2",
+      "Ch 4-4"
+    ]
+  },
+  "completed_chapters": [
+    "Ch 1-2",
+    "Ch 4-4"
+  ],
+  "current_batch": 2,
+  "total_batches": 5
+}
