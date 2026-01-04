@@ -240,12 +240,12 @@ def delete_book_from_history(epub_path, title=None, chapters=None):
     updated_history = {}
     
     # Target title for fallback matching
-    target_title = title
+    target_key = sanitize_filename(title) if title else None
     
     for book_key, entries in history.items():
         new_entries = []
-        # book_key is usually the title in our history structure
-        title_matches = (target_title and book_key == target_title)
+        # book_key is the sanitized title in our history structure
+        title_matches = (target_key and book_key == target_key)
         
         for entry in entries:
             # Check if this entry matches by hash or title
