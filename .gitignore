@@ -37,6 +37,7 @@ env/
 
 # Project Specific
 *.log
+*_log.txt
 *.epub
 *.mp3
 *.mp4
@@ -84,3 +85,8 @@ processing_queue.json
 
 # Node modules
 node_modules/
+
+# Useless files and session data
+useless/
+processing_checkpoint.json
+processing_queue.json.lock
