@@ -1,0 +1,8 @@
+{
+  "track_id": "gui_foundation_20260111",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-11T12:00:00Z",
+  "updated_at": "2026-01-11T12:00:00Z",
+  "description": "Implement a Web-Based GUI with Brutalist Aesthetics: Create the foundation for the React/Tailwind frontend and a FastAPI backend to manage and preview EPUB conversion projects."
+}
