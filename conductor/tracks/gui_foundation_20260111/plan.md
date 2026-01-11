@@ -2,7 +2,7 @@
 
 ## Phase 1: Backend Foundation (FastAPI)
 
-- [~] Task: Initialize FastAPI project structure and core dependencies.
+- [x] Task: Initialize FastAPI project structure and core dependencies. (5bd73b2)
 - [ ] Task: Implement `GET /api/health` endpoint with unit tests.
 - [ ] Task: Create project management API endpoints (`POST`, `GET` /api/projects).
     - [ ] Write tests for project creation and retrieval.
