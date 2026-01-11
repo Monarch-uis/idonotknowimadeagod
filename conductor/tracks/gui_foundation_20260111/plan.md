@@ -15,8 +15,8 @@
 ## Phase 2: Frontend Foundation (React + Tailwind)
 
 - [x] Task: Scaffold React application with Vite and Tailwind CSS. (dff34d3)
-- [~] Task: Configure Tailwind with Brutalist theme (B&W palette, custom fonts).
-- [ ] Task: Create the Immersive Hero component with video background capability.
+- [x] Task: Configure Tailwind with Brutalist theme (B&W palette, custom fonts). (ddd8dd8)
+- [~] Task: Create the Immersive Hero component with video background capability.
     - [ ] Write component unit tests (e.g., Vitest/React Testing Library).
     - [ ] Implement the component with oversized typography.
 - [ ] Task: Implement the Project Dashboard grid.
