@@ -11,9 +11,10 @@ export interface Project {
 
 interface DashboardProps {
     projects: Project[];
+    onSelectProject?: (id: string) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ projects, onSelectProject }) => {
     if (projects.length === 0) {
         return (
             <div className="w-full min-h-[50vh] flex flex-col items-center justify-center border-t-2 border-brutal-gray bg-brutal-black p-10 text-center">
@@ -74,7 +75,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
                                     <span className={`font-mono text-xs uppercase ${project.status === 'active' ? 'text-green-500' : 'text-gray-500'}`}>
                                         ● {project.status}
                                     </span>
-                                    <button className="text-brutal-white font-mono text-sm hover:underline">
+                                    <button 
+                                        onClick={() => onSelectProject?.(project.id)}
+                                        className="text-brutal-white font-mono text-sm hover:underline"
+                                    >
                                         ACCESS &gt;&gt;
                                     </button>
                                 </div>

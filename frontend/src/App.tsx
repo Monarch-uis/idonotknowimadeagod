@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Hero } from './components/Hero';
-import { Dashboard, Project } from './components/Dashboard';
+import { Dashboard } from './components/Dashboard';
+import { LogConsole } from './components/LogConsole';
+import type { Project } from './components/Dashboard';
 import { fetchProjects } from './api/client';
-import './App.css';
+import { AnimatePresence } from 'motion/react';
 
 function App() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
     useEffect(() => {
         const loadProjects = async () => {
@@ -39,8 +42,20 @@ function App() {
                     ERROR: {error}
                 </div>
             ) : (
-                <Dashboard projects={projects} />
+                <Dashboard 
+                    projects={projects} 
+                    onSelectProject={(id) => setSelectedProjectId(id)} 
+                />
             )}
+
+            <AnimatePresence>
+                {selectedProjectId && (
+                    <LogConsole 
+                        projectId={selectedProjectId} 
+                        onClose={() => setSelectedProjectId(null)} 
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

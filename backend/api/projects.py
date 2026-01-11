@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 import os
 import shutil
 from typing import List
-from backend.models.project import Project, ProjectList
+from backend.models.project import Project, ProjectList, ProjectLogs
 from core.config import ACTIVE_NOVELS_DIR, ARCHIVED_NOVELS_DIR
 from core.epub_io import parse_full_epub, sanitize_filename, setup_project_folders
 from datetime import datetime
@@ -94,3 +94,38 @@ async def create_project(file: UploadFile = File(...)):
         if os.path.exists(temp_path):
             os.remove(temp_path)
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{project_id}/logs", response_model=ProjectLogs)
+async def get_project_logs(project_id: str):
+    # Check if project exists in active or archived
+    project_path = None
+    for root_dir in [ACTIVE_NOVELS_DIR, ARCHIVED_NOVELS_DIR]:
+        if not os.path.exists(root_dir):
+            continue
+        for folder in os.listdir(root_dir):
+            if sanitize_filename(folder) == project_id:
+                project_path = os.path.join(root_dir, folder)
+                break
+        if project_path:
+            break
+            
+    if not project_path:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    # Read from global error log
+    error_log_path = "logs/errors/errors.log"
+    logs = []
+    
+    if os.path.exists(error_log_path):
+        try:
+            with open(error_log_path, "r") as f:
+                # Read last 100 lines and filter
+                lines = f.readlines()
+                for line in lines[-100:]:
+                    # Check if project_id or folder name is in line
+                    if project_id.lower() in line.lower() or os.path.basename(project_path).lower() in line.lower():
+                        logs.append(line.strip())
+        except:
+            pass
+            
+    return ProjectLogs(project_id=project_id, logs=logs)

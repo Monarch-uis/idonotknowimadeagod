@@ -18,3 +18,7 @@ class Project(ProjectBase):
 class ProjectList(BaseModel):
     active: List[Project]
     archived: List[Project]
+
+class ProjectLogs(BaseModel):
+    project_id: str
+    logs: List[str]
