@@ -17,10 +17,10 @@
 - [x] Task: Scaffold React application with Vite and Tailwind CSS. (dff34d3)
 - [x] Task: Configure Tailwind with Brutalist theme (B&W palette, custom fonts). (ddd8dd8)
 - [x] Task: Create the Immersive Hero component with video background capability. (1c4bc7a)
-- [~] Task: Implement the Project Dashboard grid.
-    - [ ] Write tests for project list rendering.
-    - [ ] Implement asymmetrical layout and interactive hover effects.
-- [ ] Task: Connect Frontend to Backend API.
+- [x] Task: Implement the Project Dashboard grid. (b39c917)
+    - [x] Write tests for project list rendering.
+    - [x] Implement asymmetrical layout and interactive hover effects.
+- [~] Task: Connect Frontend to Backend API.
     - [ ] Write integration tests for API calls.
     - [ ] Implement data fetching and state management.
 - [ ] Task: Conductor - User Manual Verification 'Frontend Foundation' (Protocol in workflow.md)
