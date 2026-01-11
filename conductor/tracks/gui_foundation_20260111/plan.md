@@ -20,9 +20,9 @@
 - [x] Task: Implement the Project Dashboard grid. (b39c917)
     - [x] Write tests for project list rendering.
     - [x] Implement asymmetrical layout and interactive hover effects.
-- [~] Task: Connect Frontend to Backend API.
-    - [ ] Write integration tests for API calls.
-    - [ ] Implement data fetching and state management.
+- [x] Task: Connect Frontend to Backend API. (c8dd58f)
+    - [x] Write integration tests for API calls.
+    - [x] Implement data fetching and state management.
 - [ ] Task: Conductor - User Manual Verification 'Frontend Foundation' (Protocol in workflow.md)
 
 ## Phase 3: Polish & Integration
