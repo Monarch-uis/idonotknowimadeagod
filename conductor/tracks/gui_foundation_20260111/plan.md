@@ -7,7 +7,7 @@
 - [x] Task: Create project management API endpoints (`POST`, `GET` /api/projects). (89f126a)
     - [ ] Write tests for project creation and retrieval.
     - [ ] Implement endpoint logic using existing `ProjectManager` components.
-- [ ] Task: Implement TTS preview endpoint (`POST /api/tts/preview`).
+- [x] Task: Implement TTS preview endpoint (`POST /api/tts/preview`). (f57ec81)
     - [ ] Write tests for voice synthesis requests.
     - [ ] Integrate with `core/tts.py`.
 - [ ] Task: Conductor - User Manual Verification 'Backend Foundation' (Protocol in workflow.md)
