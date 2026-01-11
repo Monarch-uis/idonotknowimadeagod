@@ -31,3 +31,6 @@ jsonschema>=4.19.0
 # Security: Pin versions to avoid supply chain attacks
 # Consider using pip-audit regularly to scan for vulnerabilities
 
+fastapi>=0.100.0
+uvicorn>=0.20.0
+httpx>=0.24.0
