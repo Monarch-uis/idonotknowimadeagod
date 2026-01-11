@@ -1,16 +1,16 @@
 # Track Plan: Implement a Web-Based GUI with Brutalist Aesthetics
 
-## Phase 1: Backend Foundation (FastAPI)
+## Phase 1: Backend Foundation (FastAPI) [checkpoint: 0fd5cfa]
 
 - [x] Task: Initialize FastAPI project structure and core dependencies. (5bd73b2)
 - [x] Task: Implement `GET /api/health` endpoint with unit tests. (5bd73b2)
 - [x] Task: Create project management API endpoints (`POST`, `GET` /api/projects). (89f126a)
-    - [ ] Write tests for project creation and retrieval.
-    - [ ] Implement endpoint logic using existing `ProjectManager` components.
+    - [x] Write tests for project creation and retrieval.
+    - [x] Implement endpoint logic using existing `ProjectManager` components.
 - [x] Task: Implement TTS preview endpoint (`POST /api/tts/preview`). (f57ec81)
-    - [ ] Write tests for voice synthesis requests.
-    - [ ] Integrate with `core/tts.py`.
-- [ ] Task: Conductor - User Manual Verification 'Backend Foundation' (Protocol in workflow.md)
+    - [x] Write tests for voice synthesis requests.
+    - [x] Integrate with `core/tts.py`.
+- [x] Task: Conductor - User Manual Verification 'Backend Foundation' (Protocol in workflow.md) (0fd5cfa)
 
 ## Phase 2: Frontend Foundation (React + Tailwind)
 
