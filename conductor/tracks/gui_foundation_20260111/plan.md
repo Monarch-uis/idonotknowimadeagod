@@ -4,7 +4,7 @@
 
 - [x] Task: Initialize FastAPI project structure and core dependencies. (5bd73b2)
 - [x] Task: Implement `GET /api/health` endpoint with unit tests. (5bd73b2)
-- [ ] Task: Create project management API endpoints (`POST`, `GET` /api/projects).
+- [x] Task: Create project management API endpoints (`POST`, `GET` /api/projects). (89f126a)
     - [ ] Write tests for project creation and retrieval.
     - [ ] Implement endpoint logic using existing `ProjectManager` components.
 - [ ] Task: Implement TTS preview endpoint (`POST /api/tts/preview`).
