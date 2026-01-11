@@ -77,7 +77,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onSelectProject 
                                     </span>
                                     <button 
                                         onClick={() => onSelectProject?.(project.id)}
-                                        className="text-brutal-white font-mono text-sm hover:underline"
+                                        className="text-brutal-white font-mono text-sm hover:underline active:scale-95 active:text-brutal-blue px-4 py-2 border border-transparent active:border-brutal-blue transition-all"
                                     >
                                         ACCESS &gt;&gt;
                                     </button>
