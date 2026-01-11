@@ -12,7 +12,7 @@
     - [x] Integrate with `core/tts.py`.
 - [x] Task: Conductor - User Manual Verification 'Backend Foundation' (Protocol in workflow.md) (0fd5cfa)
 
-## Phase 2: Frontend Foundation (React + Tailwind)
+## Phase 2: Frontend Foundation (React + Tailwind) [checkpoint: fb8a98c]
 
 - [x] Task: Scaffold React application with Vite and Tailwind CSS. (dff34d3)
 - [x] Task: Configure Tailwind with Brutalist theme (B&W palette, custom fonts). (ddd8dd8)
@@ -23,7 +23,7 @@
 - [x] Task: Connect Frontend to Backend API. (c8dd58f)
     - [x] Write integration tests for API calls.
     - [x] Implement data fetching and state management.
-- [ ] Task: Conductor - User Manual Verification 'Frontend Foundation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Frontend Foundation' (Protocol in workflow.md) (fb8a98c)
 
 ## Phase 3: Polish & Integration
 
