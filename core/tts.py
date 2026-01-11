@@ -108,12 +108,12 @@ def select_tts_engine_and_mode():
                 return "pyttsx3", False
             
             elif choice == "3" and PIPER_AVAILABLE:
-                print("\n💡 Piper Features:")
-                print("   • Offline (no internet)")
-                print("   • Fast generation")
-                print("   • Natural neural voices")
-                print("   • Low resource usage")
-                return "piper", False
+                print("\n💡 Piper Processing Mode:")
+                print("   Parallel = Uses all CPU cores → MUCH faster")
+                print("   Safe     = 1 clip at a time → slower but saves RAM")
+                para = input("   Use Parallel mode? (y/n, default y): ").strip().lower()
+                use_concurrent = para != 'n'
+                return "piper", use_concurrent
 
             elif choice == "4" and CHATTERBOX_AVAILABLE:
                 print("\n💡 Chatterbox Features:")

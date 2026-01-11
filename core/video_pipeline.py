@@ -465,7 +465,8 @@ def _load_whisper_model(
 def _transcribe_segment_with_model(
     model,
     audio_path: str,
-    language: Optional[str]
+    language: Optional[str],
+    initial_prompt: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """Transcribe a single audio segment using an already loaded model."""
     segments, info = model.transcribe(
@@ -474,7 +475,7 @@ def _transcribe_segment_with_model(
         vad_filter=True,
         vad_parameters=dict(min_silence_duration_ms=500),
         word_timestamps=True,
-        # beam_size=5, # Default is 5, reverting greedy (1) for better accuracy
+        initial_prompt=initial_prompt
     )
     
     words = []
@@ -496,7 +497,8 @@ def generate_timeline_from_audio(
     config: Dict[str, Any],
     model_size: str = "small",
     cpu_threads: int = 4,
-    download_root: Optional[str] = None
+    download_root: Optional[str] = None,
+    text_content: Optional[str] = None
 ) -> Dict[str, Any]:
     """Transcribe audio and emit a project timeline JSON structure."""
     WhisperModel = _import_fast_whisper()
@@ -598,8 +600,8 @@ def generate_timeline_from_audio(
                     chunk_duration_val = _probe_duration(chunk_path) or 0.0
                     progress.console.print(f"      🔹 Chunk {i+1}/{len(chunks)}: {seconds_to_time_str(chunk_duration_val)}")
                     
-                    # Transcribe chunk
-                    chunk_words = _transcribe_segment_with_model(model, chunk_path, language)
+                    # Transcribe chunk with optional prompt (first 1000 chars of matching text if possible, but for simplicity we pass the whole thing if it's small)
+                    chunk_words = _transcribe_segment_with_model(model, chunk_path, language, initial_prompt=text_content)
                     
                     # Shift timestamps and merge
                     for word in chunk_words:
@@ -621,10 +623,9 @@ def generate_timeline_from_audio(
                 TimeElapsedColumn(),
                 expand=True
             ) as progress:
-                task = progress.add_task("[yellow]Transcribing Audio...", total=None) 
                 # Note: We can't easily get realtime progress from the simple helper without callbacks, 
                 # but it keeps code clean. For short videos, spinner is fine.
-                all_words = _transcribe_segment_with_model(model, audio_path, language)
+                all_words = _transcribe_segment_with_model(model, audio_path, language, initial_prompt=text_content)
                 progress.update(task, completed=100)
 
     finally:
@@ -716,7 +717,8 @@ def generate_timeline_with_alignment(
     timeline_data = generate_timeline_from_audio(
         audio_path=audio_path,
         project_id=project_id,
-        config=config
+        config=config,
+        text_content=text_content
     )
     
     # 2. Apply global time offset if requested

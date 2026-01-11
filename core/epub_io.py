@@ -602,3 +602,113 @@ def validate_epub(epub_path):
     except Exception as e:
         return False, f"Validation error: {str(e)[:100]}"
 
+
+def get_all_temp_folders():
+    """Find all temp folders across projects"""
+    temp_folders = []
+    try:
+        if not os.path.exists(ACTIVE_NOVELS_DIR):
+            return temp_folders
+        
+        for book_folder in os.listdir(ACTIVE_NOVELS_DIR):
+            book_path = os.path.join(ACTIVE_NOVELS_DIR, book_folder)
+            if not os.path.isdir(book_path):
+                continue
+            
+            temp_path = os.path.join(book_path, "temp_render_files")
+            if os.path.exists(temp_path) and os.path.isdir(temp_path):
+                try:
+                    total_size = 0
+                    file_count = 0
+                    oldest_time = time.time()
+                    newest_time = 0
+                    
+                    for root, dirs, files in os.walk(temp_path):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            try:
+                                stat = os.stat(file_path)
+                                total_size += stat.st_size
+                                file_count += 1
+                                oldest_time = min(oldest_time, stat.st_mtime)
+                                newest_time = max(newest_time, stat.st_mtime)
+                            except:
+                                continue
+                    
+                    if file_count > 0:
+                        age_days = (time.time() - oldest_time) / 86400
+                        size_mb = total_size / (1024 * 1024)
+                        last_active_sec = time.time() - newest_time if newest_time > 0 else 999999
+                        temp_folders.append({
+                            'path': temp_path,
+                            'book': book_folder,
+                            'age_days': age_days,
+                            'size_mb': size_mb,
+                            'file_count': file_count,
+                            'last_active_sec': last_active_sec
+                        })
+                except:
+                    continue
+    except Exception as e:
+        logger.warning(f"Temp scan failed: {e}")
+    
+    return temp_folders
+
+def cleanup_old_temp_files(max_age_days=7, min_size_mb=10):
+    """Clean up old temp files from previous sessions"""
+    print("   🧹 Scanning for old temp files...", flush=True)
+    
+    temp_folders = get_all_temp_folders()
+    if not temp_folders:
+        print("   ✅ No old temp files found", flush=True)
+        return 0, 0, 0
+    
+    total_size_mb = sum(f['size_mb'] for f in temp_folders)
+    total_files = sum(f['file_count'] for f in temp_folders)
+    print(f"   📊 Found {len(temp_folders)} folders: {total_files} files ({total_size_mb:.1f} MB)", flush=True)
+    
+    folders_to_clean = [
+        f for f in temp_folders
+        if (f['age_days'] > max_age_days or f['size_mb'] > min_size_mb) and f['last_active_sec'] > 3600
+    ]
+    
+    if not folders_to_clean:
+        print(f"   ✅ All temp files recent (< {max_age_days} days)", flush=True)
+        return 0, 0, 0
+    
+    print(f"   🗑️  Cleaning {len(folders_to_clean)} old/large folders...", flush=True)
+    
+    cleaned = 0
+    freed = 0
+    failed = 0
+    
+    for folder_info in folders_to_clean:
+        try:
+            time.sleep(0.1)
+            shutil.rmtree(folder_info['path'])
+            os.makedirs(folder_info['path'])
+            cleaned += 1
+            freed += folder_info['size_mb']
+            print(f"   ✅ {folder_info['book']}: {folder_info['size_mb']:.1f} MB", flush=True)
+        except:
+            failed += 1
+    
+    if cleaned > 0:
+        print(CP(f"   ✅ Freed {freed:.1f} MB from {cleaned} folders", 'green'), flush=True)
+    if failed > 0:
+        print(CP(f"   ⚠️  {failed} folders locked", 'yellow'), flush=True)
+    
+    return cleaned, freed, failed
+
+def check_temp_space_warning(threshold_mb=1000):
+    """Warn if temp space exceeds threshold"""
+    temp_folders = get_all_temp_folders()
+    if not temp_folders:
+        return 0
+    
+    total_size_mb = sum(f['size_mb'] for f in temp_folders)
+    if total_size_mb > threshold_mb:
+        print(CP(f"\n   ⚠️  WARNING: {total_size_mb:.1f} MB temp files!", 'yellow'), flush=True)
+        print(f"      Threshold: {threshold_mb} MB\n", flush=True)
+    
+    return total_size_mb

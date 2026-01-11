@@ -51,7 +51,8 @@ from core.epub_io import (
     delete_book_from_history,
     load_book_profile, save_book_profile,
     clean_html_for_tts, clean_html_summary, parse_full_epub,
-    extract_cover_to_project, generate_description_file, validate_epub
+    extract_cover_to_project, generate_description_file, validate_epub,
+    get_all_temp_folders, cleanup_old_temp_files, check_temp_space_warning
 )
 from core.tts import (
     EDGE_TTS_AVAILABLE, PYTTSX3_AVAILABLE, PIPER_AVAILABLE,
@@ -64,8 +65,16 @@ from core.tts import (
     gen_single_clip_chatterbox,
     CHATTERBOX_AVAILABLE
 )
-from features.multispeaker_tts import gen_multispeaker_chapter # [AI] Correct import path
-from core.gemini_client import create_gemini_client, GeminiClientError # [AI] Import Gemini Client
+from features.multispeaker_tts import gen_multispeaker_chapter
+from core.gemini_client import create_gemini_client, GeminiClientError
+
+from core.ui.menus import (
+    show_chapter_overview, enforce_batch_size_limit,
+    resolve_project_name_and_history, show_preflight_summary
+)
+
+from core.parallel_tts import ParallelTTSManager
+from core.aligner import WhisperAligner
 
 from features.checkpoint_manager import CheckpointManager, save_progress_checkpoint, get_checkpoint_if_exists, ask_to_resume_checkpoint
 from features.memory_manager import optimize_memory, check_memory_status
@@ -87,170 +96,7 @@ UPLOADED_NOVELS_DIR = os.path.join(MASTER_NOVEL_DIR, "Uploaded in Youtube")
 # LOCAL HELPERS (not duplicated - unique to main file)
 # ---------------------------
 
-def show_chapter_overview(all_chapters):
-    """
-    Unified chapter overview and gap detection logic.
-    """
-    print(f"\n{'=' * 50}")
-    print(f"TOTAL CHAPTERS: {len(all_chapters)}")
-    print(f"{'=' * 50}")
-    print("First 30:")
-    for i in range(min(30, len(all_chapters))):
-        title = all_chapters[i][0]
-        num = extract_smart_number(title)
-        if num is not None:
-            print(f"   [{i+1:3}] → Ch {num:4} | {title[:50]}")
-        else:
-            print(f"   [{i+1:3}] → {'':10} | {title[:60]}")
-    
-    if len(all_chapters) > 60:
-        print("   ...")
-        print("Last 30:")
-        for i in range(max(len(all_chapters) - 30, 0), len(all_chapters)):
-            title = all_chapters[i][0]
-            num = extract_smart_number(title)
-            if num is not None:
-                print(f"   [{i+1:3}] → Ch {num:4} | {title[:50]}")
-            else:
-                print(f"   [{i+1:3}] → {'':10} | {title[:60]}")
-    
-    # Gap detection
-    nums = [extract_smart_number(t[0]) for t in all_chapters if extract_smart_number(t[0]) is not None]
-    if len(nums) > 1:
-        gaps = []
-        for i in range(len(nums) - 1):
-            if nums[i + 1] - nums[i] > 1:
-                gaps.append(f"{nums[i]+1}-{nums[i+1]-1}")
-        if gaps:
-            print(CP(f"\n⚠️  WARNING: Missing chapters: {', '.join(gaps)}", 'yellow'))
-            print("   → Consider smaller batch sizes\n")
-    
-    print(f"{'=' * 50}\n")
-
-def enforce_batch_size_limit(batch_size, max_batch):
-    """Ensure batch size stays within configured limits"""
-    if batch_size <= max_batch:
-        return True
-
-    warning_msg = f"Batch size {batch_size} exceeds recommended max ({max_batch})"
-    print(CP(f"   ⚠️  {warning_msg}", 'yellow'))
-    logger.warning(warning_msg)
-    return False
-
-def resolve_project_name_and_history(selected_path, meta, cli_args, auto_resume=False):
-    """
-    Consolidated project detection UI.
-    Merges duplicate mapping info and previous history into one unified interface.
-    Returns: (final_title, updated_meta, history_reset_performed)
-    """
-    from features.novel_name_mapper import NovelNameMapper, check_duplicate_interactive
-    mapper = NovelNameMapper()
-    
-    epub_hash = calculate_epub_hash(selected_path)
-    original_title = meta['title']
-    mapping = mapper.lookup_by_original_title(original_title)
-    
-    # Check history
-    dup_info = None
-    if epub_hash:
-        dup_info = check_duplicate_epub(selected_path)
-    if not dup_info:
-        search_title = mapping['youtube_name'] if mapping else original_title
-        dup_info = get_history_summary(search_title)
-        
-    final_title = mapping['youtube_name'] if mapping else original_title
-    active_title = dup_info['title'] if dup_info else final_title
-    
-    if dup_info or mapping:
-        # Display Combined info (Image 2 style)
-        print(CP(f"\n{'='*60}", 'yellow'))
-        print(CP(f"⚠️  PREVIOUS PROJECT DETECTED", 'yellow'))
-        print(CP(f"{'='*60}", 'yellow'))
-        
-        # Details (Bullet points)
-        print(f"   💡 Found project details:")
-        print(f"      • YouTube Name: '{active_title}'")
-        print(f"      • Original EPUB: '{original_title}'")
-        
-        if dup_info:
-            print(f"      • Last Activity: {dup_info['date']}")
-            print(f"      • Progress:      Ch {dup_info['start']} - {dup_info['end']}")
-        elif mapping:
-            date_str = mapping.get('last_updated', mapping.get('created_date', 'Unknown'))
-            if 'T' in date_str: date_str = date_str.split('T')[0]
-            print(f"      • Last Sync:     {date_str}")
-            
-        if epub_hash:
-            print(f"      • Hash:          {epub_hash[:16]}...")
-        print(CP(f"{'='*60}", 'yellow'))
-        
-        # Options (Image 1 style)
-        print(f"\n   [1] " + CP("Open Existing Project", 'green') + " (Continue where you left off)")
-        print(f"   [2] " + CP("Full Reset", 'red') + "           (Wipe history and start fresh)")
-        print(f"   [3] " + CP("Partial Reset", 'blue') + "        (Wipe history only for current range)")
-        print(f"   [4] " + CP("Cancel", 'white'))
-        
-        # Handle Selection
-        if cli_args.auto:
-            choice = '2'
-            print(f"\n   ℹ️  Auto-selecting [2] Full Reset via CLI")
-        elif auto_resume:
-            choice = '1'
-            print(f"\n   ℹ️  Auto-selecting [1] Open Existing Project (Resume)")
-        else:
-            choice = input(f"\n   {CP('👉 Select (1-4):', 'cyan')} ").strip()
-            
-        if choice == '1':
-            final_title = active_title
-            meta['title'] = final_title
-            return final_title, meta, False
-            
-        elif choice == '2':
-            if not cli_args.auto:
-                confirm = input(f"\n   {CP('⚠️  REALLY WIPE ALL HISTORY?', 'red')} (y/n): ").strip().lower()
-                if confirm != 'y': return active_title, meta, False
-            
-            # Wipe
-            from core.epub_io import delete_book_from_history
-            target_t = active_title
-            success, count = delete_book_from_history(selected_path, title=target_t)
-            if success: print(CP(f"   ✅ History Purged ({count} entries).", 'green'))
-            
-            # Folder wipe?
-            if not cli_args.auto:
-                wipe_f = input(f"   {CP('🗑️  Also delete existing project files?', 'yellow')} (y/n): ").strip().lower()
-                if wipe_f == 'y' and dup_info:
-                    dup_path = os.path.join(ACTIVE_NOVELS_DIR, dup_info['key'])
-                    if os.path.exists(dup_path):
-                        try: shutil.rmtree(dup_path); print(CP("   ✅ Project folder deleted.", 'green'))
-                        except Exception as e: print(CP(f"   ❌ Folder deletion failed: {e}", 'red'))
-            
-            # New Name
-            new_title = input("\n   Enter new project name (Enter to keep original): ").strip()
-            if new_title:
-                final_title = check_duplicate_interactive(original_title, new_title)
-            else:
-                final_title = original_title
-            meta['title'] = final_title
-            return final_title, meta, True
-            
-        elif choice == '3':
-            print(f"\n   ℹ️  Partial reset will trigger based on the ranges you select next.")
-            meta['_partial_reset_pending'] = True
-            final_title = active_title
-            meta['title'] = final_title
-            return final_title, meta, False
-            
-        else: # Cancel
-            return None, None, False
-    else:
-        # Standard initial name prompt
-        print(CP(f"\n📘 Original Title: {original_title}", 'cyan'))
-        new_title = input("   Press Enter to keep, or type new name: ").strip()
-        if new_title:
-            final_title = check_duplicate_interactive(original_title, new_title)
-            meta['title'] = final_title
-        return final_title, meta, False
+# UI functions moved to core.ui.menus
 
 # ---------------------------
 # PROCESSING ENGINES (wrappers using imported functions)
@@ -264,190 +110,12 @@ def resolve_project_name_and_history(selected_path, meta, cli_args, auto_resume=
 # PREFLIGHT SYSTEM
 # ---------------------------
 
-    
-    print("\n" + "=" * 60)
-    
-    if hasattr(mode, 'lower'): # Hack check if 'auto' passed via kwargs if we changed sig? No, cleaner to change sig.
-         # Actually let's just use a kwarg in signature update
-         pass
-
-    # Note: caller must pass confirm_needed=False to bypass
-    return True
-
-def show_preflight_summary(meta, total_available, selected_total, batch_size, engine, voice, speed, use_concurrent, tts_delay, mode, auto_confirm=False):
-    """Show preflight summary with risk tips before processing"""
-    print("\n" + "=" * 60)
-    print(CP("📋 PREFLIGHT SUMMARY", 'cyan'))
-    print("=" * 60)
-    
-    print(f"\n📚 Book: {meta['title']}")
-    print(f"   Chapters available: {total_available}")
-    print(f"   Chapters selected: {selected_total}")
-    print(f"   Mode: {'Batch' if mode == '1' else 'Manual'}")
-    
-    if mode == "1" and batch_size and selected_total:
-        estimated_batches = (selected_total + batch_size - 1) // batch_size
-        print(f"   Batch size: {batch_size} chapters")
-        print(f"   Estimated batches: {estimated_batches}")
-    
-    print(f"\n🎤 TTS Settings:")
-    print(f"   Engine: {engine.upper()}")
-    print(f"   Voice: {voice}")
-    print(f"   Speed: {speed}")
-    print(f"   Concurrent: {'Yes' if use_concurrent else 'No'}")
-    
-    if engine == "edge":
-        print(f"   Request delay: {tts_delay}s")
-    
-    # Risk tips based on configuration
-    print(f"\n⚠️  Risk Assessment:")
-    risks = []
-    
-    if engine == "edge" and use_concurrent:
-        if tts_delay < 0.5:
-            risks.append("   ⚠️  Low Edge-TTS delay may cause rate limit (403 errors)")
-        else:
-            risks.append("   ✅ Edge-TTS delay looks safe")
-        
-        if batch_size and batch_size > 30:
-            risks.append("   ⚠️  Large batches with concurrent Edge-TTS may hit limits")
-    
-    if batch_size and batch_size > 50:
-        limits = CONFIG.get("system_limits", {})
-        max_batch = limits.get("max_batch_size", 50)
-        if batch_size > max_batch:
-            risks.append(f"   ⚠️  Batch size ({batch_size}) exceeds recommended max ({max_batch})")
-    
-    if engine == "edge" and not use_concurrent:
-        risks.append("   ℹ️  Sequential Edge-TTS is slow but very safe")
-    
-    if not risks:
-        risks.append("   ✅ Configuration looks good!")
-    
-    for risk in risks:
-        print(risk)
-    
-    print("\n" + "=" * 60)
-    
-    if auto_confirm:
-         print("\n👉 Proceeding automatically (auto-confirm enabled)...")
-         return True
-         
-    proceed = input("\n👉 Proceed with processing? (y/n, default y): ").strip().lower()
-    return proceed != 'n'
+# Preflight summary moved to core.ui.menus
 
 # ---------------------------
 # TEMP FILE CLEANUP SYSTEM
 # ---------------------------
-def get_all_temp_folders():
-    """Find all temp folders across projects"""
-    temp_folders = []
-    try:
-        if not os.path.exists(ACTIVE_NOVELS_DIR):
-            return temp_folders
-        
-        for book_folder in os.listdir(ACTIVE_NOVELS_DIR):
-            book_path = os.path.join(ACTIVE_NOVELS_DIR, book_folder)
-            if not os.path.isdir(book_path):
-                continue
-            
-            temp_path = os.path.join(book_path, "temp_render_files")
-            if os.path.exists(temp_path) and os.path.isdir(temp_path):
-                try:
-                    total_size = 0
-                    file_count = 0
-                    oldest_time = time.time()
-                    newest_time = 0
-                    
-                    for root, dirs, files in os.walk(temp_path):
-                        for file in files:
-                            file_path = os.path.join(root, file)
-                            try:
-                                stat = os.stat(file_path)
-                                total_size += stat.st_size
-                                file_count += 1
-                                oldest_time = min(oldest_time, stat.st_mtime)
-                                newest_time = max(newest_time, stat.st_mtime)
-                            except:
-                                continue
-                    
-                    if file_count > 0:
-                        age_days = (time.time() - oldest_time) / 86400
-                        size_mb = total_size / (1024 * 1024)
-                        last_active_sec = time.time() - newest_time if newest_time > 0 else 999999
-                        temp_folders.append({
-                            'path': temp_path,
-                            'book': book_folder,
-                            'age_days': age_days,
-                            'size_mb': size_mb,
-                            'file_count': file_count,
-                            'last_active_sec': last_active_sec
-                        })
-                except:
-                    continue
-    except Exception as e:
-        logger.warning(f"Temp scan failed: {e}")
-    
-    return temp_folders
-
-def cleanup_old_temp_files(max_age_days=7, min_size_mb=10):
-    """Clean up old temp files from previous sessions"""
-    print("   🧹 Scanning for old temp files...", flush=True)
-    
-    temp_folders = get_all_temp_folders()
-    if not temp_folders:
-        print("   ✅ No old temp files found", flush=True)
-        return 0, 0, 0
-    
-    total_size_mb = sum(f['size_mb'] for f in temp_folders)
-    total_files = sum(f['file_count'] for f in temp_folders)
-    print(f"   📊 Found {len(temp_folders)} folders: {total_files} files ({total_size_mb:.1f} MB)", flush=True)
-    
-    folders_to_clean = [
-        f for f in temp_folders
-        if (f['age_days'] > max_age_days or f['size_mb'] > min_size_mb) and f['last_active_sec'] > 3600
-    ]
-    
-    if not folders_to_clean:
-        print(f"   ✅ All temp files recent (< {max_age_days} days)", flush=True)
-        return 0, 0, 0
-    
-    print(f"   🗑️  Cleaning {len(folders_to_clean)} old/large folders...", flush=True)
-    
-    cleaned = 0
-    freed = 0
-    failed = 0
-    
-    for folder_info in folders_to_clean:
-        try:
-            time.sleep(0.1)
-            shutil.rmtree(folder_info['path'])
-            os.makedirs(folder_info['path'])
-            cleaned += 1
-            freed += folder_info['size_mb']
-            print(f"   ✅ {folder_info['book']}: {folder_info['size_mb']:.1f} MB", flush=True)
-        except:
-            failed += 1
-    
-    if cleaned > 0:
-        print(CP(f"   ✅ Freed {freed:.1f} MB from {cleaned} folders", 'green'), flush=True)
-    if failed > 0:
-        print(CP(f"   ⚠️  {failed} folders locked", 'yellow'), flush=True)
-    
-    return cleaned, freed, failed
-
-def check_temp_space_warning(threshold_mb=1000):
-    """Warn if temp space exceeds threshold"""
-    temp_folders = get_all_temp_folders()
-    if not temp_folders:
-        return 0
-    
-    total_size_mb = sum(f['size_mb'] for f in temp_folders)
-    if total_size_mb > threshold_mb:
-        print(CP(f"\n   ⚠️  WARNING: {total_size_mb:.1f} MB temp files!", 'yellow'), flush=True)
-        print(f"      Threshold: {threshold_mb} MB\n", flush=True)
-    
-    return total_size_mb
+# Temp file cleanup moved to core.epub_io
 
 
 
@@ -798,6 +466,7 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
             print(f"   ✅ Generation complete in {generation_time:.1f}s", flush=True)
             print(f"   📊 Loading files and calculating timestamps...", flush=True)
             
+            # ... (Existing Loading logic)
             successful_count = 0
             from rich.progress import track
             for chap_index, title, audio_path, error, timing_data, is_precision in track(
@@ -811,7 +480,6 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     if not audio_path or not os.path.exists(audio_path):
                         raise Exception("Audio file missing")
                     
-                    # Crossfade logic
                     xfade = 0.5 if CONFIG["audio_settings"].get("enable_audio_crossfade", True) else 0
                     if successful_count > 0:
                         current_seconds -= xfade
@@ -819,15 +487,12 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     clip = AudioFileClip(audio_path)
                     timestamp_list.append((current_seconds, title))
                     
-                    # Apply fades for crossfade
                     if xfade > 0:
                         if successful_count > 0:
                             clip = clip.audio_fadein(xfade)
-                        # Fade out will be handled in final assembly or by overlapping
                     
                     clips_to_merge.append(clip)
                     
-                    # Accumulate timing data ONLY if it's high precision (e.g. EdgeTTS)
                     if timing_data and is_precision:
                         for word in timing_data:
                             word['start'] += current_seconds
@@ -845,15 +510,67 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     })
             
             print(CP(f"\n   ✅ Loaded {successful_count}/{total} chapters", 'green'), flush=True)
+
+        elif tts_engine == "piper" and use_concurrent:
+            # PARALLEL PIPER (NEW)
+            print(f"   ⚡ PARALLEL MODE: Generating Piper audio in multiple processes...", flush=True)
+            start_time = time.time()
             
-            if successful_count > 0:
-                avg_time = generation_time / total
-                estimated_sequential = total * 8
-                time_saved = estimated_sequential - generation_time
-                print(f"   📈 {avg_time:.2f}s per chapter (concurrent)", flush=True)
-                if time_saved > 0:
-                    print(f"   ⚡ Saved ~{time_saved:.0f}s vs sequential", flush=True)
-        
+            parallel_manager = ParallelTTSManager()
+            generation_results = parallel_manager.process_piper_batch(
+                chapters, temp_dir, tts_voice
+            )
+            
+            generation_time = time.time() - start_time
+            print(f"   ✅ Parallel Piper generation complete in {generation_time:.1f}s", flush=True)
+            print(f"   📊 Loading clips and syncing timestamps...", flush=True)
+            
+            successful_count = 0
+            from rich.progress import track
+            for chap_index, title, audio_path, error, timing_data, is_precision in track(
+                generation_results, 
+                description="[yellow]Loading clips...",
+                total=total
+            ):
+                try:
+                    if error is not None:
+                        raise Exception(error)
+                    if not audio_path or not os.path.exists(audio_path):
+                        raise Exception("Audio file missing")
+                    
+                    xfade = 0.5 if CONFIG["audio_settings"].get("enable_audio_crossfade", True) else 0
+                    if successful_count > 0:
+                        current_seconds -= xfade
+
+                    clip = AudioFileClip(audio_path)
+                    timestamp_list.append((current_seconds, title))
+                    
+                    if xfade > 0:
+                        if successful_count > 0:
+                            clip = clip.audio_fadein(xfade)
+                    
+                    clips_to_merge.append(clip)
+                    
+                    # Piper usually doesn't provide high-precision timing directly from subprocess
+                    # but if we add it later, this logic will handle it.
+                    if timing_data and is_precision:
+                        for word in timing_data:
+                            word['start'] += current_seconds
+                            word['end'] += current_seconds
+                            full_word_timeline.append(word)
+                            
+                    current_seconds += clip.duration
+                    successful_count += 1
+                
+                except Exception as e:
+                    failed_chapters.append({
+                        'number': chap_index + 1,
+                        'title': title,
+                        'error': str(e)[:60]
+                    })
+            
+            print(CP(f"\n   ✅ Loaded {successful_count}/{total} chapters", 'green'), flush=True)
+
         else:
             # SEQUENTIAL MODE (SAFE)
             from rich.progress import track
@@ -872,7 +589,7 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     clean_body = censor_text(clean_body, CONFIG["banned_words"])
                     clean_body = fix_pronunciation(clean_body, CONFIG["pronunciation_fixes"])
                     audio_text = f"{title}. . {clean_body} . "
-                    chap_path = os.path.join(temp_dir, f"chap_{i}.mp3")
+                    chap_path = os.path.join(temp_dir, f"chap_{i}.mp3" if tts_engine != "piper" else f"chap_{i}.wav")
                     
                     if tts_engine == "edge":
                         tts_success, tts_error, tts_result = asyncio.run(gen_single_clip_edge_with_retry(
@@ -887,11 +604,8 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                         if gemini_enabled:
                             print(f"      ✨ AI analyzing chapter for multi-speaker audio...", flush=True)
                             
-                            # 1. Analyze for characters/segments
-                            # Load character list from Phase 1 metadata if available
                             character_list = []
                             try:
-                                # Find project root (one level up from temp)
                                 project_root = os.path.dirname(temp_dir)
                                 ai_meta_path = os.path.join(project_root, "ai_metadata.json")
                                 if os.path.exists(ai_meta_path):
@@ -912,17 +626,13 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                                 from core.ai_schemas import TTSBatchScript, TTSSegment
                                 segments = [TTSSegment(**s) for s in analysis['segments']]
                                 script = TTSBatchScript(segments=segments)
-                                
-                                # 2. Generate Multi-Speaker Audio
                                 tts_success, tts_error, tts_result = asyncio.run(gen_multispeaker_chapter(script, chap_path))
                             else:
-                                # Fallback to standard Piper
                                 tts_success, tts_error, tts_result = gen_single_clip_piper_with_retry(
                                     audio_text, chap_path, tts_voice,
                                     max_retries=max_retries, delay=delay
                                 )
                         else:
-                            # Standard Piper
                             tts_success, tts_error, tts_result = gen_single_clip_piper_with_retry(
                                 audio_text, chap_path, tts_voice,
                                 max_retries=max_retries, delay=delay
@@ -944,7 +654,6 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     tts_timing = tts_result.get('events', []) if tts_result else []
                     is_precision = tts_result.get('is_high_precision', False) if tts_result else False
                     
-                    # Crossfade logic
                     xfade = 0.5 if CONFIG["audio_settings"].get("enable_audio_crossfade", True) else 0
                     if i > 0:
                         current_seconds -= xfade
@@ -952,15 +661,12 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     timestamp_list.append((current_seconds, title))
                     clip = AudioFileClip(chap_path)
                     
-                    # Apply fades for crossfade
                     if xfade > 0:
                         if i > 0:
                             clip = clip.audio_fadein(xfade)
                     
                     clips_to_merge.append(clip)
                     
-                    # Accumulate timing data ONLY if it's high precision (e.g. EdgeTTS)
-                    # If inaccurate (Piper linear est), we skip it so Faster-Whisper runs later
                     if tts_timing and is_precision:
                         for word in tts_timing:
                             word['start'] += current_seconds
@@ -975,7 +681,6 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                         'title': title,
                         'error': str(e)[:60]
                     })
-                    # Use print instead of progress.console to avoid potential context issues, track handles it
                     print(CP(f"\n   ❌ FAILED: {title} - {str(e)[:40]}", 'red'), flush=True)
         
         # === OUTRO (CRITICAL) ===
@@ -1581,7 +1286,7 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
                         render_audio_tmp,
                         project_id=project_id,
                         config=CONFIG,
-                        text_content=None,  # Not needed for Whisper
+                        text_content=text_content,
                         time_offset=0
                     )
 
@@ -2705,7 +2410,6 @@ def main():
                 print(CP(f"\n   ✅ Added to queue: {job_details['title']}", 'green'))
                 time.sleep(1)
         
-        from core import ui_manager
         ui_manager.handle_queue_menu(qm, process_batch_queue, add_to_queue_callback)
         print("\n👇 Returning to main menu...")
         return main() # Recursion to main menu
@@ -2716,7 +2420,6 @@ def main():
         input("\nPress Enter to return to main menu...")
         return main()
     elif main_choice == '5':
-        from core import ui_manager
         ui_manager.handle_video_quality_menu()
         print("\n👇 Returning to main menu...")
         return main()
