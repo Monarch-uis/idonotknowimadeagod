@@ -26,7 +26,12 @@ fi
 
 # 0. Check dependencies
 echo "🔍 Checking dependencies..."
-python3 -m pip install --break-system-packages --user -r requirements.txt better-ffmpeg-progress rich --quiet
+PIP_FLAGS="--quiet"
+if [ -z "$VIRTUAL_ENV" ]; then
+    # Outside venv, add safety flags for PEP 668 systems
+    PIP_FLAGS="$PIP_FLAGS --break-system-packages --user"
+fi
+python3 -m pip install $PIP_FLAGS -r requirements.txt better-ffmpeg-progress rich
 
 # 1. Modify Config to Disable AI
 if [ -f "config.json" ]; then

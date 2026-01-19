@@ -49,30 +49,22 @@ class ParallelTTSManager:
     def __init__(self, max_workers: Optional[int] = None):
         self.max_workers = max_workers or max(1, multiprocessing.cpu_count() - 1)
         
-    def process_piper_batch(self, chapters: List[Tuple[str, str]], temp_dir: str, model_path: str) -> List[Tuple[int, str, Optional[str], Optional[str], List, bool]]:
+    def process_piper_batch(self, chapters: List[Tuple[str, str]], temp_dir: str, model_path: str):
         """
         Process a batch of chapters using Piper TTS in parallel processes.
-        
-        Returns:
-            List of (index, title, audio_path, error, events, is_precision)
+        Yields results as they complete: (index, title, audio_path, error, events, is_precision)
         """
         print(CP(f"   🚀 Launching {len(chapters)} parallel Piper processes (max {self.max_workers})...", 'cyan'))
         
         # Prepare arguments for workers
         prepared_args = []
         for i, (title, text) in enumerate(chapters):
-            output_path = os.path.join(temp_dir, f"chap_{i}.wav") # Piper usually outputs wav
+            output_path = os.path.join(temp_dir, f"chap_{i}.wav")
             prepared_args.append((i, title, text, output_path, model_path, CONFIG))
             
-        start_time = time.time()
-        
-        # We use a progress bar if rich is available (imported in main, but let's assume it here or just print)
-        results = []
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
-            # We wrap it in a list to wait for completion
-            results = list(executor.map(_piper_worker, prepared_args))
+            from concurrent.futures import as_completed
+            futures = [executor.submit(_piper_worker, args) for args in prepared_args]
             
-        duration = time.time() - start_time
-        print(CP(f"   ✅ Parallel Piper complete in {duration:.1f}s", 'green'))
-        
-        return results
+            for future in as_completed(futures):
+                yield future.result()

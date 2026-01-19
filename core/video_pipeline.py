@@ -413,60 +413,33 @@ def _load_whisper_model(
     download_root: Optional[str],
     progress_console=None
 ):
-    """Refactored model loader to allow reuse across chunks."""
+    """Simple model loader."""
     WhisperModel = _import_fast_whisper()
-    import threading
     
-    model = None
-    load_error = []
-
-    def _loader_thread(m_size, dev, c_type, threads, root):
-        nonlocal model
-        try:
-            # First, check if valid model path exists in root to avoid network calls
-            local_files_only = False
-            if root and os.path.exists(root):
-                if any(p.name.startswith("model") for p in Path(root).rglob("*")):
-                     local_files_only = True
-            
-            try:
-                if local_files_only:
-                     print(f"   📂 Loading from local cache: {root}")
-                     model = WhisperModel(m_size, device=dev, compute_type=c_type, cpu_threads=threads, download_root=root, local_files_only=True)
-                else:
-                     model = WhisperModel(m_size, device=dev, compute_type=c_type, cpu_threads=threads, download_root=root)
-            except Exception as local_err:
-                if local_files_only:
-                     print(f"   ⚠️  Local load failed, retrying with network: {local_err}")
-                     model = WhisperModel(m_size, device=dev, compute_type=c_type, cpu_threads=threads, download_root=root, local_files_only=False)
-                else:
-                    raise local_err
-
-        except Exception as e:
-            load_error.append(e)
-
-    # If we have a console/progress context, use it. Otherwise just print.
-    if progress_console:
-        loader = threading.Thread(target=_loader_thread, args=(model_size, device, compute_type, cpu_threads, download_root))
-        loader.daemon = True
-        loader.start()
-        while loader.is_alive():
-            loader.join(0.1)
-    else:
-        # Simple blocking load if no UI context
-        _loader_thread(model_size, device, compute_type, cpu_threads, download_root)
-
-    if load_error:
-        raise load_error[0]
-        
-    return model
+    # First, check if valid model path exists in root to avoid network calls
+    local_files_only = False
+    if download_root and os.path.exists(download_root):
+        if any(p.name.startswith("model") for p in Path(download_root).rglob("*")):
+             local_files_only = True
+    
+    try:
+        if local_files_only:
+             return WhisperModel(model_size, device=device, compute_type=compute_type, cpu_threads=cpu_threads, download_root=download_root, local_files_only=True)
+        else:
+             return WhisperModel(model_size, device=device, compute_type=compute_type, cpu_threads=cpu_threads, download_root=download_root)
+    except Exception as e:
+        if "float16" in str(e).lower() and device == "cpu":
+             print(f"   ⚠️  float16 fallback...")
+             return WhisperModel(model_size, device=device, compute_type="int8", cpu_threads=cpu_threads, download_root=download_root)
+        raise e
 
 
 def _transcribe_segment_with_model(
     model,
     audio_path: str,
     language: Optional[str],
-    initial_prompt: Optional[str] = None
+    initial_prompt: Optional[str] = None,
+    progress_callback=None
 ) -> List[Dict[str, Any]]:
     """Transcribe a single audio segment using an already loaded model."""
     segments, info = model.transcribe(
@@ -479,7 +452,11 @@ def _transcribe_segment_with_model(
     )
     
     words = []
+    # Real-time progress update if callback provided
     for segment in segments:
+        if progress_callback:
+            progress_callback(segment.end)
+            
         for word in getattr(segment, "words", []):
             if word.word is None:
                 continue
@@ -504,13 +481,9 @@ def generate_timeline_from_audio(
     WhisperModel = _import_fast_whisper()
 
     video_settings = config.get("video_settings", {})
-    # Precedence: Argument override > Config > Default
-    # model_size argument handles the override logic if passed (default "small" in arg matches config default roughly)
-    
     compute_type = video_settings.get("caption_compute_type", "float16")
     language = video_settings.get("caption_language")
     
-    # faster-whisper requires None for auto-detection, not "auto" string
     if language in (None, "", "auto", "Auto"):
         language = None
     max_fragment_duration = float(
@@ -518,11 +491,9 @@ def generate_timeline_from_audio(
     )
     max_fragment_words = int(video_settings.get("caption_fragment_max_words", 12))
 
-    # Get device preference from config (cpu, cuda, auto, etc.)
     device_pref = video_settings.get("caption_device", "auto")
     device = _detect_gpu_device(device_pref)
     
-    # RAM-Aware Model Selection
     from features.memory_manager import get_recommended_whisper_model, check_memory_status
     safe_model = get_recommended_whisper_model(model_size)
     if safe_model != model_size:
@@ -531,22 +502,15 @@ def generate_timeline_from_audio(
         print(CP(f"   📉 Auto-downgrading model: {model_size} → {safe_model} for stability", 'yellow'))
         model_size = safe_model
     
-    # Auto-adjust compute_type if it's float16 but on CPU (often slow/unsupported)
     if device == "cpu" and compute_type == "float16":
         compute_type = "int8"
         print(f"   ℹ️  Auto-switching compute_type to {compute_type} for CPU")
 
-    import threading
-
-    # Check duration to decide on splitting
     total_duration = _probe_duration(audio_path) or 0.0
     CHUNK_THRESHOLD = 30 * 60  # 30 minutes
-    
-    # Holder for final merged words
     all_words: List[Dict[str, Any]] = []
     
-    # LOAD MODEL ONCE
-    # We use a progress bar for the loading phase
+    # 1. Loading Phase
     model = None
     try:
         with Progress(
@@ -556,77 +520,58 @@ def generate_timeline_from_audio(
             expand=True
         ) as progress:
             progress.add_task(description=f"[cyan]Loading Whisper Model ({model_size}, {compute_type})...", total=None)
-            
-            # Use our new loader helper
-            # We catch errors here to handle the float16 fallback logic
-            try:
-                model = _load_whisper_model(model_size, device, compute_type, cpu_threads, download_root, progress)
-            except Exception as e:
-                # Handle float16 error fallback for CPU
-                if "float16" in str(e).lower() and device == "cpu":
-                    fallback = "int8"
-                    progress.console.print(f"   ⚠️  float16 not supported on this device. Falling back to {fallback}...")
-                    model = _load_whisper_model(model_size, device, fallback, cpu_threads, download_root, progress)
-                    # Update metadata
-                    compute_type = fallback
-                else:
-                    raise e
+            model = _load_whisper_model(model_size, device, compute_type, cpu_threads, download_root, progress)
     except Exception as e:
         print(f"   ❌ Failed to load model: {e}")
         raise
 
-    # PROCESSING STRATEGY
+    # 2. Transcription Phase
     temp_chunk_dir = None
-    
     try:
-        if total_duration > CHUNK_THRESHOLD:
-            # --- SPLIT STRATEGY ---
-            print(f"   🚀 Long video detected ({seconds_to_time_str(total_duration)}). engaging chunked mode.")
-            temp_chunk_dir, chunks = _split_audio_into_chunks(audio_path, chunk_duration=1800) # 30 mins
+        # User hint / prompt handling: Cap to 1000 chars for Whisper stability
+        model_prompt = text_content[:1000] if text_content else None
+        
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeElapsedColumn(),
+            expand=True
+        ) as progress:
             
-            current_offset = 0.0
-            
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                BarColumn(),
-                TaskProgressColumn(),
-                TimeElapsedColumn(),
-                expand=True
-            ) as progress:
-                main_task = progress.add_task(f"[yellow]Processing {len(chunks)} Chunks...", total=len(chunks))
+            if total_duration > CHUNK_THRESHOLD:
+                # --- SPLIT STRATEGY ---
+                progress.console.print(f"   🚀 Long video detected ({seconds_to_time_str(total_duration)}). chunked mode.")
+                temp_chunk_dir, chunks = _split_audio_into_chunks(audio_path, chunk_duration=1800)
+                
+                current_offset = 0.0
+                main_task = progress.add_task(f"[yellow]Transcribing {len(chunks)} Chunks...", total=total_duration)
                 
                 for i, chunk_path in enumerate(chunks):
                     chunk_duration_val = _probe_duration(chunk_path) or 0.0
-                    progress.console.print(f"      🔹 Chunk {i+1}/{len(chunks)}: {seconds_to_time_str(chunk_duration_val)}")
                     
-                    # Transcribe chunk with optional prompt (first 1000 chars of matching text if possible, but for simplicity we pass the whole thing if it's small)
-                    chunk_words = _transcribe_segment_with_model(model, chunk_path, language, initial_prompt=text_content)
+                    def chunk_cb(p_seconds):
+                        progress.update(main_task, completed=current_offset + p_seconds)
                     
-                    # Shift timestamps and merge
+                    chunk_words = _transcribe_segment_with_model(model, chunk_path, language, initial_prompt=model_prompt, progress_callback=chunk_cb)
+                    
                     for word in chunk_words:
                         word["start"] += current_offset
                         word["end"] += current_offset
                         all_words.append(word)
                     
-                    # Update offset using ACTUAL chunk duration (safest to use what ffmpeg produced)
                     current_offset += chunk_duration_val
-                    progress.advance(main_task)
-
-        else:
-            # --- STANDARD STRATEGY ---
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                BarColumn(),
-                TaskProgressColumn(),
-                TimeElapsedColumn(),
-                expand=True
-            ) as progress:
-                # Note: We can't easily get realtime progress from the simple helper without callbacks, 
-                # but it keeps code clean. For short videos, spinner is fine.
-                all_words = _transcribe_segment_with_model(model, audio_path, language, initial_prompt=text_content)
-                progress.update(task, completed=100)
+                    progress.update(main_task, completed=current_offset)
+            else:
+                # --- STANDARD STRATEGY ---
+                task = progress.add_task(f"[cyan]Transcribing Audio...", total=total_duration)
+                
+                def single_cb(p_seconds):
+                    progress.update(task, completed=p_seconds)
+                
+                all_words = _transcribe_segment_with_model(model, audio_path, language, initial_prompt=model_prompt, progress_callback=single_cb)
+                progress.update(task, completed=total_duration)
 
     finally:
         # Cleanup chunks
@@ -637,6 +582,13 @@ def generate_timeline_from_audio(
                 print(f"   ⚠️  Failed to clean up temp chunks: {e}")
 
     words = all_words
+    
+    if not words:
+        print(CP(f"   ⚠️  Whisper found 0 words! No captions will be generated for the story.", 'yellow'))
+        if text_content:
+            print(f"   💡 Tip: The audio might be silent or Whisper failed to align the large text input.")
+    else:
+        print(f"   📝 Whisper found {len(words)} words for captions.")
 
     fragments = _group_words_into_fragments(words, max_fragment_duration, max_fragment_words)
     

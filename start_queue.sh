@@ -38,7 +38,12 @@ fi
 
 # Check requirements
 echo "🔍 Checking dependencies..."
-python3 -m pip install --break-system-packages --user -r requirements.txt --quiet
+PIP_FLAGS="--quiet"
+if [ -z "$VIRTUAL_ENV" ]; then
+    # Outside venv, add safety flags for PEP 668 systems
+    PIP_FLAGS="$PIP_FLAGS --break-system-packages --user"
+fi
+python3 -m pip install $PIP_FLAGS -r requirements.txt better-ffmpeg-progress rich
 
 # Run the manager in queue mode
 python3 epub_project_manager.py --queue-manager "$@"

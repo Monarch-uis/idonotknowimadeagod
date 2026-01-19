@@ -108,12 +108,9 @@ def select_tts_engine_and_mode():
                 return "pyttsx3", False
             
             elif choice == "3" and PIPER_AVAILABLE:
-                print("\n💡 Piper Processing Mode:")
-                print("   Parallel = Uses all CPU cores → MUCH faster")
-                print("   Safe     = 1 clip at a time → slower but saves RAM")
-                para = input("   Use Parallel mode? (y/n, default y): ").strip().lower()
-                use_concurrent = para != 'n'
-                return "piper", use_concurrent
+                print("\n💡 Piper enabled (Sequential Safe Mode)")
+                # Force sequential mode to avoid process pool failures
+                return "piper", False
 
             elif choice == "4" and CHATTERBOX_AVAILABLE:
                 print("\n💡 Chatterbox Features:")

@@ -107,9 +107,10 @@ def handle_queue_menu(qm: QueueManager, process_callback: Callable, add_job_call
             print(f"  {CP('3.', 'cyan')} Start processing queue")
             print(f"  {CP('4.', 'cyan')} Clear completed jobs")
             print(f"  {CP('5.', 'cyan')} Remove a job from queue")
-            print(f"  {CP('6.', 'cyan')} Back to main menu")
+            print(f"  {CP('6.', 'cyan')} Clear all pending books")
+            print(f"  {CP('7.', 'cyan')} Back to main menu")
             
-            choice = input(f"\n   {CP('👉 Select (1-6):', 'cyan')} ").strip()
+            choice = input(f"\n   {CP('👉 Select (1-7):', 'cyan')} ").strip()
             
             if choice == '1':
                 add_job_callback()
@@ -200,7 +201,11 @@ def handle_queue_menu(qm: QueueManager, process_callback: Callable, add_job_call
                 except:
                     print("   ❌ Invalid selection")
                     time.sleep(1)
-            elif choice == '6' or choice.lower() == 'b':
+            elif choice == '6':
+                cleared = qm.clear_pending()
+                print(CP(f"\n   ✅ Cleared {cleared} pending jobs", 'green'))
+                time.sleep(1)
+            elif choice == '7' or choice.lower() == 'b':
                 break
         except Exception as e:
             print(CP(f"\n   ❌ Menu Error: {e}", 'red'))

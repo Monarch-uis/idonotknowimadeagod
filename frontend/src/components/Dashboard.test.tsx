@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { Dashboard, Project } from './Dashboard';
+import { Dashboard } from './Dashboard';
+import type { Project } from './Dashboard';
 import { describe, it, expect } from 'vitest';
 
 const mockProjects: Project[] = [

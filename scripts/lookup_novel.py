@@ -12,6 +12,10 @@ Then just paste the YouTube name when prompted!
 
 import os
 import sys
+
+# Ensure project root is in path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from features.novel_name_mapper import NovelNameMapper
 from core.utils import CP
 
@@ -54,7 +58,7 @@ def main():
                 continue
             
             # Lookup the novel
-            result = mapper.lookup_by_youtube_name(youtube_name)
+            result, match_type, score = mapper.lookup_by_youtube_name(youtube_name)
             
             if result:
                 print(CP("\n✅ FOUND!", 'green'))

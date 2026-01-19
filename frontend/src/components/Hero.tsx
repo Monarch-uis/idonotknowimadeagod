@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion } from 'motion/react';
 
-export const Hero: React.FC = () => {
+interface HeroProps {
+    onUpload?: (file: File) => void;
+}
+
+export const Hero: React.FC<HeroProps> = ({ onUpload }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const title = "FANFICTION";
     const subtitle = "LEGEND";
+
+    const handleButtonClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && onUpload) {
+            onUpload(file);
+        }
+    };
 
     // Animation variants for letters
     const letterVariants = {
@@ -96,7 +112,17 @@ export const Hero: React.FC = () => {
                     transition={{ delay: 1.2 }}
                     className="mt-12 flex flex-col md:flex-row gap-6 w-full max-w-md md:max-w-none"
                 >
-                    <button className="group relative px-10 py-5 bg-brutal-blue text-white font-mono font-black text-xl shadow-brutal hover:shadow-none hover:translate-x-1 hover:translate-y-1 active:scale-95 transition-all w-full md:w-auto">
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        accept=".epub"
+                        onChange={handleFileChange}
+                    />
+                    <button 
+                        onClick={handleButtonClick}
+                        className="group relative px-10 py-5 bg-brutal-blue text-white font-mono font-black text-xl shadow-brutal hover:shadow-none hover:translate-x-1 hover:translate-y-1 active:scale-95 transition-all w-full md:w-auto"
+                    >
                         INITIALIZE_CONVERSION
                         <span className="absolute -top-2 -right-2 bg-brutal-red text-[10px] px-1 animate-pulse">NEW</span>
                     </button>

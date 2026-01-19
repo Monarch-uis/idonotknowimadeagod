@@ -12,10 +12,26 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 # Check for virtual environment
-if [ -d ".venv" ]; then
+VENV_ACTIVE=false
+if [ -f ".venv/bin/activate" ]; then
+    echo "📦 Activating virtual environment (.venv)..."
     source .venv/bin/activate
+    VENV_ACTIVE=true
+elif [ -f "venv/bin/activate" ]; then
+    echo "📦 Activating virtual environment (venv)..."
+    source venv/bin/activate
+    VENV_ACTIVE=true
 fi
 
+# Check requirements
+echo "🔍 Checking dependencies..."
+PIP_FLAGS="--quiet"
+if [ -z "$VIRTUAL_ENV" ]; then
+    # Outside venv, add safety flags for PEP 668 systems
+    PIP_FLAGS="$PIP_FLAGS --break-system-packages --user"
+fi
+python3 -m pip install $PIP_FLAGS rich
+
 # Run the lookup script
-echo "Starting lookup tool..."
+echo "🚀 Starting lookup tool..."
 python3 scripts/lookup_novel.py

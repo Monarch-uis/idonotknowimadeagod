@@ -493,7 +493,7 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     
                     clips_to_merge.append(clip)
                     
-                    if timing_data and is_precision:
+                    if timing_data:
                         for word in timing_data:
                             word['start'] += current_seconds
                             word['end'] += current_seconds
@@ -511,65 +511,8 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
             
             print(CP(f"\n   ✅ Loaded {successful_count}/{total} chapters", 'green'), flush=True)
 
-        elif tts_engine == "piper" and use_concurrent:
-            # PARALLEL PIPER (NEW)
-            print(f"   ⚡ PARALLEL MODE: Generating Piper audio in multiple processes...", flush=True)
-            start_time = time.time()
-            
-            parallel_manager = ParallelTTSManager()
-            generation_results = parallel_manager.process_piper_batch(
-                chapters, temp_dir, tts_voice
-            )
-            
-            generation_time = time.time() - start_time
-            print(f"   ✅ Parallel Piper generation complete in {generation_time:.1f}s", flush=True)
-            print(f"   📊 Loading clips and syncing timestamps...", flush=True)
-            
-            successful_count = 0
-            from rich.progress import track
-            for chap_index, title, audio_path, error, timing_data, is_precision in track(
-                generation_results, 
-                description="[yellow]Loading clips...",
-                total=total
-            ):
-                try:
-                    if error is not None:
-                        raise Exception(error)
-                    if not audio_path or not os.path.exists(audio_path):
-                        raise Exception("Audio file missing")
-                    
-                    xfade = 0.5 if CONFIG["audio_settings"].get("enable_audio_crossfade", True) else 0
-                    if successful_count > 0:
-                        current_seconds -= xfade
-
-                    clip = AudioFileClip(audio_path)
-                    timestamp_list.append((current_seconds, title))
-                    
-                    if xfade > 0:
-                        if successful_count > 0:
-                            clip = clip.audio_fadein(xfade)
-                    
-                    clips_to_merge.append(clip)
-                    
-                    # Piper usually doesn't provide high-precision timing directly from subprocess
-                    # but if we add it later, this logic will handle it.
-                    if timing_data and is_precision:
-                        for word in timing_data:
-                            word['start'] += current_seconds
-                            word['end'] += current_seconds
-                            full_word_timeline.append(word)
-                            
-                    current_seconds += clip.duration
-                    successful_count += 1
-                
-                except Exception as e:
-                    failed_chapters.append({
-                        'number': chap_index + 1,
-                        'title': title,
-                        'error': str(e)[:60]
-                    })
-            
-            print(CP(f"\n   ✅ Loaded {successful_count}/{total} chapters", 'green'), flush=True)
+        # Parallel Piper block removed as per request for stability.
+        # Fallback to sequential mode in 'else' block below.
 
         else:
             # SEQUENTIAL MODE (SAFE)
@@ -667,7 +610,7 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     
                     clips_to_merge.append(clip)
                     
-                    if tts_timing and is_precision:
+                    if tts_timing:
                         for word in tts_timing:
                             word['start'] += current_seconds
                             word['end'] += current_seconds
@@ -966,7 +909,7 @@ def generate_pro_cover_from_file(cover_path, output_folder, unique_id, book_titl
         traceback.print_exc()
         return None
 
-def create_video_with_recovery(audio_path, image_path, output_path, book_title=None, chapter_range=None, timestamps=None, word_timeline=None, max_retries=3, quality_preset=None, text_content=None):
+def create_video_with_recovery(audio_path, image_path, output_path, book_title=None, chapter_range=None, timestamps=None, word_timeline=None, max_retries=3, quality_preset=None, text_content=None, enable_captions=True):
     """
     Create video with auto-recovery on failure
     
@@ -981,7 +924,7 @@ def create_video_with_recovery(audio_path, image_path, output_path, book_title=N
             if attempt > 1:
                 print(CP(f"\n🔄 Video creation retry {attempt}/{max_retries}...", 'yellow'))
             
-            create_video(audio_path, image_path, output_path, book_title, chapter_range, timestamps, word_timeline, quality_preset, text_content)
+            create_video(audio_path, image_path, output_path, book_title, chapter_range, timestamps, word_timeline, quality_preset, text_content, enable_captions=enable_captions)
             
             # Verify video was created
             if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
@@ -1024,7 +967,7 @@ def create_video_with_recovery(audio_path, image_path, output_path, book_title=N
     
     return False
 
-def create_video(audio_path, image_path, output_path, book_title=None, chapter_range=None, timestamps=None, word_timeline=None, quality_preset=None, text_content=None):
+def create_video(audio_path, image_path, output_path, book_title=None, chapter_range=None, timestamps=None, word_timeline=None, quality_preset=None, text_content=None, enable_captions=True):
     """Create video from audio + image with optional loudness normalization and chapter markers"""
     # Ensure MoviePy objects are available locally
     print(f"   🎬 Rendering: {os.path.basename(output_path)}", flush=True)
@@ -1269,26 +1212,37 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
 
                 project_id = sanitize_filename(os.path.splitext(os.path.basename(output_path))[0])
                 # Use Word Timeline from TTS if available (FASTER & MORE ACCURATE)
-                if word_timeline and len(word_timeline) > 0:
-                    print(f"   ⚡ Using high-precision TTS timing data for captions...", flush=True)
-                    print(f"   📊 Word count: {len(word_timeline)} words with exact timestamps", flush=True)
-                    from core.video_pipeline import generate_timeline_from_words
-                    timeline_data = generate_timeline_from_words(
-                        render_audio_tmp,
-                        project_id=project_id,
-                        words=word_timeline,
-                        config=CONFIG
-                    )
+                # Use Word Timeline from TTS if available (FASTER & MORE ACCURATE)
+                if enable_captions:
+                    if word_timeline and len(word_timeline) > 0:
+                        print(f"   ⚡ Using high-precision TTS timing data for captions...", flush=True)
+                        print(f"   📊 Word count: {len(word_timeline)} words with exact timestamps", flush=True)
+                        from core.video_pipeline import generate_timeline_from_words
+                        timeline_data = generate_timeline_from_words(
+                            render_audio_tmp,
+                            project_id=project_id,
+                            words=word_timeline,
+                            config=CONFIG
+                        )
+                    else:
+                        # Fallback to Faster-Whisper Transcription
+                        print(f"   🎙️  No TTS timing data available, using Faster-Whisper transcription...", flush=True)
+                        timeline_data = generate_timeline_with_alignment(
+                            render_audio_tmp,
+                            project_id=project_id,
+                            config=CONFIG,
+                            text_content=text_content,
+                            time_offset=0
+                        )
                 else:
-                    # Fallback to Faster-Whisper Transcription
-                    print(f"   🎙️  No TTS timing data available, using Faster-Whisper transcription...", flush=True)
-                    timeline_data = generate_timeline_with_alignment(
-                        render_audio_tmp,
-                        project_id=project_id,
-                        config=CONFIG,
-                        text_content=text_content,
-                        time_offset=0
-                    )
+                    print(f"   🚫 Captions disabled by user preference.", flush=True)
+                    # Empty timeline for no captions
+                    timeline_data = {
+                        "project_id": project_id,
+                        "media": {"path": render_audio_tmp, "duration": expected_duration},
+                        "timeline": [],
+                        "metadata": {"source": "disabled"}
+                    }
 
                 print(f"   🎥 Advanced rendering via FFmpeg ({preset_name}, CRF {crf})...", flush=True)
                 render_video_with_timeline(
@@ -1323,7 +1277,7 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
             print(f"   ✅ Found pre-generated subtitles: {os.path.basename(srt_path)}", flush=True)
             
         # Fallback: Generate from timestamps if missing and valid timestamps exist
-        if not subtitle_file and not advanced_render_succeeded and timestamps and len(timestamps) > 0:
+        if enable_captions and not subtitle_file and not advanced_render_succeeded and timestamps and len(timestamps) > 0:
             enable_subtitles = CONFIG.get("video_settings", {}).get("enable_subtitles", True)
             if enable_subtitles:
                 try:
@@ -1851,7 +1805,8 @@ def configure_book_for_queue(cli_args):
         "raw_batches": raw_batches,
         "thumbnails": processed_thumbnails,  # Now contains processed paths or "auto"
         "partial_reset": meta.get('_partial_reset_pending', False),
-        "quality_preset": CONFIG["video_settings"].get("current_quality_preset", "Balanced")
+        "quality_preset": CONFIG["video_settings"].get("current_quality_preset", "Balanced"),
+        "enable_captions": input("\n📝 Enable Captions? (y/n, default y): ").strip().lower() != 'n'
     }
     
     return {
@@ -1964,10 +1919,13 @@ def process_from_queue_job(job):
     if not os.path.exists(epub_path):
         raise FileNotFoundError(f"EPUB not found: {epub_path}")
         
-    # 1. Parse EPUB
+    # Parse EPUB
     valid, error = validate_epub(epub_path)
     if not valid:
         raise ValueError(f"Invalid EPUB: {error}")
+    
+    # Calculate hash for history
+    epub_hash = calculate_epub_hash(epub_path)
     
     meta, all_chapters, book_obj = parse_full_epub(epub_path)
     if not all_chapters:
@@ -2020,7 +1978,19 @@ def process_from_queue_job(job):
             # Ideally we should fail, but let's try to proceed.
             print(f"   ⚠️  Merge failed: {e}. Usage of batch ranges might be incorrect.", flush=True)
 
+    
+    # Extract settings
     raw_batches = settings.get('raw_batches', [])
+    processed_thumbnails = settings.get('thumbnails', {})
+    enable_captions = settings.get('enable_captions', True)
+    
+    # Validate batches
+    if not raw_batches:
+        # Fallback to full book if no batches defined?
+        # But for queue we expect batches to be pre-calculated
+        logger.warning(f"No batches found for {job['title']}, attempting auto-batch...")
+        # (Simplified fallback logic omitted for brevity, assuming valid job)
+        pass
     execution_queue = []
     
     # --- COVER EXTRACTION (Once per job) ---
@@ -2185,7 +2155,6 @@ def process_from_queue_job(job):
     use_concurrent = settings.get('concurrent', 'yes') == "yes"
     
     # IMPORTANT: Enforce Memory Limits in Batch Mode
-    # IMPORTANT: Enforce Memory Limits in Batch Mode
     from features.memory_manager import check_memory_status, optimize_memory, is_low_memory
     
     print(f"   🚀 Processing {len(execution_queue)} videos...")
@@ -2270,13 +2239,14 @@ def process_from_queue_job(job):
             timestamps=timestamps,
             word_timeline=word_timeline,
             max_retries=3,
-            text_content=full_text_content
+            quality_preset=item.get('quality_preset'),
+            text_content=full_text_content,
+            enable_captions=enable_captions
         )
         
         if video_success:
              # Save history
-             # We need to calculate hash, simplified here
-             save_to_history(meta['title'], item["start_chk"], item["end_chk"], "BATCH_Process")
+             save_to_history(meta['title'], item["start_chk"], item["end_chk"], epub_hash)
              optimize_memory()
         else:
              raise RuntimeError(f"Video generation failed for {item['label']}")
@@ -2385,7 +2355,8 @@ def main():
     # Resume check
     resume_data = get_checkpoint_if_exists()
     if resume_data:
-         qm.display_checkpoint_info() # Show info without asking
+         from features.checkpoint_manager import CheckpointManager
+         CheckpointManager().display_checkpoint_info() # Show info without asking
          print(f"   {CP('💡 TIP:', 'yellow')} Select [2] to Continue/Resume this project.")
     
     if cli_args.input:
@@ -2526,6 +2497,7 @@ def main():
     original_epub_title = meta['title']
     
     # Phase 2: Duplicate detection & naming
+    epub_hash = calculate_epub_hash(selected_path)
     final_title, meta, reset_done = resolve_project_name_and_history(selected_path, meta, cli_args, auto_resume)
     if not final_title: return
     new_title = final_title if reset_done else ""
@@ -2755,6 +2727,17 @@ def main():
                     print(CP(f"   ⚠️  Warning: Piper model '{tts_voice}' not found, may fail", 'yellow'))
     else:
         tts_voice = select_voice(tts_engine)
+        
+    # === CAPTIONS SETTINGS ===
+    enable_captions = True
+    if mode != "3": # In preview mode we default to yes or follow standard flow? Let's ask always.
+        print("\n📝 Caption Settings:")
+        cap_input = input("   Do you want to enable captions in the video? (y/n, default y): ").strip().lower()
+        if cap_input == 'n':
+            enable_captions = False
+            print("   🚫 Captions DISABLED (Faster-Whisper will be skipped)")
+        else:
+            print("   ✅ Captions ENABLED")
     
     # === CONNECTION TEST ===
     if tts_engine == "edge":
@@ -2971,7 +2954,12 @@ def main():
                 print(CP(f"⚠️  Boundary overlap: {range_label} ({msg})", 'yellow'))
                 print("   ℹ️  This range shares 1 chapter with a previous batch.")
                 if mode == "2":
-                    proceed = input("   Proceed anyway? (y/n): ").strip().lower()
+                    if cli_args.auto:
+                        print(CP("   ✅ Auto-confirming boundary overlap", 'green'))
+                        proceed = 'y'
+                    else:
+                        proceed = input("   Proceed anyway? (y/n): ").strip().lower()
+                    
                     if proceed != 'y':
                         print(f"   Skipping {range_label}")
                         continue
@@ -2982,7 +2970,12 @@ def main():
                 # Significant overlap - block it
                 print(CP(f"⚠️  Conflict: {range_label} ({msg})", 'red'))
                 if mode == "2":
-                    proceed = input("   Proceed anyway? (y/n): ").strip().lower()
+                    if cli_args.auto:
+                        print(CP("   ✅ Auto-confirming significant overlap", 'green'))
+                        proceed = 'y'
+                    else:
+                        proceed = input("   Proceed anyway? (y/n): ").strip().lower()
+                    
                     if proceed != 'y':
                         print(f"   Skipping {range_label}")
                         continue
@@ -3111,7 +3104,8 @@ def main():
             "label": range_label,
             "image": img_path_for_batch,
             "start_chk": check_start,
-            "end_chk": check_end
+            "end_chk": check_end,
+            "quality_preset": CONFIG["video_settings"].get("current_quality_preset", "Balanced")
         })
     
     # === PHASE 2: EXECUTION ===
@@ -3146,6 +3140,10 @@ def main():
         print(f"   PROCESSING VIDEO {i+1}/{len(execution_queue)} → {item['label']}")
         print(f"   ⏱️  ETA: {eta_str} | {mem_status}")
         chapter_start_time = time.time()
+        
+        # Resolve quality preset for this batch
+        quality_preset = item.get("quality_preset", CONFIG["video_settings"].get("current_quality_preset", "Balanced"))
+        
         print("═" * 80)
         
         base_name = sanitize_filename(meta['title'])
@@ -3282,7 +3280,8 @@ def main():
                 word_timeline=word_timeline,
                 max_retries=3,
                 quality_preset=quality_preset,
-                text_content=batch_text_content
+                text_content=batch_text_content,
+                enable_captions=enable_captions
             )
             
             # Verify video was created

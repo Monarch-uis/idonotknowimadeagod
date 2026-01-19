@@ -148,11 +148,16 @@ def resolve_project_name_and_history(selected_path, meta, cli_args, auto_resume=
                         except Exception as e: print(CP(f"   ❌ Folder deletion failed: {e}", 'red'))
             
             # New Name
-            new_title = input("\n   Enter new project name (Enter to keep original): ").strip()
-            if new_title:
-                final_title = check_duplicate_interactive(original_title, new_title)
-            else:
+            if cli_args and getattr(cli_args, 'auto', False):
                 final_title = original_title
+                print(f"\n   ℹ️  Auto-keeping original title: {final_title}")
+            else:
+                new_title = input("\n   Enter new project name (Enter to keep original): ").strip()
+                if new_title:
+                    final_title = check_duplicate_interactive(original_title, new_title)
+                else:
+                    final_title = original_title
+            
             meta['title'] = final_title
             return final_title, meta, True
             
