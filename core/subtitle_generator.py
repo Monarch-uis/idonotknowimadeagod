@@ -248,7 +248,7 @@ class SubtitleGenerator:
             try:
                 from imageio_ffmpeg import get_ffmpeg_exe
                 ffmpeg_exe = get_ffmpeg_exe()
-            except:
+            except Exception:
                 ffmpeg_exe = 'ffmpeg'
             
             # Create temp output path

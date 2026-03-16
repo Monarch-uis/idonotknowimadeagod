@@ -750,42 +750,6 @@ def generate_timeline_from_words(
     }
 
 
-def _build_video_stream(stream, fps, ass_path, effects):
-    """Helper to build the video filter graph with effects and subtitles"""
-    for effect in effects:
-        start = float(effect.get("start", 0.0))
-        end = float(effect.get("end", start))
-        params = effect.get("params", {})
-        enable_expr = f"between(t,{start},{end})"
-        effect_id = effect.get("effect_id", "gaussian_blur")
-
-        if effect_id == "gaussian_blur":
-            sigma = float(params.get("sigma", 5))
-            stream = stream.filter(
-                "boxblur",
-                luma_radius=max(1, int(sigma)),
-                luma_power=1,
-                enable=enable_expr,
-            )
-        elif effect_id == "grayscale":
-            stream = stream.filter("hue", s=0, enable=enable_expr)
-        elif effect_id == "brightness":
-            value = float(params.get("value", 0.1))
-            stream = stream.filter("eq", brightness=value, enable=enable_expr)
-        else:
-            print(f"   ⚠️  Unknown effect '{effect_id}', skipping")
-
-    stream = stream.filter("fps", fps)
-    stream = stream.filter("format", "yuv420p")
-
-    if ass_path is not None:
-        # Windows path escaping for FFmpeg filter syntax
-        # FFmpeg requires: backslashes escaped as \\ and colons as \:
-        escaped_path = str(ass_path).replace("\\", "/")  # Use forward slashes (works on Windows)
-        escaped_path = escaped_path.replace(":", r"\:")  # Escape colons for filter syntax
-        stream = stream.filter("subtitles", escaped_path)
-        
-    return stream
 
 def _escape_ffmpeg_path(path: str | Path) -> str:
     """
@@ -930,8 +894,8 @@ def render_video_with_timeline(
         try:
             if log_file.exists():
                 log_file.unlink()
-        except:
-            pass
+        except OSError:
+            pass  # Log cleanup is non-critical
 
     # Export timeline BEFORE rendering
     if export_timeline_json:
@@ -1034,7 +998,7 @@ def check_dependencies() -> bool:
                 from imageio_ffmpeg import get_ffmpeg_exe
                 exe = get_ffmpeg_exe()
                 subprocess.run([exe, '-version'], capture_output=True, check=True, startupinfo=startupinfo)
-            except:
+            except (FileNotFoundError, subprocess.CalledProcessError):
                 missing.append("ffmpeg (executable not found)")
     except RuntimeError:
         missing.append("ffmpeg-python (pip package)")

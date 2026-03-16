@@ -38,13 +38,15 @@ def clean_cache():
         try:
             shutil.rmtree('build')
             print("   Deleted: build/")
-        except: pass
+        except OSError:
+            pass
         
     if Path('dist').exists():
         try:
             shutil.rmtree('dist')
             print("   Deleted: dist/")
-        except: pass
+        except OSError:
+            pass
 
 if __name__ == "__main__":
     clean_cache()

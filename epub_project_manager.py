@@ -145,7 +145,7 @@ def handle_critical_failure(section_name, error):
 # ---------------------------
 # CONCURRENT AUDIO GENERATION
 # ---------------------------
-async def generate_chapters_concurrently(chapters, temp_dir, voice, speed_rate, max_concurrent=10):
+async def generate_chapters_concurrently(chapters, temp_dir, voice, speed_rate, max_concurrent=10, engine_override="edge"):
     """Generate all chapter audio concurrently"""
     semaphore = asyncio.Semaphore(max_concurrent)
     
@@ -169,10 +169,19 @@ async def generate_chapters_concurrently(chapters, temp_dir, voice, speed_rate, 
                 max_retries = CONFIG["audio_settings"]["retry_attempts"]
                 delay = CONFIG["audio_settings"]["retry_delay"]
                 
-                success, error, tts_result = await gen_single_clip_edge_with_retry(
-                    audio_text, chap_path, voice, speed_rate,
-                    max_retries=max_retries, delay=delay, silent=True
-                )
+                # Handle different TTS engines concurrently
+                if engine_override == "pocket":
+                    from core.tts import gen_single_clip_pocket_with_retry
+                    success, error, tts_result = await asyncio.to_thread(
+                        gen_single_clip_pocket_with_retry,
+                        audio_text, chap_path, voice,
+                        max_retries=max_retries, delay=delay, silent=True
+                    )
+                else:
+                    success, error, tts_result = await gen_single_clip_edge_with_retry(
+                        audio_text, chap_path, voice, speed_rate,
+                        max_retries=max_retries, delay=delay, silent=True
+                    )
                 
                 if success:
                     timing_data = tts_result.get('events', [])
@@ -239,6 +248,18 @@ def gen_audio_with_recovery(text, output_path, engine, voice, speed_rate, max_re
                 text, output_path, voice,
                 max_retries=max_retries, delay=delay
             )
+        elif engine == "pocket":
+            from core.tts import gen_single_clip_pocket_with_retry
+            success, error, tts_result = gen_single_clip_pocket_with_retry(
+                text, output_path, voice,
+                max_retries=max_retries, delay=delay
+            )
+        elif engine == "kokoro":
+            from core.tts import gen_single_clip_kokoro_with_retry
+            success, error, tts_result = gen_single_clip_kokoro_with_retry(
+                text, output_path, voice,
+                max_retries=max_retries, delay=delay
+            )
         else:  # pyttsx3
             success, error, tts_result = gen_single_clip_pyttsx3_with_retry(
                 text, output_path, voice, speed_rate,
@@ -284,6 +305,18 @@ def gen_audio_with_recovery(text, output_path, engine, voice, speed_rate, max_re
                         ))
                     elif fallback_engine == "piper":
                         success, error, tts_result = gen_single_clip_piper_with_retry(
+                            text, output_path, fallback_voice,
+                            max_retries=max_retries, delay=delay
+                        )
+                    elif fallback_engine == "pocket":
+                        from core.tts import gen_single_clip_pocket_with_retry
+                        success, error, tts_result = gen_single_clip_pocket_with_retry(
+                            text, output_path, fallback_voice,
+                            max_retries=max_retries, delay=delay
+                        )
+                    elif fallback_engine == "kokoro":
+                        from core.tts import gen_single_clip_kokoro_with_retry
+                        success, error, tts_result = gen_single_clip_kokoro_with_retry(
                             text, output_path, fallback_voice,
                             max_retries=max_retries, delay=delay
                         )
@@ -343,7 +376,8 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
     try:
         # === INTRO (CRITICAL) ===
         print("   🎬 Generating intro...", flush=True)
-        intro_path = os.path.join(temp_dir, "00_intro.mp3")
+        audio_ext = ".wav" if tts_engine in ("piper", "pocket", "kokoro") else ".mp3"
+        intro_path = os.path.join(temp_dir, f"00_intro{audio_ext}")
         
         intro_text = intro_override if intro_override else CONFIG["branding"]["intro"]
         success, error, tts_engine, tts_voice, tts_result = gen_audio_with_recovery(
@@ -390,7 +424,7 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
         if not skip_disclaimer:
             print("   📜 Generating disclaimer...", flush=True)
             disc_text = "Disclaimer. I do not claim ownership of this story. All rights belong to the original creators. Note: I’m constantly tweaking the settings to make it as immersive as possible!"
-            disc_path = os.path.join(temp_dir, "01_disclaimer.mp3")
+            disc_path = os.path.join(temp_dir, f"01_disclaimer{audio_ext}")
             
             success, error, tts_engine, tts_voice, tts_result = gen_audio_with_recovery(
                 disc_text, disc_path, tts_engine, tts_voice,
@@ -420,7 +454,7 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
         # === TITLE (CRITICAL) ===
         print("   📖 Generating title...", flush=True)
         title_text = f"{meta['title']}."
-        title_path = os.path.join(temp_dir, "02_title.mp3")
+        title_path = os.path.join(temp_dir, f"02_title{audio_ext}")
         
         success, error, tts_engine, tts_voice, tts_result = gen_audio_with_recovery(
             title_text, title_path, tts_engine, tts_voice,
@@ -453,10 +487,9 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
         total = len(chapters)
         
         if tts_engine == "edge" and use_concurrent:
-            # CONCURRENT MODE (FAST)
+            # CONCURRENT MODE (FAST) - Only for lightweight network-based engines
             print(f"   ⚡ CONCURRENT MODE: Generating all audio in parallel...", flush=True)
             start_time = time.time()
-            
             max_concurrent = CONFIG["audio_settings"]["max_concurrent_tts"]
             generation_results = asyncio.run(generate_chapters_concurrently(
                 chapters, temp_dir, tts_voice, speed_rate, max_concurrent
@@ -532,7 +565,8 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     clean_body = censor_text(clean_body, CONFIG["banned_words"])
                     clean_body = fix_pronunciation(clean_body, CONFIG["pronunciation_fixes"])
                     audio_text = f"{title}. . {clean_body} . "
-                    chap_path = os.path.join(temp_dir, f"chap_{i}.mp3" if tts_engine != "piper" else f"chap_{i}.wav")
+                    ext = ".wav" if tts_engine in ("piper", "pocket", "kokoro") else ".mp3"
+                    chap_path = os.path.join(temp_dir, f"chap_{i}{ext}")
                     
                     if tts_engine == "edge":
                         tts_success, tts_error, tts_result = asyncio.run(gen_single_clip_edge_with_retry(
@@ -584,6 +618,18 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
                     elif tts_engine == "chatterbox":
                         tts_success, tts_error, tts_result = gen_single_clip_chatterbox(
                             audio_text, chap_path
+                        )
+                    elif tts_engine == "pocket":
+                        from core.tts import gen_single_clip_pocket_with_retry
+                        tts_success, tts_error, tts_result = gen_single_clip_pocket_with_retry(
+                            audio_text, chap_path, tts_voice,
+                            max_retries=max_retries, delay=delay
+                        )
+                    elif tts_engine == "kokoro":
+                        from core.tts import gen_single_clip_kokoro_with_retry
+                        tts_success, tts_error, tts_result = gen_single_clip_kokoro_with_retry(
+                            audio_text, chap_path, tts_voice,
+                            max_retries=max_retries, delay=delay
                         )
                     else:
                         tts_success, tts_error, tts_result = gen_single_clip_pyttsx3_with_retry(
@@ -757,8 +803,8 @@ def run_audio_gen_with_timestamps(chapters, meta, final_filename, speed_rate, te
             try:
                 clip.close()
                 cleanup_count += 1
-            except:
-                pass
+            except Exception:
+                pass  # Clip may already be closed
         if cleanup_count > 0:
             print(f"   ✅ Released {cleanup_count} clips", flush=True)
         import gc
@@ -846,7 +892,7 @@ def generate_pro_cover_from_file(cover_path, output_folder, unique_id, book_titl
                 else:
                     title_font = ImageFont.load_default()
                     range_font = ImageFont.load_default()
-            except:
+            except (OSError, IOError):
                 title_font = ImageFont.load_default()
                 range_font = ImageFont.load_default()
             
@@ -1090,7 +1136,7 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
                 try:
                     from imageio_ffmpeg import get_ffmpeg_exe
                     ffmpeg_path = get_ffmpeg_exe()
-                except:
+                except ImportError:
                     pass
                 
                 if ffmpeg_path:
@@ -1112,8 +1158,8 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
                 if normalized_audio_path and os.path.exists(normalized_audio_path):
                     try:
                         os.remove(normalized_audio_path)
-                    except:
-                        pass
+                    except OSError:
+                        pass  # File cleanup non-critical
         
         final_audio = tts_clip
         
@@ -1360,7 +1406,7 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
                 try:
                     from imageio_ffmpeg import get_ffmpeg_exe
                     ffmpeg_exe = get_ffmpeg_exe()
-                except:
+                except ImportError:
                     pass
                 cmd[0] = ffmpeg_exe
                 
@@ -1381,8 +1427,8 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
                 # Cleanup chapter file
                 try:
                     os.remove(chapter_file)
-                except:
-                    pass
+                except OSError:
+                    pass  # Chapter file cleanup non-critical
         
         # (Removed duplicate 'Video saved!' message - already printed at line 1497)
     
@@ -1406,29 +1452,29 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
             try:
                 video_clip.close()
                 released.append("video")
-            except:
-                pass
+            except Exception:
+                pass  # Resource may already be released
         
         if final_audio and final_audio != tts_clip:
             try:
                 final_audio.close()
                 released.append("composite")
-            except:
-                pass
+            except Exception:
+                pass  # Resource may already be released
         
         if bg_clip:
             try:
                 bg_clip.close()
                 released.append("background")
-            except:
-                pass
+            except Exception:
+                pass  # Resource may already be released
         
         if tts_clip:
             try:
                 tts_clip.close()
                 released.append("TTS")
-            except:
-                pass
+            except Exception:
+                pass  # Resource may already be released
         
         if released:
             print(f"   ✅ Released: {', '.join(released)}", flush=True)
@@ -1437,13 +1483,13 @@ def create_video(audio_path, image_path, output_path, book_title=None, chapter_r
         if normalized_audio_path and os.path.exists(normalized_audio_path):
             try:
                 os.remove(normalized_audio_path)
-            except:
-                pass
+            except OSError:
+                pass  # Temp file cleanup non-critical
         if render_audio_tmp and os.path.exists(render_audio_tmp):
             try:
                 os.remove(render_audio_tmp)
-            except:
-                pass
+            except OSError:
+                pass  # Temp file cleanup non-critical
         
         time.sleep(0.3)
 
@@ -1545,7 +1591,7 @@ def configure_book_for_queue(cli_args):
             if 1 <= choice_idx <= len(epub_files):
                 selected_path = epub_files[choice_idx - 1]
                 break
-        except: pass
+        except ValueError: pass  # Invalid integer input
 
     # === PARSING ===
     valid, error = validate_epub(selected_path)
@@ -1597,7 +1643,7 @@ def configure_book_for_queue(cli_args):
             parts = range_input.split("-")
             start_chap = max(1, int(parts[0]))
             end_chap = min(len(all_chapters), int(parts[1]))
-        except: pass
+        except ValueError: pass  # Invalid range format
     
     selected_chapters = all_chapters[start_chap-1:end_chap]
     print(f"   ✅ Selected: Chapter {start_chap} to {end_chap} ({len(selected_chapters)} chapters)")
@@ -1606,7 +1652,7 @@ def configure_book_for_queue(cli_args):
     try:
         bs_in = input(f"🔢 Chapters per video (default 10): ").strip()
         if bs_in: batch_size = int(bs_in)
-    except: pass
+    except ValueError: pass  # Invalid batch size
 
     # Create raw_batches
     raw_batches = []
@@ -2355,7 +2401,6 @@ def main():
     # Resume check
     resume_data = get_checkpoint_if_exists()
     if resume_data:
-         from features.checkpoint_manager import CheckpointManager
          CheckpointManager().display_checkpoint_info() # Show info without asking
          print(f"   {CP('💡 TIP:', 'yellow')} Select [2] to Continue/Resume this project.")
     
@@ -2480,8 +2525,8 @@ def main():
         except (KeyboardInterrupt, EOFError):
             print("\n⚠️  Input interrupted. Exiting.")
             sys.exit(1)
-        except:
-            pass
+        except ValueError:
+            pass  # Invalid integer input
     
     # === EPUB PARSING ===
     valid, error = validate_epub(selected_path)
@@ -2791,7 +2836,7 @@ def main():
                         print("   ⚠️  Invalid range, using all chapters")
                         start_chapter = 1
                         end_chapter = len(all_chapters)
-            except:
+            except ValueError:
                 print("   ⚠️  Invalid format, using all chapters")
         
         # Convert to 0-indexed
@@ -2823,8 +2868,8 @@ def main():
                             print("   Please enter a smaller batch size")
                             continue
                         break
-                except:
-                    pass
+                except ValueError:
+                    pass  # Invalid batch size input
         
         # Create batches from selected range
         selected_total = len(selected_chapters)
@@ -2869,8 +2914,8 @@ def main():
             except (KeyboardInterrupt, EOFError):
                 print("\n⚠️  Input interrupted. Exiting.")
                 sys.exit(1)
-            except:
-                pass
+            except ValueError:
+                pass  # Invalid range format
     
     # Phase 2: Show preflight summary before processing
     if not show_preflight_summary(meta, len(all_chapters), selected_total, batch_size if mode == "1" else None, 
@@ -3096,8 +3141,8 @@ def main():
                 # Fallback to copy if PIL fails
                 try:
                     shutil.copy2(img_path_for_batch, archive_path)
-                except:
-                    pass
+                except OSError:
+                    pass  # Archive copy non-critical
         
         execution_queue.append({
             "batch": selected_batch,
@@ -3190,8 +3235,8 @@ def main():
                     start_chap_title = item['batch'][0][0]
                     intro_override = f"This video continues with {start_chap_title}."
                     print(f"   ℹ️  Standard Intro Override: {intro_override}")
-                except:
-                    pass
+                except (IndexError, KeyError):
+                    pass  # Batch structure issue
 
         success, timestamps, word_timeline = run_audio_gen_with_timestamps(
             item["batch"], meta, audio_file, speed, paths["temp"],
@@ -3465,6 +3510,6 @@ if __name__ == "__main__":
         traceback.print_exc()
         try:
             input("\nPress Enter to exit...")
-        except:
-            pass
+        except (KeyboardInterrupt, EOFError):
+            pass  # User exit
         sys.exit(1)

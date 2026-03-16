@@ -62,7 +62,7 @@ def main():
         traceback.print_exc()
         try:
             input("\\nPress Enter to exit...")
-        except:
+        except (EOFError, KeyboardInterrupt):
             pass
         sys.exit(1)
     finally:

@@ -3,6 +3,9 @@ TTS module
 Handles TTS engine selection, voice selection, and audio generation
 """
 import os
+# Force HuggingFace Hub into offline mode for all local TTS engines (Pocket, Kokoro)
+# This prevents any network calls. Edge-TTS is unaffected (it uses its own API).
+os.environ["HF_HUB_OFFLINE"] = "1"
 import sys
 import asyncio
 import subprocess
@@ -49,7 +52,7 @@ except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
         PIPER_EXE_PATH = local_piper_linux
         # Ensure executable
         try: os.chmod(PIPER_EXE_PATH, 0o755)
-        except: pass
+        except OSError: pass  # Permission may already be set
         print(f"✅ Piper TTS detected (local Linux: {local_piper_linux})")
     elif os.path.exists(local_piper_windows):
         PIPER_AVAILABLE = True
@@ -72,7 +75,25 @@ except Exception as e:
     CHATTERBOX_AVAILABLE = False
     print(f"⚠️  Chatterbox TTS import error: {e}")
 
-if not EDGE_TTS_AVAILABLE and not PYTTSX3_AVAILABLE and not PIPER_AVAILABLE:
+# Check Pocket TTS availability
+try:
+    from pocket_tts import TTSModel
+    POCKET_AVAILABLE = True
+    print("✅ Pocket TTS available")
+except ImportError:
+    POCKET_AVAILABLE = False
+    print("⚠️  'pocket-tts' missing. Run: pip install pocket-tts")
+
+# Check Kokoro TTS availability
+try:
+    from kokoro import KPipeline
+    KOKORO_AVAILABLE = True
+    print("✅ Kokoro TTS available (offline)")
+except ImportError:
+    KOKORO_AVAILABLE = False
+    print("⚠️  'kokoro' missing. Run: pip install kokoro soundfile")
+
+if not EDGE_TTS_AVAILABLE and not PYTTSX3_AVAILABLE and not PIPER_AVAILABLE and not POCKET_AVAILABLE and not KOKORO_AVAILABLE:
     print(CP("❌ No TTS libraries available. Install at least one.", 'red'))
     sys.exit(1)
 
@@ -87,6 +108,10 @@ def select_tts_engine_and_mode():
         available.append("3. Piper (offline, neural, FAST)")
     if CHATTERBOX_AVAILABLE:
         available.append("4. Chatterbox Turbo (premium, expressive, SLOW)")
+    if POCKET_AVAILABLE:
+        available.append("5. Pocket TTS (offline, fast, CPU-efficient)")
+    if KOKORO_AVAILABLE:
+        available.append("6. Kokoro (offline, 82M, high-quality)")
     
     print("\n🎤 TTS Engine Selection:")
     for eng in available:
@@ -119,8 +144,53 @@ def select_tts_engine_and_mode():
                 print("   • Quality > Speed")
                 return "chatterbox", False
                 
+            elif choice == "5" and POCKET_AVAILABLE:
+                print("\n💡 Pocket TTS enabled (Sequential Mode)")
+                return "pocket", False
+
+            elif choice == "6" and KOKORO_AVAILABLE:
+                print("\n💡 Kokoro TTS enabled (Sequential Mode)")
+                return "kokoro", False
+                
         except (KeyboardInterrupt, EOFError):
             sys.exit(1)
+
+def preview_voice(engine, voice_id):
+    """Generate and play a short voice preview (~10 seconds)"""
+    import os
+    import subprocess
+    import tempfile
+    
+    text = "This is a preview of my voice. I can narrate your audiobooks with high quality and natural intonation. Let's make something great together."
+    tmp_wav = os.path.join(tempfile.gettempdir(), f"preview_{engine}_{voice_id}.wav")
+    
+    print(f"\n   ⏳ Generating ~10s preview for '{voice_id}' (please wait)...")
+    success = False
+    
+    if engine == "pocket":
+        success, _, _ = gen_single_clip_pocket_with_retry(text, tmp_wav, voice_id, max_retries=1, delay=1, silent=True)
+    elif engine == "kokoro":
+        success, _, _ = gen_single_clip_kokoro_with_retry(text, tmp_wav, voice_id, max_retries=1, delay=1, silent=True)
+        
+    if success and os.path.exists(tmp_wav):
+        print("   🔊 Playing preview...")
+        try:
+            # Try ffplay first
+            subprocess.run(["ffplay", "-nodisp", "-autoexit", tmp_wav], 
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except FileNotFoundError:
+            try:
+                # Fallback to aplay (ALSA player on Linux)
+                subprocess.run(["aplay", "-q", tmp_wav], 
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except FileNotFoundError:
+                print("   ❌ Could not play audio (ffplay/aplay not found)")
+        try:
+            os.remove(tmp_wav)
+        except OSError:
+            pass
+    else:
+        print("   ❌ Failed to generate preview")
 
 def select_voice(engine):
     """Select voice for TTS engine"""
@@ -139,8 +209,8 @@ def select_voice(engine):
                     return voices[choice]
             except (KeyboardInterrupt, EOFError):
                 sys.exit(1)
-            except:
-                pass
+            except ValueError:
+                pass  # Invalid input, loop again
     
     elif engine == "pyttsx3":
         print("\n🔊 pyttsx3 Voices:")
@@ -158,11 +228,93 @@ def select_voice(engine):
                     return voices[choice].id
             except (KeyboardInterrupt, EOFError):
                 sys.exit(1)
-            except:
-                pass
+            except ValueError:
+                pass  # Invalid input, loop again
     
     elif engine == "piper":
         return select_piper_model()
+    
+    elif engine == "pocket":
+        print("\n🔊 Pocket TTS Voices:")
+        voices = [
+            ("Alba (Female, Default)", "alba"),
+            ("Fantine (Female)", "fantine"),
+            ("Marius (Male)", "marius"),
+            ("Javert (Male)", "javert")
+        ]
+        for i, (name, _) in enumerate(voices, 1):
+            print(f"   {i}. {name}")
+        print("\n   💡 Tip: Type 'p' followed by the number (e.g. 'p1') to preview a voice!")
+        
+        while True:
+            try:
+                choice = input(f"\n👉 Select (1-{len(voices)}, default 1): ").strip().lower()
+                if not choice:
+                    return voices[0][1]
+                
+                is_preview = choice.startswith('p')
+                if is_preview:
+                    choice = choice[1:]
+                    
+                if not choice.isdigit():
+                    continue
+                    
+                idx = int(choice) - 1
+                if 0 <= idx < len(voices):
+                    selected_voice = voices[idx][1]
+                    if is_preview:
+                        preview_voice("pocket", selected_voice)
+                    else:
+                        return selected_voice
+            except (KeyboardInterrupt, EOFError):
+                sys.exit(1)
+            except ValueError:
+                pass
+
+    elif engine == "kokoro":
+        print("\n🔊 Kokoro Houses (Voices):")
+        voices = [
+            ("Heart (American Female, Default)", "af_heart", "a"),
+            ("Emma (British Female)", "bf_emma", "b"),
+            ("Adam (American Male)", "am_adam", "a"),
+            ("Michael (American Male)", "am_michael", "a"),
+            ("George (British Male)", "bm_george", "b")
+        ]
+        for i, (name, _, _) in enumerate(voices, 1):
+            print(f"   {i}. {name}")
+        print("\n   💡 Tip: Type 'p' followed by the number (e.g. 'p1') to preview a voice!")
+        
+        while True:
+            try:
+                choice = input(f"\n👉 Select (1-{len(voices)}, default 1): ").strip().lower()
+                if not choice:
+                    CONFIG["audio_settings"]["kokoro_lang_code"] = voices[0][2]
+                    return voices[0][1] # af_heart
+                    
+                is_preview = choice.startswith('p')
+                if is_preview:
+                    choice = choice[1:]
+                    
+                if not choice.isdigit():
+                    continue
+                    
+                idx = int(choice) - 1
+                if 0 <= idx < len(voices):
+                    selected_voice = voices[idx][1]
+                    selected_lang = voices[idx][2]
+                    
+                    if is_preview:
+                        old_lang = CONFIG["audio_settings"].get("kokoro_lang_code", "a")
+                        CONFIG["audio_settings"]["kokoro_lang_code"] = selected_lang
+                        preview_voice("kokoro", selected_voice)
+                        CONFIG["audio_settings"]["kokoro_lang_code"] = old_lang
+                    else:
+                        CONFIG["audio_settings"]["kokoro_lang_code"] = selected_lang
+                        return selected_voice
+            except (KeyboardInterrupt, EOFError):
+                sys.exit(1)
+            except ValueError:
+                pass
     
     return None
 
@@ -190,8 +342,8 @@ async def test_edge_tts_connection():
                 # Clean up
                 try:
                     os.remove(test_file)
-                except:
-                    pass
+                except OSError:
+                    pass  # Cleanup is non-critical
                 
                 return True
             else:
@@ -495,7 +647,7 @@ def gen_single_clip_piper_with_retry(text, filename, model_path, max_retries=7, 
                     try:
                         from imageio_ffmpeg import get_ffmpeg_exe
                         probe_exe = get_ffmpeg_exe().replace('ffmpeg', 'ffprobe')
-                    except:
+                    except Exception:
                         pass
                         
                     p_cmd = [probe_exe, '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', filename]
@@ -546,6 +698,146 @@ def gen_single_clip_piper_with_retry(text, filename, model_path, max_retries=7, 
     
     return False, "Max retries reached", None
 
+import threading
+_pocket_local = threading.local()
+_pocket_lock = threading.Lock()
+
+def get_pocket_model():
+    """Retrieve or initialize thread-local Pocket TTS model safely"""
+    if getattr(_pocket_local, 'model', None) is None:
+        import torch
+        from pocket_tts import TTSModel
+        
+        # Option 2: Optimize CPU Threads for Ryzen 5600GT (6 cores)
+        # Safe to set per-thread initialization, it sets global PyTorch threads
+        torch.set_num_threads(6)
+        
+        # Option 1 failed: lsd_decode_steps must be > 0. Reverting to default (1).
+        with _pocket_lock:
+            _pocket_local.model = TTSModel.load_model()
+            
+    return _pocket_local.model
+
+def gen_single_clip_pocket_with_retry(text, filename, voice_id="en", max_retries=7, delay=5, silent=False):
+    """Generate Pocket TTS audio with retry logic"""
+    for attempt in range(1, max_retries + 1):
+        try:
+            if attempt > 1 and not silent:
+                print(f"\n   🔄 Retry {attempt-1}/{max_retries-1}...", end='', flush=True)
+            
+            import scipy.io.wavfile
+            import torch
+            import numpy as np
+            import re
+            
+            model = get_pocket_model()
+            
+            # Parse voice
+            v_id = voice_id if voice_id else "alba"
+            if v_id == "en" or v_id == "":
+                v_id = "alba"
+                
+            voice_state = model.get_state_for_audio_prompt(v_id)
+            
+            # Smart chunking to avoid "Maximum generation length reached" bug
+            # Pocket TTS has a known bug with long text — we must keep chunks short.
+            # Step 1: Split on sentence boundaries (.!?;:)
+            raw_chunks = re.split(r'(?<=[.!?;:])\s+', text.strip())
+            
+            # Step 2: Sub-split any chunk still over the limit on commas/dashes
+            MAX_CHUNK_CHARS = 100
+            chunks = []
+            for chunk in raw_chunks:
+                chunk = chunk.strip()
+                if not chunk:
+                    continue
+                if len(chunk) <= MAX_CHUNK_CHARS:
+                    chunks.append(chunk)
+                else:
+                    # Split on commas, dashes, and em-dashes
+                    sub_parts = re.split(r'[,\-—]\s*', chunk)
+                    current = ""
+                    for part in sub_parts:
+                        if current and len(current) + len(part) > MAX_CHUNK_CHARS:
+                            chunks.append(current.strip())
+                            current = part
+                        else:
+                            current = f"{current} {part}" if current else part
+                    if current.strip():
+                        chunks.append(current.strip())
+            
+            # Step 3: Hard fallback — if any chunk is STILL too long (no punctuation),
+            # split by word count
+            MAX_WORDS_PER_CHUNK = 15
+            final_chunks = []
+            for chunk in chunks:
+                words_in_chunk = chunk.split()
+                if len(words_in_chunk) > MAX_WORDS_PER_CHUNK:
+                    for i in range(0, len(words_in_chunk), MAX_WORDS_PER_CHUNK):
+                        segment = " ".join(words_in_chunk[i:i + MAX_WORDS_PER_CHUNK])
+                        if segment:
+                            final_chunks.append(segment)
+                else:
+                    final_chunks.append(chunk)
+            
+            chunks = final_chunks if final_chunks else [text]
+            
+            # Generate audio for each chunk and concatenate
+            audio_chunks = []
+            for chunk in chunks:
+                chunk_audio = model.generate_audio(voice_state, chunk)
+                chunk_np = chunk_audio.cpu().numpy()
+                if chunk_np.shape[0] == 1:
+                    chunk_np = chunk_np[0]
+                elif chunk_np.ndim > 1:
+                    chunk_np = chunk_np.T
+                audio_chunks.append(chunk_np)
+            
+            if not audio_chunks:
+                raise Exception("No audio chunks generated")
+            
+            full_audio = np.concatenate(audio_chunks)
+            scipy.io.wavfile.write(filename, model.sample_rate, full_audio)
+            
+            if os.path.exists(filename) and os.path.getsize(filename) > 1000:
+                if attempt > 1 and not silent:
+                    print(" ✅", flush=True)
+                
+                # Estimate word timing (Linear Distribution)
+                duration = len(full_audio) / model.sample_rate
+                words = text.split()
+                estimated_subs = []
+                if words and duration > 0:
+                    word_duration = duration / len(words)
+                    current_time = 0.0
+                    for word in words:
+                        estimated_subs.append({
+                            'start': current_time,
+                            'end': current_time + word_duration,
+                            'text': word
+                        })
+                        current_time += word_duration
+                
+                return True, None, {'events': estimated_subs, 'is_high_precision': False}
+            else:
+                raise Exception("Empty audio file")
+                
+        except Exception as e:
+            import traceback
+            full_trace = traceback.format_exc()
+            if attempt < max_retries:
+                if not silent:
+                    print(f"\n   ❌ Pocket-TTS error: {str(e)[:40]}", flush=True)
+                    print(f"   [DEBUG TRACE]: {full_trace}", flush=True)
+                    print(f"   ⏳ Waiting {delay}s...", flush=True)
+                import time
+                time.sleep(delay)
+                continue
+            else:
+                return False, f"Pocket-TTS error: {str(e)}\nTrace: {full_trace}", None
+                
+    return False, "Max retries reached", None
+
 def gen_single_clip_chatterbox(text, filename):
     """Generate audio using Chatterbox Turbo"""
     try:
@@ -578,3 +870,88 @@ def gen_single_clip_chatterbox(text, filename):
     except Exception as e:
         return False, str(e), None
 
+# ------ Kokoro TTS ------
+import threading
+_kokoro_local = threading.local()
+_kokoro_lock = threading.Lock()
+
+def get_kokoro_pipeline():
+    """Retrieve or initialize thread-local Kokoro pipeline, re-initializing if lang_code changes"""
+    import torch
+    lang_code = CONFIG["audio_settings"].get("kokoro_lang_code", "a")
+    curr_lang = getattr(_kokoro_local, 'lang_code', None)
+    
+    if getattr(_kokoro_local, 'pipeline', None) is None or curr_lang != lang_code:
+        from kokoro import KPipeline
+        # Optimize CPU: use all 6 cores of Ryzen 5600GT
+        torch.set_num_threads(6)
+        with _kokoro_lock:
+            _kokoro_local.pipeline = KPipeline(lang_code=lang_code, repo_id='hexgrad/Kokoro-82M')
+            _kokoro_local.lang_code = lang_code
+    return _kokoro_local.pipeline
+
+def gen_single_clip_kokoro_with_retry(text, filename, voice_id="af_heart", max_retries=7, delay=5, silent=False):
+    """Generate Kokoro TTS audio with retry logic"""
+    for attempt in range(1, max_retries + 1):
+        try:
+            if attempt > 1 and not silent:
+                print(f"\n   🔄 Retry {attempt-1}/{max_retries-1}...", end='', flush=True)
+            
+            import soundfile as sf
+            import numpy as np
+            
+            pipeline = get_kokoro_pipeline()
+            v_id = voice_id if voice_id else "af_heart"
+            
+            import torch
+            
+            # Generate all chunks with inference_mode (no gradients = ~30-50% faster)
+            audio_chunks = []
+            with torch.inference_mode():
+                for i, (gs, ps, audio) in enumerate(pipeline(text, voice=v_id, speed=1)):
+                    audio_chunks.append(audio)
+            
+            if not audio_chunks:
+                raise Exception("No audio chunks generated")
+            
+            full_audio = np.concatenate(audio_chunks)
+            sf.write(filename, full_audio, 24000)
+            
+            if os.path.exists(filename) and os.path.getsize(filename) > 1000:
+                if attempt > 1 and not silent:
+                    print(" ✅", flush=True)
+                
+                # Estimate word timing (Linear Distribution)
+                duration = len(full_audio) / 24000.0
+                words = text.split()
+                estimated_subs = []
+                if words and duration > 0:
+                    word_duration = duration / len(words)
+                    current_time = 0.0
+                    for word in words:
+                        estimated_subs.append({
+                            'start': current_time,
+                            'end': current_time + word_duration,
+                            'text': word
+                        })
+                        current_time += word_duration
+                
+                return True, None, {'events': estimated_subs, 'is_high_precision': False}
+            else:
+                raise Exception("Empty audio file")
+                
+        except Exception as e:
+            import traceback
+            full_trace = traceback.format_exc()
+            if attempt < max_retries:
+                if not silent:
+                    print(f"\n   ❌ Kokoro error: {str(e)[:40]}", flush=True)
+                    print(f"   [DEBUG TRACE]: {full_trace}", flush=True)
+                    print(f"   ⏳ Waiting {delay}s...", flush=True)
+                import time
+                time.sleep(delay)
+                continue
+            else:
+                return False, f"Kokoro error: {str(e)}\nTrace: {full_trace}", None
+                
+    return False, "Max retries reached", None

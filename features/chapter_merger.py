@@ -41,8 +41,8 @@ class ChapterMerger:
                     try:
                         with open(content, "r", encoding="utf-8") as f:
                             text_to_check = f.read()
-                    except:
-                        pass
+                    except (OSError, IOError):
+                        pass  # File read failed, use string as-is
                 
                 words = self.estimate_word_count(text_to_check)
                 

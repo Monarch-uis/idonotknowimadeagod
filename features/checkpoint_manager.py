@@ -23,7 +23,7 @@ class CheckpointManager:
             try:
                 with open(CHECKPOINT_FILE, 'r') as f:
                     return json.load(f)
-            except:
+            except (json.JSONDecodeError, OSError):
                 return {}
         return {}
     

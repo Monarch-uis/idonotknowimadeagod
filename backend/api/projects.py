@@ -26,7 +26,7 @@ def get_project_info(folder_path: str, status: str, queued_ids: List[str] = None
                 profile = json.load(f)
                 author = profile.get("author", "Unknown")
                 last_updated = profile.get("last_updated")
-        except:
+        except Exception:
             pass
             
     proj_id = sanitize_filename(title)
@@ -54,7 +54,7 @@ async def list_projects():
     try:
         qm = QueueManager()
         queued_ids = [sanitize_filename(os.path.basename(j["path"])) for j in qm.queue_data if j["status"] == "pending"]
-    except:
+    except Exception:
         pass
 
     if os.path.exists(ACTIVE_NOVELS_DIR):
@@ -73,9 +73,18 @@ async def list_projects():
 
 @router.post("", response_model=Project, status_code=201)
 async def create_project(file: UploadFile = File(...)):
+    # Validate file extension
+    if not file.filename or not file.filename.lower().endswith('.epub'):
+        raise HTTPException(status_code=400, detail="Only .epub files are accepted")
+    
+    # Sanitize the filename to prevent path traversal
+    safe_filename = sanitize_filename(os.path.basename(file.filename))
+    if not safe_filename.lower().endswith('.epub'):
+        safe_filename += '.epub'
+    
     temp_dir = "temp_uploads"
     os.makedirs(temp_dir, exist_ok=True)
-    temp_path = os.path.join(temp_dir, file.filename)
+    temp_path = os.path.join(temp_dir, safe_filename)
     
     with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -132,7 +141,7 @@ async def get_project_logs(project_id: str):
                 for line in lines[-100:]:
                     if project_id.lower() in line.lower() or os.path.basename(project_path).lower() in line.lower():
                         logs.append(line.strip())
-        except:
+        except Exception:
             pass
             
     return ProjectLogs(project_id=project_id, logs=logs)

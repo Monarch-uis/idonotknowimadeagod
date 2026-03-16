@@ -8,6 +8,7 @@ import time
 import string
 import re
 import logging
+import subprocess
 from logging.handlers import RotatingFileHandler
 from datetime import timedelta
 try:
@@ -31,7 +32,14 @@ logger.addHandler(log_handler)
 logger.addHandler(logging.StreamHandler())  # Also log to console
 
 # === COLOR SYSTEM ===
-os.system("")  # Makes colors work on Windows
+if sys.platform == "win32":
+    # Enable ANSI escape codes on Windows
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+    except Exception:
+        pass
 
 def CP(text, color='white'):
     """Color Print - makes text colorful"""
@@ -60,9 +68,14 @@ def beep_notification():
             time.sleep(0.1)
             winsound.Beep(1200, 400)
         elif system == "Darwin":  # macOS
-            os.system('afplay /System/Library/Sounds/Ping.aiff')
+            subprocess.run(['afplay', '/System/Library/Sounds/Ping.aiff'],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         else:  # Linux
-            os.system('paplay /usr/share/sounds/freedesktop/stereo/bell.oga 2>/dev/null || echo -e "\a"')
+            try:
+                subprocess.run(['paplay', '/usr/share/sounds/freedesktop/stereo/bell.oga'],
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except FileNotFoundError:
+                print('\a', end='', flush=True)
     except Exception as e:
         print(f"⚠️  Notification failed: {e}")
 
@@ -77,13 +90,14 @@ def play_critical_failure_alarm():
                 winsound.Beep(1500, 300)
                 time.sleep(0.1)
         elif system == "Darwin":
-            os.system('afplay /System/Library/Sounds/Sosumi.aiff')
+            subprocess.run(['afplay', '/System/Library/Sounds/Sosumi.aiff'],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         else:
             for _ in range(3):
                 print('\a', end='', flush=True)
                 time.sleep(0.3)
-    except:
-        pass
+    except Exception:
+        pass  # Sound notification is non-critical
     
     print("\n" + "🚨" * 20)
     print("      CRITICAL FAILURE - ATTENTION REQUIRED")

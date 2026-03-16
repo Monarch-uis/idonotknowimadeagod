@@ -75,7 +75,7 @@ class PatternLearner:
             try:
                 with open(PATTERN_FILE, 'r') as f:
                     return json.load(f)
-            except:
+            except (json.JSONDecodeError, OSError):
                 return {"error_counts": {}, "fix_success_rates": {}, "last_updated": None}
         return {"error_counts": {}, "fix_success_rates": {}, "last_updated": None}
     

@@ -76,8 +76,8 @@ def handle_video_quality_menu():
                     save_global_config()
                 else:
                      print("   ❌ Preset not configured")
-        except:
-            pass
+        except ValueError:
+            pass  # Invalid input, loop again
 
 def handle_queue_menu(qm: QueueManager, process_callback: Callable, add_job_callback: Callable):
     """
@@ -198,7 +198,7 @@ def handle_queue_menu(qm: QueueManager, process_callback: Callable, add_job_call
                         else:
                              print("   ❌ Job not found in queue")
                     time.sleep(1)
-                except:
+                except (ValueError, IndexError, KeyError):
                     print("   ❌ Invalid selection")
                     time.sleep(1)
             elif choice == '6':

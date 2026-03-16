@@ -73,6 +73,7 @@ Thumbs.db
 *.pem
 secrets/
 config.local.json
+config_gemini_enhanced.json
 
 # Media files
 media/*.mp3

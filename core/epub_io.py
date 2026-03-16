@@ -154,8 +154,8 @@ def check_duplicate_epub(epub_path):
                     e = int(entry.get("end", 0))
                     if s < min_start: min_start = s
                     if e > max_end: max_end = e
-                except:
-                    pass
+                except ValueError:
+                    pass  # Skip entries with invalid integer values
 
             if min_start == float('inf'): min_start = "?"
             if max_end == -1: max_end = "?"
@@ -190,7 +190,7 @@ def get_history_summary(search_title):
                 s, e = int(entry.get("start", 0)), int(entry.get("end", 0))
                 if s < min_start: min_start = s
                 if e > max_end: max_end = e
-            except: pass
+            except ValueError: pass  # Skip entries with invalid integer values
             
         return {
             "key": search_key, "title": title, "date": latest_date,
@@ -215,7 +215,7 @@ def get_history_summary(search_title):
                     s, e = int(entry.get("start", 0)), int(entry.get("end", 0))
                     if s < min_start: min_start = s
                     if e > max_end: max_end = e
-                except: pass
+                except ValueError: pass  # Skip entries with invalid integer values
                 
             return {
                 "key": book_key, "title": title, "date": latest_date,
@@ -407,22 +407,22 @@ def parse_full_epub(epub_path):
     
     try:
         meta["title"] = book.get_metadata('DC', 'title')[0][0]
-    except:
-        pass
+    except (IndexError, KeyError):
+        pass  # Metadata may not exist
     try:
         meta["author"] = book.get_metadata('DC', 'creator')[0][0]
-    except:
-        pass
+    except (IndexError, KeyError):
+        pass  # Author metadata may not exist
     try:
         raw = book.get_metadata('DC', 'description')[0][0]
         meta["summary"] = clean_html_summary(raw)
-    except:
-        pass
+    except (IndexError, KeyError):
+        pass  # Description may not exist
     try:
         subjects = book.get_metadata('DC', 'subject')
         meta["tags"] = [s[0] for s in subjects]
-    except:
-        pass
+    except (IndexError, KeyError):
+        pass  # Subject tags may not exist
     
     chapters = []
     for i, item_id in enumerate(book.spine):
@@ -632,8 +632,8 @@ def get_all_temp_folders():
                                 file_count += 1
                                 oldest_time = min(oldest_time, stat.st_mtime)
                                 newest_time = max(newest_time, stat.st_mtime)
-                            except:
-                                continue
+                            except OSError:
+                                continue  # Skip files we can't stat
                     
                     if file_count > 0:
                         age_days = (time.time() - oldest_time) / 86400
@@ -647,8 +647,8 @@ def get_all_temp_folders():
                             'file_count': file_count,
                             'last_active_sec': last_active_sec
                         })
-                except:
-                    continue
+                except OSError:
+                    continue  # Skip folders with permission issues
     except Exception as e:
         logger.warning(f"Temp scan failed: {e}")
     
@@ -690,8 +690,8 @@ def cleanup_old_temp_files(max_age_days=7, min_size_mb=10):
             cleaned += 1
             freed += folder_info['size_mb']
             print(f"   ✅ {folder_info['book']}: {folder_info['size_mb']:.1f} MB", flush=True)
-        except:
-            failed += 1
+        except OSError:
+            failed += 1  # Folder locked or permission denied
     
     if cleaned > 0:
         print(CP(f"   ✅ Freed {freed:.1f} MB from {cleaned} folders", 'green'), flush=True)

@@ -48,7 +48,7 @@ async def tts_preview(request: TTSPreviewRequest):
                 speed_rate = int(request.speed.replace("+", "").replace("%", ""))
                 # default rate is 200, so +0% = 200
                 speed_rate = 200 + (speed_rate * 2) 
-            except:
+            except (ValueError, TypeError, AttributeError):
                 speed_rate = 200
             gen_single_clip_pyttsx3_with_retry(
                 request.text, file_path, request.voice, speed_rate

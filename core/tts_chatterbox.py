@@ -99,7 +99,7 @@ class ChatterboxTTSClient:
                 for f in temp_files:
                     try:
                         os.remove(f)
-                    except:
+                    except OSError:
                         pass
 
     def _generate_single_chunk(self, text: str, output_path: str):

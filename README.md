@@ -62,16 +62,28 @@ docker-compose up
 ## Installation
 
 ```bash
+# Create and activate a virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
+
+# Install dev dependencies (optional, for testing/linting)
+pip install -r requirements-dev.txt
 
 # Verify installation
 python run.py --validate-config
 ```
 
+> **Note:** Always activate the virtual environment (`source venv/bin/activate`) before running any Python commands. The system Python on modern Debian/Ubuntu is externally managed and will reject direct `pip install` calls.
+
 ## Testing
 
 ```bash
+# Make sure venv is active
+source venv/bin/activate
+
 # Run all tests
 pytest tests/ -v
 

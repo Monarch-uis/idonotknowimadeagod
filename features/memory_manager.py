@@ -33,8 +33,8 @@ class MemoryManager:
                             parts = line.split()
                             return int(parts[1]) // 1024
             return 4096  # Default fallback if detection fails
-        except:
-            return 4096 # Assume enough if we can't check
+        except Exception:
+            return 4096  # Assume enough if we can't check
             
     def check_memory(self, custom_threshold_mb: Optional[int] = None) -> Tuple[bool, str]:
         """

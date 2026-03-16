@@ -276,8 +276,8 @@ def gen_multispeaker_chapter(
     for seg_file in segment_files:
         try:
             os.remove(seg_file)
-        except:
-            pass
+        except OSError:
+            pass  # Temp file cleanup non-critical
     
     subtitle_result = {
         'events': merged_subtitles,

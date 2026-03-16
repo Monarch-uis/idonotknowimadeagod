@@ -115,8 +115,8 @@ class NovelNameMapper:
                 if os.path.exists(temp_path):
                     try:
                         os.remove(temp_path)
-                    except:
-                        pass
+                    except OSError:
+                        pass  # Temp cleanup non-critical
                 raise e
         except Exception as e:
             logger.error(f"Failed to save mappings: {e}")
@@ -488,8 +488,8 @@ class NovelNameMapper:
                         profile = json.load(f)
                     original_title = profile.get('original_title', folder_name)
                     youtube_name = profile.get('display_name', profile.get('title', folder_name))
-                except:
-                    pass
+                except (json.JSONDecodeError, OSError):
+                    pass  # Profile read failed, use folder name
             
             # Add new mapping
             success = self.save_mapping(

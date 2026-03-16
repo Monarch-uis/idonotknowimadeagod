@@ -1,8 +1,14 @@
 import sys
 import os
+import subprocess
 
 # Set window title directly
-os.system("title Fanfiction Legend Manager (Safe Mode)")
+if sys.platform == "win32":
+    subprocess.run(["cmd", "/c", "title", "Fanfiction Legend Manager (Safe Mode)"],
+                  creationflags=0x08000000)  # CREATE_NO_WINDOW
+else:
+    sys.stdout.write("\033]0;Fanfiction Legend Manager (Safe Mode)\007")
+    sys.stdout.flush()
 
 print("Starting Safe Mode...")
 

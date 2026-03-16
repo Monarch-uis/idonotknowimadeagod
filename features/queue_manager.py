@@ -96,7 +96,7 @@ class QueueManager:
             except Exception as e:
                 if os.path.exists(temp_path):
                     try: os.remove(temp_path)
-                    except: pass
+                    except OSError: pass  # Temp cleanup non-critical
                 logger.error(f"Queue write error: {e}")
                 return False
         except Exception as e:
@@ -269,20 +269,41 @@ class QueueManager:
         pids = []
         try:
             current_pid = os.getpid()
-            cmd = f"ps aux | grep 'epub_project_manager.py --worker' | grep -v grep"
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
             
-            lines = result.stdout.strip().split('\n')
-            for line in lines:
-                if not line.strip(): continue
-                parts = line.split()
-                if len(parts) > 1:
-                    try:
-                        pid = int(parts[1])
-                        if pid != current_pid:
-                            pids.append(pid)
-                    except ValueError:
-                        continue
+            # Try pgrep first (safer, no shell=True needed)
+            try:
+                result = subprocess.run(
+                    ['pgrep', '-f', 'epub_project_manager.py --worker'],
+                    capture_output=True, text=True, timeout=5
+                )
+                if result.returncode == 0:
+                    for line in result.stdout.strip().split('\n'):
+                        if line.strip():
+                            try:
+                                pid = int(line.strip())
+                                if pid != current_pid:
+                                    pids.append(pid)
+                            except ValueError:
+                                continue
+                    return pids
+            except FileNotFoundError:
+                pass  # pgrep not available, fall back to ps
+            
+            # Fallback: Use ps without shell=True
+            result = subprocess.run(
+                ['ps', 'aux'], capture_output=True, text=True, timeout=10
+            )
+            
+            for line in result.stdout.strip().split('\n'):
+                if 'epub_project_manager.py --worker' in line and 'grep' not in line:
+                    parts = line.split()
+                    if len(parts) > 1:
+                        try:
+                            pid = int(parts[1])
+                            if pid != current_pid:
+                                pids.append(pid)
+                        except ValueError:
+                            continue
         except Exception as e:
             logger.warning(f"Failed to check process list: {e}")
             

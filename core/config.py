@@ -51,6 +51,7 @@ class AudioSettings(TypedDict):
     piper_noise_scale: float
     piper_length_scale: float
     enable_audio_crossfade: bool
+    pocket_tts_voice: str
 
 class SystemLimits(TypedDict):
     max_batch_size: int
@@ -152,7 +153,10 @@ DEFAULT_CONFIG: ConfigType = {
         "piper_speaker_id": 0,
         "piper_noise_scale": 0.667,
         "piper_length_scale": 1.0,
-        "enable_audio_crossfade": True
+        "enable_audio_crossfade": True,
+        "pocket_tts_voice": "alba",
+        "kokoro_voice": "af_heart",
+        "kokoro_lang_code": "a"
     },
     "system_limits": {
         "max_batch_size": 50,
@@ -327,6 +331,8 @@ def validate_config(config):
             validated["audio_settings"]["background_music_path"] = audio["background_music_path"]
         if isinstance(audio.get("enable_audio_crossfade"), bool):
             validated["audio_settings"]["enable_audio_crossfade"] = audio["enable_audio_crossfade"]
+        if isinstance(audio.get("pocket_tts_voice"), str):
+            validated["audio_settings"]["pocket_tts_voice"] = audio["pocket_tts_voice"]
     
     # System limits
     if "system_limits" in config:

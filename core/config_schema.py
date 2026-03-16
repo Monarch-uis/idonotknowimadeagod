@@ -102,7 +102,22 @@ CONFIG_SCHEMA = {
                 },
                 "chatterbox_enabled": {"type": "boolean"},
                 "chatterbox_model": {"type": "string"},
-                "chatterbox_tier": {"type": "string"}
+                "chatterbox_tier": {"type": "string"},
+                "pocket_tts_voice": {
+                    "type": "string",
+                    "description": "Voice ID or language code for Pocket TTS",
+                    "examples": ["en", "en-US", "fr"]
+                },
+                "kokoro_voice": {
+                    "type": "string",
+                    "description": "Voice preset for Kokoro TTS",
+                    "examples": ["af_heart", "af_bella", "am_adam", "bf_emma"]
+                },
+                "kokoro_lang_code": {
+                    "type": "string",
+                    "description": "Language code for Kokoro TTS pipeline",
+                    "examples": ["a", "b", "e", "f", "h", "i", "j", "p", "z"]
+                }
             }
         },
         "system_limits": {

@@ -7,9 +7,10 @@ import os
 app = FastAPI(title="EPUB to Audiobook/Video Converter API")
 
 # Configure CORS for the React frontend
+allowed_origins = os.environ.get("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust in production
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
