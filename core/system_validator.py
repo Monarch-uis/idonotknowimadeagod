@@ -11,8 +11,7 @@ import py_compile
 import importlib
 import subprocess
 import shutil
-from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 from core.utils import CP
 
@@ -25,26 +24,31 @@ class SystemValidator:
     def __init__(self):
         self.results = {}
     
-    def check_disk_space(self, min_gb: float = 2.0) -> Tuple[bool, str]:
+    def check_disk_space(self, min_gb: Optional[float] = None) -> Tuple[bool, str]:
         """Check available disk space
         
         Args:
-            min_gb: Minimum required free space in GB (default: 2.0)
+            min_gb: Minimum required free space in GB (defaults to config value)
             
         Returns:
             Tuple of (success: bool, message: str)
         """
         try:
             # Get disk usage for current working directory
-            total, used, free = shutil.disk_usage(os.getcwd())
+            _, _, free = shutil.disk_usage(os.getcwd())
             free_gb = free / (1024 ** 3)
+            
+            # Use config default if not specified
+            if min_gb is None:
+                from core.config import CONFIG
+                min_gb = CONFIG.get("min_disk_space_gb", 2.0)
             
             if free_gb >= min_gb:
                 return True, f"Disk space OK: {free_gb:.2f} GB free (minimum: {min_gb} GB)"
             else:
                 return False, f"Low disk space: {free_gb:.2f} GB free (minimum: {min_gb} GB required)"
-        except Exception as e:
-            return False, f"Disk space check failed: {str(e)}"
+        except OSError as e:
+            return False, f"Disk space check failed: {e!s}"
     
     def check_ffmpeg(self) -> Tuple[bool, str]:
         """Check if FFmpeg is available and working"""

@@ -1,6 +1,8 @@
 # TTS Requirements - Text-to-Speech specific dependencies
 # Install with: pip install -r requirements-tts.txt
-# Note: Also requires requirements-core.txt
+# Includes core requirements automatically
+
+-r requirements-core.txt
 
 # Primary TTS Engines
 edge-tts>=6.1.9

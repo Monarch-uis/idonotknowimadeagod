@@ -1,43 +1,8 @@
 # Core Requirements - Essential dependencies for basic functionality
 # Install with: pip install -r requirements-core.txt
+# Includes all canonical dependencies from requirements.txt
 
-# EPUB Processing
-ebooklib>=0.18
-beautifulsoup4>=4.12.0
-# Pinned <6.0 for lightnovel-crawler compatibility
-lxml>=4.9.0,<6.0
+-r requirements.txt
 
-# Video Processing
-moviepy<2.0.0
-ffmpeg-python>=0.2.0
-imageio-ffmpeg>=0.4.9
-
-# Audio Processing
-edge-tts>=6.1.9
-pyttsx3>=2.90
-pydub>=0.25.1
-
-# Image Processing
-# Security: Updated Pillow to address CVE-2023-50447 and CVE-2023-44271
-# Pinned <12.0 for gradio compatibility (gradio requires <12.0)
-Pillow>=11.3.0,<12.0
-
-# System Monitoring
-psutil>=5.9.0
-
-# File Watching
-watchdog>=3.0.0
-
-# TTS Engines
-pocket-tts>=0.1.0
-kokoro>=0.9.4
-soundfile
-
-# Config Validation
-jsonschema>=4.19.0
-
-# API Server
-fastapi>=0.100.0
-uvicorn>=0.20.0
-httpx>=0.24.0
-python-multipart>=0.0.6
+# Additional core-specific packages (if any not in requirements.txt)
+# Most core dependencies are already in requirements.txt to prevent drift
