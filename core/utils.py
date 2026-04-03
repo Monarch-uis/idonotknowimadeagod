@@ -19,8 +19,13 @@ except ImportError:
     pass
 
 # Setup logging with rotation (2MB × 3 backups)
+# Ensure logs directory exists before creating handler
+import os as _os
+_logs_dir = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), 'logs')
+_os.makedirs(_logs_dir, exist_ok=True)
+
 log_handler = RotatingFileHandler(
-    'logs/epub_automation.log',
+    _os.path.join(_logs_dir, 'epub_automation.log'),
     maxBytes=2*1024*1024,  # 2MB
     backupCount=3
 )
