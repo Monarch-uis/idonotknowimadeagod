@@ -1,83 +1,81 @@
-# Python
+```
+# Log files
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+*.env.*
+
+# Python specific
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+*.pyc
+*.pyo
+*.pyd
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual Environment
-.venv/
-venv/
-ENV/
 env/
+venv/
+.venv/
+pip-log.txt
+pip-selfcheck.json
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage/
+htmlcov/
 
-# IDEs
-.idea/
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# IDE and editor files
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
 .DS_Store
+Thumbs.db
 
-# Project Specific
-*.log
-*.epub
-*.mp3
-*.mp4
-*.m4b
-*.wav
-*.ogg
-Novels/
-output/
-_NEW_EPUBS_HERE/
-logs/
-*.prof
-htmlcov/
-.coverage
-.pytest_cache/
-*.pyc
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
 
 # Temporary files
 *.tmp
-temp/
-tmp/
-backups/
+*.temp
 *.bak
+*.backup
 
-# OS specific
-Thumbs.db
+# OS generated files
 .DS_Store
-
-# Docker
-.dockerignore
-
-# Sensitive data
-*.key
-*.pem
-secrets/
-config.local.json
-
-# Media files
-media/*.mp3
-media/*.mp4
-piper_models/*.onnx
-
-# Recovery and queue files
-recovery_patterns.json
-processing_queue.json
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Icon?
+Thumbs.db
+```
