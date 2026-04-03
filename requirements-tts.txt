@@ -1,0 +1,24 @@
+# TTS Requirements - Text-to-Speech specific dependencies
+# Install with: pip install -r requirements-tts.txt
+# Includes core requirements automatically
+
+-r requirements-core.txt
+
+# Primary TTS Engines
+edge-tts>=6.1.9
+pyttsx3>=2.90
+
+# Advanced TTS
+pocket-tts>=0.1.0
+kokoro>=0.9.4
+soundfile
+
+# Audio Processing
+pydub>=0.25.1
+
+# NumPy for audio processing
+# Pinned numpy <2.3 for numba compatibility (numba 0.61.x requires <2.3)
+numpy>=1.24,<2.3
+
+# Optional: Faster Whisper for speech recognition
+faster-whisper>=0.10.0

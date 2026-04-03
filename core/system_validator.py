@@ -3,13 +3,15 @@ System Validator - Comprehensive system validation and health checks
 Merged from: health_check.py + system_check.py + system_validator.py
 
 Validates dependencies, syntax, imports, and component health
+Includes pre-flight disk space checks
 """
 import sys
 import os
 import py_compile
 import importlib
 import subprocess
-from typing import Dict, List, Tuple
+import shutil
+from typing import Dict, List, Tuple, Optional
 
 from core.utils import CP
 
@@ -21,6 +23,32 @@ class SystemValidator:
     
     def __init__(self):
         self.results = {}
+    
+    def check_disk_space(self, min_gb: Optional[float] = None) -> Tuple[bool, str]:
+        """Check available disk space
+        
+        Args:
+            min_gb: Minimum required free space in GB (defaults to config value)
+            
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
+        try:
+            # Get disk usage for current working directory
+            _, _, free = shutil.disk_usage(os.getcwd())
+            free_gb = free / (1024 ** 3)
+            
+            # Use config default if not specified
+            if min_gb is None:
+                from core.config import CONFIG
+                min_gb = CONFIG.get("min_disk_space_gb", 2.0)
+            
+            if free_gb >= min_gb:
+                return True, f"Disk space OK: {free_gb:.2f} GB free (minimum: {min_gb} GB)"
+            else:
+                return False, f"Low disk space: {free_gb:.2f} GB free (minimum: {min_gb} GB required)"
+        except OSError as e:
+            return False, f"Disk space check failed: {e!s}"
     
     def check_ffmpeg(self) -> Tuple[bool, str]:
         """Check if FFmpeg is available and working"""
@@ -279,6 +307,12 @@ def run_full_health_check(verbose: bool = True) -> bool:
         print("-"*30)
     
     validator = SystemValidator()
+    
+    # Disk Space Check (Pre-flight)
+    disk_ok, disk_msg = validator.check_disk_space(min_gb=2.0)
+    if verbose:
+        print(f"   {'✅' if disk_ok else '❌'} {disk_msg}")
+    overall_success &= disk_ok
     
     # FFmpeg
     ffmpeg_ok, ffmpeg_msg = validator.check_ffmpeg()

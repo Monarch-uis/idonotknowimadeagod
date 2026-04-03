@@ -1,0 +1,8 @@
+# Core Requirements - Essential dependencies for basic functionality
+# Install with: pip install -r requirements-core.txt
+# Includes all canonical dependencies from requirements.txt
+
+-r requirements.txt
+
+# Additional core-specific packages (if any not in requirements.txt)
+# Most core dependencies are already in requirements.txt to prevent drift
