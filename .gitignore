@@ -1,4 +1,3 @@
-```
 # Python
 __pycache__/
 *.pyc
@@ -131,4 +130,14 @@ dmypy.json
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```
+
+# Node modules
+node_modules/
+
+# Useless files and session data
+useless/
+processing_checkpoint.json
+processing_queue.json.lock
+
+# Local skill symlinks - do not commit
+.agent/skills/
