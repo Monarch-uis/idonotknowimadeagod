@@ -1,130 +1,232 @@
-# EPUB to Audiobook/Video Converter - Quick Start
+# 📚 EPUB to Audiobook & Video Converter
 
-This project converts EPUB files into audiobooks and videos with automated TTS and subtitle generation.
+> Automatically convert EPUB novels into high-quality audiobooks and YouTube-ready videos with subtitles, background music, and multi-speaker narration — powered by Piper TTS.
 
-## Quick Start
+---
 
-### Option 1: Direct Run (Original)
-```bash
-python epub_project_manager.py
+## ✨ Features
+
+- **🎙️ Multi-Engine TTS** — Piper (primary, offline), Edge-TTS, Pyttsx3, Chatterbox, and Kokoro
+- **🧠 AI-Powered Processing** — Gemini AI integration for chapter analysis, pronunciation fixes, and content enhancement
+- **🎬 Video Generation** — Auto-subtitled MP4 videos with word-level timing via faster-whisper
+- **👥 Multi-Speaker Narration** — Differentiated voices for dialogue and narration
+- **⚡ Parallel TTS** — Concurrent chapter processing to maximize throughput
+- **🔄 Auto-Recovery** — Resume interrupted jobs from the last checkpoint automatically
+- **📋 Queue Manager** — Background job queue for batch processing multiple EPUBs
+- **🗺️ Novel Name Mapper** — Smart filename normalization and mapping for consistent project organization
+- **📊 Performance Profiling** — Built-in profiler with HTML reports
+- **🔒 Config Validation** — JSON schema validation with descriptive error messages
+- **🐳 Docker Support** — Ready-to-run container with all dependencies
+
+---
+
+## 🏗️ Architecture
+
+```
+epub_project_manager.py   ← Main orchestrator & CLI entry point
+│
+├── core/
+│   ├── tts.py                ← Multi-engine TTS (Piper-first)
+│   ├── tts_chatterbox.py     ← Chatterbox TTS engine
+│   ├── parallel_tts.py       ← Concurrent chapter TTS
+│   ├── video_pipeline.py     ← Whisper transcription → ASS subtitles → FFmpeg
+│   ├── subtitle_generator.py ← Word-level subtitle timing
+│   ├── epub_io.py            ← EPUB parsing & project folder setup
+│   ├── gemini_client.py      ← Google Gemini AI client
+│   ├── gemini_prompts.py     ← AI prompts for text enhancement
+│   ├── config.py             ← Config loader & manager
+│   ├── config_schema.py      ← JSON schema validation
+│   ├── system_validator.py   ← Pre-flight dependency checks
+│   ├── profiler.py           ← Performance profiling
+│   ├── logging_config.py     ← Structured rotating log setup
+│   ├── aligner.py            ← Audio/subtitle alignment
+│   ├── path_utils.py         ← Safe path utilities
+│   └── ui_manager.py         ← CLI UI components
+│
+├── features/
+│   ├── queue_manager.py      ← Background job queue (file-locked)
+│   ├── auto_recovery.py      ← Checkpoint-based crash recovery
+│   ├── checkpoint_manager.py ← Save/restore processing state
+│   ├── chapter_merger.py     ← Multi-chapter audio merging
+│   ├── multispeaker_tts.py   ← Dialogue/narration voice splitting
+│   ├── novel_name_mapper.py  ← EPUB filename normalization
+│   ├── gemini_processor.py   ← AI text pre-processing pipeline
+│   ├── memory_manager.py     ← Runtime memory monitoring
+│   └── video_diagnostics.py  ← Video render health checks
+│
+├── backend/                  ← FastAPI REST API
+│   ├── main.py               ← App entry, CORS, routing
+│   └── api/
+│       ├── projects.py       ← Project CRUD, queue, logs
+│       └── tts.py            ← TTS preview endpoint
+│
+├── captiongod/               ← Caption rendering engine
+├── piper/                    ← Piper TTS binary (local, not tracked by git)
+├── piper_models/             ← Voice models (local, not tracked by git)
+├── _NEW_EPUBS_HERE/          ← Drop EPUBs here to process
+└── Novels/                   ← Output organized by status
+    ├── Active Novels/
+    ├── Archived Novels/
+    ├── Nonactive Novels/
+    └── Uploaded in Youtube/
 ```
 
-### Option 2: With Profiling and Logging (New)
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.10+
+- FFmpeg installed and in `PATH`
+- Piper TTS binary in `piper/` (downloaded separately)
+
+### 1. Install Dependencies
+
 ```bash
-# Basic usage with enhanced logging
-python run.py
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Enable performance profiling
-python run.py --profile
+# Core dependencies
+pip install -r requirements.txt
 
-# Set logging level
-python run.py --log-level DEBUG
+# Dev dependencies (testing, linting)
+pip install -r requirements-dev.txt
+```
 
-# Use JSON log format
-python run.py --log-format json
+> **Note (Debian/Ubuntu):** Always use the venv. The system Python rejects direct `pip install` on modern Debian/Ubuntu.
 
-# Validate configuration
+### 2. Validate Setup
+
+```bash
 python run.py --validate-config
 ```
 
-### Option 3: Docker
+### 3. Run
+
+```bash
+# Interactive mode (guided setup)
+python epub_project_manager.py
+
+# With enhanced logging and profiling
+python run.py
+
+# With debug logging
+python run.py --log-level DEBUG
+
+# With performance profiling (saves report to logs/profiling/)
+python run.py --profile
+```
+
+### 4. Docker
+
 ```bash
 docker-compose up
 ```
 
-## New Features
+---
 
-### 🐳 Docker Support
-- Multi-stage build for minimal image size
-- Non-root user for security
-- Volume mounts for EPUBs, output, and logs
-- See `docs/DOCKER.md` for details
+## ⚙️ Configuration
 
-### 📊 Performance Profiling
-- HTML reports with timing and memory usage
-- Function-level profiling
-- Reports saved to `logs/profiling/`
+All behavior is controlled via `config.json`. Key sections:
 
-### ✅ Testing Suite
-- Pytest with coverage reporting
-- Run: `pytest tests/ -v --cov=core --cov=features`
+| Section | Controls |
+|---|---|
+| `audio_settings` | TTS engine, voice, speed, retry logic |
+| `video_settings` | Resolution, subtitle style, quality preset |
+| `tts_engines` | Per-engine config (Piper model path, Edge-TTS voice, etc.) |
+| `banned_words` | Words to censor or replace before TTS |
+| `pronunciation_fixes` | Custom phoneme overrides |
+| `system` | Worker threads, memory limits, timeouts |
+| `recovery_settings` | Checkpoint strategy, stale lock detection |
 
-### 🔒 Config Validation
-- JSON schema validation
-- Detailed error messages
-- Validate: `python run.py --validate-config`
-
-### 📝 Structured Logging
-- Component-specific log files in `logs/` directory
-- Rotating file handlers (10MB max, 5 backups)
-- Colored console output
-
-## Installation
-
+Validate after editing:
 ```bash
-# Create and activate a virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install dev dependencies (optional, for testing/linting)
-pip install -r requirements-dev.txt
-
-# Verify installation
 python run.py --validate-config
 ```
 
-> **Note:** Always activate the virtual environment (`source venv/bin/activate`) before running any Python commands. The system Python on modern Debian/Ubuntu is externally managed and will reject direct `pip install` calls.
+---
 
-## Testing
+## 🎙️ TTS Engines
+
+| Engine | Type | Quality | Notes |
+|---|---|---|---|
+| **Piper** | Offline | ⭐⭐⭐⭐⭐ | Primary engine. Fast, local, no API needed |
+| **Edge-TTS** | Online | ⭐⭐⭐⭐ | Microsoft Azure voices, requires internet |
+| **Chatterbox** | Offline | ⭐⭐⭐⭐ | Emotional, expressive narration |
+| **Kokoro** | Offline | ⭐⭐⭐⭐ | High quality, compact model |
+| **Pyttsx3** | Offline | ⭐⭐ | Fallback, uses system voices |
+
+Piper is the primary focus. Models are stored in `piper_models/` and are not committed to Git (too large).
+
+---
+
+## 📦 Backend API
+
+A FastAPI backend is available for programmatic control:
 
 ```bash
-# Make sure venv is active
+# Start the API server
+uvicorn backend.main:app --reload
+```
+
+### Key Endpoints
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/api/health` | Health check |
+| `GET` | `/api/projects` | List all projects |
+| `POST` | `/api/projects` | Upload EPUB, create project |
+| `GET` | `/api/projects/{id}` | Get project status |
+| `POST` | `/api/projects/{id}/queue` | Add project to processing queue |
+| `GET` | `/api/projects/{id}/logs` | Stream project logs |
+| `POST` | `/api/tts/preview` | Preview TTS audio for a text snippet |
+
+---
+
+## 🧪 Testing
+
+```bash
 source venv/bin/activate
 
 # Run all tests
 pytest tests/ -v
 
-# Run with coverage
+# With coverage
 pytest tests/ --cov=core --cov=features --cov-report=html
 
-# View coverage report
-start htmlcov/index.html  # Windows
-open htmlcov/index.html   # Mac
-xdg-open htmlcov/index.html  # Linux
+# View HTML coverage report (Linux)
+xdg-open htmlcov/index.html
 ```
 
-## Documentation
+---
 
-- **Docker Deployment**: `docs/DOCKER.md`
-- **Full Documentation**: `docs/START_HERE_README.md`
-- **Project Memory**: `GEMINI.md`
+## 📝 Logs
 
-## Log Files
+Logs are organized by component under `logs/` (not tracked by Git):
 
-Logs are organized by component:
-- `logs/main/app.log` - Main application logs
-- `logs/tts/synthesis.log` - TTS-specific logs
-- `logs/video/rendering.log` - Video rendering logs
-- `logs/errors/errors.log` - Error-only logs
-- `logs/profiling/performance.log` - Performance metrics
-- `logs/recovery/recovery.log` - Auto-recovery actions
+| Path | Contains |
+|---|---|
+| `logs/main/` | Main application flow |
+| `logs/tts/` | TTS synthesis events |
+| `logs/video/` | Video rendering events |
+| `logs/errors/` | Errors only, all components |
+| `logs/profiling/` | Performance timing reports |
 
-## Configuration
+All log files rotate at 10 MB (max 5 backups).
 
-Edit `config.json` to customize:
-- TTS settings (voice, speed, retry logic)
-- Video quality presets
-- Banned words and pronunciation fixes
-- System resource limits
+---
 
-Validate your changes:
-```bash
-python run.py --validate-config
-```
+## 🔒 Security
 
-## Support
+- Bandit static analysis in CI/CD
+- `pip-audit` for CVE scanning on all dependencies
+- Dependabot configured for automatic dependency updates
+- See [SECURITY.md](SECURITY.md) for the vulnerability reporting policy
 
-For issues or questions, check the logs in `logs/` directory first.
+---
+
+## 📄 License & Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
