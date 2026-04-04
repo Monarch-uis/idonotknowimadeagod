@@ -141,3 +141,18 @@ processing_queue.json.lock
 
 # Local skill symlinks - do not commit
 .agent/skills/
+
+# EPUBs and Novels contents
+_NEW_EPUBS_HERE/*
+!_NEW_EPUBS_HERE/.gitkeep
+Novels/*
+!Novels/.gitkeep
+
+# Piper TTS Engine Binaries and Models
+piper/
+piper_models/
+
+# Test temp outputs
+test_results/
+tests/integration_temp/
+tests/minimal_test/
