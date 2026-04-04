@@ -9,7 +9,6 @@
 - **🎙️ Multi-Engine TTS** — Piper (primary, offline), Edge-TTS, Pyttsx3, Chatterbox, and Kokoro
 - **🧠 AI-Powered Processing** — Gemini AI integration for chapter analysis, pronunciation fixes, and content enhancement
 - **🎬 Video Generation** — Auto-subtitled MP4 videos with word-level timing via faster-whisper
-- **👥 Multi-Speaker Narration** — Differentiated voices for dialogue and narration
 - **⚡ Parallel TTS** — Concurrent chapter processing to maximize throughput
 - **🔄 Auto-Recovery** — Resume interrupted jobs from the last checkpoint automatically
 - **📋 Queue Manager** — Background job queue for batch processing multiple EPUBs
