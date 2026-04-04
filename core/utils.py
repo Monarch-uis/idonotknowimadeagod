@@ -196,13 +196,18 @@ def extract_smart_number(text):
     return None
 
 def censor_text(text, banned_words):
-    """Remove banned words from text (for TTS audio)"""
+    """Censor banned words with partial masking for TTS audio (e.g., fuck -> f**k)"""
     if not text:
         return ""
     clean_text = text
     for pattern in banned_words:
         try:
-            clean_text = re.sub(pattern, "...", clean_text, flags=re.IGNORECASE)
+            matches = list(re.finditer(pattern, clean_text, flags=re.IGNORECASE))
+            for match in reversed(matches):
+                matched_word = match.group(0)
+                censored_word = partial_censor_word(matched_word)
+                start, end = match.span()
+                clean_text = clean_text[:start] + censored_word + clean_text[end:]
         except re.error:
             pass
     return clean_text
