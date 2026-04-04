@@ -156,3 +156,22 @@ piper_models/
 test_results/
 tests/integration_temp/
 tests/minimal_test/
+
+# Runtime / generated data
+processing_queue.json
+recovery_patterns.json
+
+# Backup files
+backups/
+*_BACKUP.*
+
+# Logs (keep folder structure via .gitkeep)
+logs/*
+!logs/.gitkeep
+logs/**/*
+!logs/**/.gitkeep
+
+# Media assets (large binary files)
+media/*.mp3
+media/*.mp4
+media/*.wav

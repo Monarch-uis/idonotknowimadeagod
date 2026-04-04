@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# IDEs
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/**/*.log
+*.log
+
+# Output files
+output/
+Novels/*/temp_render_files/
+Novels/*/final_videos/
+Novels/*/final_audio/
+
+# Temporary files
+*.tmp
+*.temp
+temp_*/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (keep only essential docs)
+docs/
+
+# Backups
+backups/
+*.backup
+*.bak
+
+# Useless files
+useless/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build artifacts
+*.spec
+build/
+dist/
+
+# Large binary files (will be copied separately if needed)
+# Uncomment if Piper models are too large
+# piper_models/
+
+# Test files
+tests/
